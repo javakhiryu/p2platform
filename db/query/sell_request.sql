@@ -1,16 +1,17 @@
 -- name: CreateSellRequest :one
 INSERT INTO sell_requests (
   sell_amount,
-  currency,
+  currency_from,
+  currency_to,
   tg_username,
   sell_by_card,
   sell_amount_by_card,
   sell_by_cash,
-  sell_amunt_by_cash,
+  sell_amount_by_cash,
   sell_exchange_rate,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 
@@ -27,27 +28,43 @@ OFFSET $2;
 -- name: UpdateSellRequest :one
 UPDATE sell_requests
 SET
-  sell_amount = coalesce($1, sell_amount),
-    currency = coalesce($2, currency),
-    tg_username = coalesce($3, tg_username),
-    sell_by_card = coalesce($4, sell_by_card),
-    sell_amount_by_card = coalesce($5, sell_amount_by_card),
-    sell_by_cash = coalesce($6, sell_by_cash),
-    sell_amunt_by_cash = coalesce($7, sell_amunt_by_cash),
-    sell_exchange_rate = coalesce($8, sell_exchange_rate),
-    comment = coalesce($9, comment),
-    is_actual = coalesce($10, is_actual),
-    -- set updated_at to now() if any of the fields are updated
-    -- otherwise keep the old value
-    -- this is a workaround for the fact that we can't use
-    -- coalesce on the updated_at field
+    sell_amount = COALESCE(sqlc.narg('sell_amount'), sell_amount),
+    currency_from = COALESCE(sqlc.narg('currency_from'), currency_from),
+    currency_to = COALESCE(sqlc.narg('currency_to'), currency_to),
+    tg_username = COALESCE(sqlc.narg('tg_username'), tg_username),
+    sell_by_card = COALESCE(sqlc.narg('sell_by_card'), sell_by_card),
+    sell_amount_by_card = COALESCE(sqlc.narg('sell_amount_by_card'), sell_amount_by_card),
+    sell_by_cash = COALESCE(sqlc.narg('sell_by_cash'), sell_by_cash),
+    sell_amount_by_cash = COALESCE(sqlc.narg('sell_amount_by_cash'), sell_amount_by_cash),
+    sell_exchange_rate = COALESCE(sqlc.narg('sell_exchange_rate'), sell_exchange_rate),
+    comment = COALESCE(sqlc.narg('comment'), comment),
     updated_at = CASE
-      WHEN $1 IS NOT NULL OR $2 IS NOT NULL OR $3 IS NOT NULL OR $4 IS NOT NULL OR $5 IS NOT NULL OR $6 IS NOT NULL OR $7 IS NOT NULL OR $8 IS NOT NULL OR $9 IS NOT NULL OR $10 IS NOT NULL OR $11 IS NOT NULL
-      THEN now()
-      ELSE updated_at
+        WHEN sqlc.narg('sell_amount') IS NOT NULL
+          OR sqlc.narg('currency_from') IS NOT NULL
+          OR sqlc.narg('currency_to') IS NOT NULL
+          OR sqlc.narg('tg_username') IS NOT NULL
+          OR sqlc.narg('sell_by_card') IS NOT NULL
+          OR sqlc.narg('sell_amount_by_card') IS NOT NULL
+          OR sqlc.narg('sell_by_cash') IS NOT NULL
+          OR sqlc.narg('sell_amount_by_cash') IS NOT NULL
+          OR sqlc.narg('sell_exchange_rate') IS NOT NULL
+          OR sqlc.narg('comment') IS NOT NULL
+        THEN now()
+        ELSE updated_at
     END
-WHERE sell_req_id = $11
+WHERE sell_req_id = sqlc.arg('sell_req_id')
 RETURNING *;
+
+
+-- name: OpenCloseSellRequest :one
+UPDATE sell_requests
+SET
+  is_actual = $1,
+  updated_at = now()
+WHERE
+  sell_req_id = $2
+RETURNING *;
+
 
 -- name: DeleteSellRequest :one
 UPDATE sell_requests
