@@ -11,7 +11,6 @@ import (
 )
 
 type Querier interface {
-	CloseBuyRequest(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error)
 	CreateBuyRequest(ctx context.Context, arg CreateBuyRequestParams) (BuyRequest, error)
 	CreateSellRequest(ctx context.Context, arg CreateSellRequestParams) (SellRequest, error)
 	DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
@@ -20,6 +19,8 @@ type Querier interface {
 	GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error)
 	ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams) ([]BuyRequest, error)
 	ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error)
+	OpenCloseBuyRequest(ctx context.Context, arg OpenCloseBuyRequestParams) (BuyRequest, error)
+	OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellRequestParams) (SellRequest, error)
 	UpdateBuyRequest(ctx context.Context, arg UpdateBuyRequestParams) (BuyRequest, error)
 	UpdateSellRequest(ctx context.Context, arg UpdateSellRequestParams) (SellRequest, error)
 }

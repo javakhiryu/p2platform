@@ -12,33 +12,33 @@ import (
 )
 
 type BuyRequest struct {
-	BuyReqID        uuid.UUID      `json:"buy_req_id"`
-	SellReqID       int32          `json:"sell_req_id"`
-	BuyAmount       pgtype.Numeric `json:"buy_amount"`
-	Currency        string         `json:"currency"`
-	TgUsername      string         `json:"tg_username"`
-	BuyByCard       pgtype.Bool    `json:"buy_by_card"`
-	BuyAmountByCard pgtype.Numeric `json:"buy_amount_by_card"`
-	BuyByCash       pgtype.Bool    `json:"buy_by_cash"`
-	BuyAmuntByCash  pgtype.Numeric `json:"buy_amunt_by_cash"`
-	IsSuccessful    pgtype.Bool    `json:"is_successful"`
-	CreatedAt       time.Time      `json:"created_at"`
-	ExpiresAt       time.Time      `json:"expires_at"`
+	BuyReqID        uuid.UUID   `json:"buy_req_id"`
+	SellReqID       int32       `json:"sell_req_id"`
+	BuyAmount       int64       `json:"buy_amount"`
+	TgUsername      string      `json:"tg_username"`
+	BuyByCard       pgtype.Bool `json:"buy_by_card"`
+	BuyAmountByCard pgtype.Int8 `json:"buy_amount_by_card"`
+	BuyByCash       pgtype.Bool `json:"buy_by_cash"`
+	BuyAmountByCash pgtype.Int8 `json:"buy_amount_by_cash"`
+	IsSuccessful    pgtype.Bool `json:"is_successful"`
+	CreatedAt       time.Time   `json:"created_at"`
+	ExpiresAt       time.Time   `json:"expires_at"`
 }
 
 type SellRequest struct {
-	SellReqID        int32          `json:"sell_req_id"`
-	SellAmount       pgtype.Numeric `json:"sell_amount"`
-	Currency         string         `json:"currency"`
-	TgUsername       string         `json:"tg_username"`
-	SellByCard       pgtype.Bool    `json:"sell_by_card"`
-	SellAmountByCard pgtype.Numeric `json:"sell_amount_by_card"`
-	SellByCash       pgtype.Bool    `json:"sell_by_cash"`
-	SellAmuntByCash  pgtype.Numeric `json:"sell_amunt_by_cash"`
-	SellExchangeRate pgtype.Numeric `json:"sell_exchange_rate"`
-	IsActual         pgtype.Bool    `json:"is_actual"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	IsDeleted        pgtype.Bool    `json:"is_deleted"`
-	Comment          pgtype.Text    `json:"comment"`
+	SellReqID        int32       `json:"sell_req_id"`
+	SellAmount       int64       `json:"sell_amount"`
+	CurrencyFrom     string      `json:"currency_from"`
+	CurrencyTo       string      `json:"currency_to"`
+	TgUsername       string      `json:"tg_username"`
+	SellByCard       pgtype.Bool `json:"sell_by_card"`
+	SellAmountByCard pgtype.Int8 `json:"sell_amount_by_card"`
+	SellByCash       pgtype.Bool `json:"sell_by_cash"`
+	SellAmountByCash pgtype.Int8 `json:"sell_amount_by_cash"`
+	SellExchangeRate pgtype.Int8 `json:"sell_exchange_rate"`
+	IsActual         pgtype.Bool `json:"is_actual"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
+	IsDeleted        pgtype.Bool `json:"is_deleted"`
+	Comment          string      `json:"comment"`
 }

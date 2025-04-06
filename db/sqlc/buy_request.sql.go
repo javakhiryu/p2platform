@@ -12,62 +12,31 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const closeBuyRequest = `-- name: CloseBuyRequest :one
-UPDATE buy_requests
-SET
-  is_successful = true
-WHERE
-  buy_req_id = $1
-RETURNING buy_req_id, sell_req_id, buy_amount, currency, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amunt_by_cash, is_successful, created_at, expires_at
-`
-
-func (q *Queries) CloseBuyRequest(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error) {
-	row := q.db.QueryRow(ctx, closeBuyRequest, buyReqID)
-	var i BuyRequest
-	err := row.Scan(
-		&i.BuyReqID,
-		&i.SellReqID,
-		&i.BuyAmount,
-		&i.Currency,
-		&i.TgUsername,
-		&i.BuyByCard,
-		&i.BuyAmountByCard,
-		&i.BuyByCash,
-		&i.BuyAmuntByCash,
-		&i.IsSuccessful,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-	)
-	return i, err
-}
-
 const createBuyRequest = `-- name: CreateBuyRequest :one
 INSERT INTO buy_requests (
    buy_req_id,
   sell_req_id,
   buy_amount,
-  currency,
   tg_username,
   buy_by_card,
   buy_amount_by_card,
   buy_by_cash,
-  buy_amunt_by_cash
+  buy_amount_by_cash
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9
+  $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING buy_req_id, sell_req_id, buy_amount, currency, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amunt_by_cash, is_successful, created_at, expires_at
+RETURNING buy_req_id, sell_req_id, buy_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, is_successful, created_at, expires_at
 `
 
 type CreateBuyRequestParams struct {
-	BuyReqID        uuid.UUID      `json:"buy_req_id"`
-	SellReqID       int32          `json:"sell_req_id"`
-	BuyAmount       pgtype.Numeric `json:"buy_amount"`
-	Currency        string         `json:"currency"`
-	TgUsername      string         `json:"tg_username"`
-	BuyByCard       pgtype.Bool    `json:"buy_by_card"`
-	BuyAmountByCard pgtype.Numeric `json:"buy_amount_by_card"`
-	BuyByCash       pgtype.Bool    `json:"buy_by_cash"`
-	BuyAmuntByCash  pgtype.Numeric `json:"buy_amunt_by_cash"`
+	BuyReqID        uuid.UUID   `json:"buy_req_id"`
+	SellReqID       int32       `json:"sell_req_id"`
+	BuyAmount       int64       `json:"buy_amount"`
+	TgUsername      string      `json:"tg_username"`
+	BuyByCard       pgtype.Bool `json:"buy_by_card"`
+	BuyAmountByCard pgtype.Int8 `json:"buy_amount_by_card"`
+	BuyByCash       pgtype.Bool `json:"buy_by_cash"`
+	BuyAmountByCash pgtype.Int8 `json:"buy_amount_by_cash"`
 }
 
 func (q *Queries) CreateBuyRequest(ctx context.Context, arg CreateBuyRequestParams) (BuyRequest, error) {
@@ -75,24 +44,22 @@ func (q *Queries) CreateBuyRequest(ctx context.Context, arg CreateBuyRequestPara
 		arg.BuyReqID,
 		arg.SellReqID,
 		arg.BuyAmount,
-		arg.Currency,
 		arg.TgUsername,
 		arg.BuyByCard,
 		arg.BuyAmountByCard,
 		arg.BuyByCash,
-		arg.BuyAmuntByCash,
+		arg.BuyAmountByCash,
 	)
 	var i BuyRequest
 	err := row.Scan(
 		&i.BuyReqID,
 		&i.SellReqID,
 		&i.BuyAmount,
-		&i.Currency,
 		&i.TgUsername,
 		&i.BuyByCard,
 		&i.BuyAmountByCard,
 		&i.BuyByCash,
-		&i.BuyAmuntByCash,
+		&i.BuyAmountByCash,
 		&i.IsSuccessful,
 		&i.CreatedAt,
 		&i.ExpiresAt,
@@ -112,7 +79,7 @@ func (q *Queries) DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) erro
 }
 
 const getBuyRequestById = `-- name: GetBuyRequestById :one
-SELECT buy_req_id, sell_req_id, buy_amount, currency, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amunt_by_cash, is_successful, created_at, expires_at FROM buy_requests WHERE buy_req_id = $1
+SELECT buy_req_id, sell_req_id, buy_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, is_successful, created_at, expires_at FROM buy_requests WHERE buy_req_id = $1
 `
 
 func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error) {
@@ -122,12 +89,11 @@ func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (Bu
 		&i.BuyReqID,
 		&i.SellReqID,
 		&i.BuyAmount,
-		&i.Currency,
 		&i.TgUsername,
 		&i.BuyByCard,
 		&i.BuyAmountByCard,
 		&i.BuyByCash,
-		&i.BuyAmuntByCash,
+		&i.BuyAmountByCash,
 		&i.IsSuccessful,
 		&i.CreatedAt,
 		&i.ExpiresAt,
@@ -136,7 +102,7 @@ func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (Bu
 }
 
 const listBuyRequests = `-- name: ListBuyRequests :many
-SELECT buy_req_id, sell_req_id, buy_amount, currency, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amunt_by_cash, is_successful, created_at, expires_at FROM buy_requests
+SELECT buy_req_id, sell_req_id, buy_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, is_successful, created_at, expires_at FROM buy_requests
 WHERE sell_req_id = $1
     AND is_successful = false
 ORDER BY created_at DESC
@@ -163,12 +129,11 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 			&i.BuyReqID,
 			&i.SellReqID,
 			&i.BuyAmount,
-			&i.Currency,
 			&i.TgUsername,
 			&i.BuyByCard,
 			&i.BuyAmountByCard,
 			&i.BuyByCash,
-			&i.BuyAmuntByCash,
+			&i.BuyAmountByCash,
 			&i.IsSuccessful,
 			&i.CreatedAt,
 			&i.ExpiresAt,
@@ -183,11 +148,44 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 	return items, nil
 }
 
+const openCloseBuyRequest = `-- name: OpenCloseBuyRequest :one
+UPDATE buy_requests
+SET
+  is_successful = $1
+WHERE
+  buy_req_id = $2
+RETURNING buy_req_id, sell_req_id, buy_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, is_successful, created_at, expires_at
+`
+
+type OpenCloseBuyRequestParams struct {
+	IsSuccessful pgtype.Bool `json:"is_successful"`
+	BuyReqID     uuid.UUID   `json:"buy_req_id"`
+}
+
+func (q *Queries) OpenCloseBuyRequest(ctx context.Context, arg OpenCloseBuyRequestParams) (BuyRequest, error) {
+	row := q.db.QueryRow(ctx, openCloseBuyRequest, arg.IsSuccessful, arg.BuyReqID)
+	var i BuyRequest
+	err := row.Scan(
+		&i.BuyReqID,
+		&i.SellReqID,
+		&i.BuyAmount,
+		&i.TgUsername,
+		&i.BuyByCard,
+		&i.BuyAmountByCard,
+		&i.BuyByCash,
+		&i.BuyAmountByCash,
+		&i.IsSuccessful,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+	)
+	return i, err
+}
+
 const updateBuyRequest = `-- name: UpdateBuyRequest :one
 UPDATE buy_requests
 SET tg_username= $1
 WHERE buy_req_id = $2
-RETURNING buy_req_id, sell_req_id, buy_amount, currency, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amunt_by_cash, is_successful, created_at, expires_at
+RETURNING buy_req_id, sell_req_id, buy_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, is_successful, created_at, expires_at
 `
 
 type UpdateBuyRequestParams struct {
@@ -202,12 +200,11 @@ func (q *Queries) UpdateBuyRequest(ctx context.Context, arg UpdateBuyRequestPara
 		&i.BuyReqID,
 		&i.SellReqID,
 		&i.BuyAmount,
-		&i.Currency,
 		&i.TgUsername,
 		&i.BuyByCard,
 		&i.BuyAmountByCard,
 		&i.BuyByCash,
-		&i.BuyAmuntByCash,
+		&i.BuyAmountByCash,
 		&i.IsSuccessful,
 		&i.CreatedAt,
 		&i.ExpiresAt,
