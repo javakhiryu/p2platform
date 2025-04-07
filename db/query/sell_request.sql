@@ -74,3 +74,8 @@ SET
 WHERE
   sell_req_id = $1
 RETURNING *;
+
+-- name: GetSellRequestForUpdate :one
+SELECT * FROM sell_requests
+WHERE sell_req_id = $1
+FOR UPDATE;

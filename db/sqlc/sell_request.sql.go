@@ -136,6 +136,35 @@ func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (Sell
 	return i, err
 }
 
+const getSellRequestForUpdate = `-- name: GetSellRequestForUpdate :one
+SELECT sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+WHERE sell_req_id = $1
+FOR UPDATE
+`
+
+func (q *Queries) GetSellRequestForUpdate(ctx context.Context, sellReqID int32) (SellRequest, error) {
+	row := q.db.QueryRow(ctx, getSellRequestForUpdate, sellReqID)
+	var i SellRequest
+	err := row.Scan(
+		&i.SellReqID,
+		&i.SellTotalAmount,
+		&i.CurrencyFrom,
+		&i.CurrencyTo,
+		&i.TgUsername,
+		&i.SellByCard,
+		&i.SellAmountByCard,
+		&i.SellByCash,
+		&i.SellAmountByCash,
+		&i.SellExchangeRate,
+		&i.IsActual,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+		&i.Comment,
+	)
+	return i, err
+}
+
 const listSellRequests = `-- name: ListSellRequests :many
 SELECT sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
 WHERE is_deleted = false

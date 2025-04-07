@@ -22,8 +22,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal("cannot connect to database", err)
 	}
-
+	
 	testStore = NewStore(conn)
-
 	os.Exit(m.Run())
 }

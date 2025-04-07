@@ -4,6 +4,7 @@ import (
 	"context"
 	"p2platform/util"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -11,14 +12,14 @@ import (
 func createRandomSellRequest(t *testing.T) SellRequest {
 	SellAmount := util.RandomMoney()
 	arg := CreateSellRequestParams{
-		SellTotalAmount:       SellAmount,
+		SellTotalAmount:  SellAmount,
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
 		TgUsername:       util.RandomTgUsername(),
 		SellByCard:       util.ToPgBool(true),
-		SellAmountByCard: util.ToPgInt(SellAmount/2),
+		SellAmountByCard: util.ToPgInt(SellAmount / 2),
 		SellByCash:       util.ToPgBool(true),
-		SellAmountByCash:  util.ToPgInt(SellAmount/2),
+		SellAmountByCash: util.ToPgInt(SellAmount / 2),
 		SellExchangeRate: util.ToPgInt(12950),
 		Comment:          util.RandomString(10),
 	}
@@ -80,19 +81,17 @@ func TestListSellRequests(t *testing.T) {
 
 func TestUpdateSellRequest(t *testing.T) {
 	newSellTotalAmount := util.RandomMoney()
-	newCurrencyFrom :=util.RandomCurrency()
+	newCurrencyFrom := util.RandomCurrency()
 	newCurrencyTo := util.RandomCurrency()
 	newComment := util.RandomString(10)
 
 	sellRequest1 := createRandomSellRequest(t)
 	arg := UpdateSellRequestParams{
-		SellReqID:        sellRequest1.SellReqID,
-		SellTotalAmount:       util.ToPgInt(newSellTotalAmount),
-		CurrencyFrom:     util.ToPgText(newCurrencyFrom),
-		CurrencyTo:       util.ToPgText(newCurrencyTo),
-		Comment: 		  util.ToPgText(newComment),
-
-		
+		SellReqID:       sellRequest1.SellReqID,
+		SellTotalAmount: util.ToPgInt(newSellTotalAmount),
+		CurrencyFrom:    util.ToPgText(newCurrencyFrom),
+		CurrencyTo:      util.ToPgText(newCurrencyTo),
+		Comment:         util.ToPgText(newComment),
 	}
 	sellRequest2, err := testStore.UpdateSellRequest(context.Background(), arg)
 	require.NoError(t, err)
@@ -113,10 +112,10 @@ func TestUpdateSellRequest(t *testing.T) {
 
 }
 
-func TestCloseSellRequest(t *testing.T){
+func TestCloseSellRequest(t *testing.T) {
 	sellRequest1 := createRandomSellRequest(t)
 	arg := OpenCloseSellRequestParams{
-		IsActual: util.ToPgBool(false),
+		IsActual:  util.ToPgBool(false),
 		SellReqID: sellRequest1.SellReqID,
 	}
 	sellRequest2, err := testStore.OpenCloseSellRequest(context.Background(), arg)
@@ -127,10 +126,57 @@ func TestCloseSellRequest(t *testing.T){
 	require.NotEqual(t, sellRequest2.UpdatedAt, sellRequest1.UpdatedAt)
 }
 
-func TestDeleteSellRequest(t *testing.T){
+func TestDeleteSellRequest(t *testing.T) {
 	SellRequest1 := createRandomSellRequest(t)
 	SellRequest2, err := testStore.DeleteSellRequest(context.Background(), SellRequest1.SellReqID)
 	require.NoError(t, err)
 	require.Equal(t, util.ToPgBool(false), SellRequest1.IsDeleted)
 	require.Equal(t, util.ToPgBool(true), SellRequest2.IsDeleted)
+}
+
+func TestGetSellRequestForUpdate_Lock(t *testing.T) {
+	sellRequest := createRandomSellRequest(t)
+	sqlStore := testStore.(*SQLStore)
+	conn1, err := sqlStore.connPool.Acquire(context.Background())
+	require.NoError(t, err)
+	defer conn1.Release()
+
+	tx1, err := conn1.Begin(context.Background())
+	require.NoError(t, err)
+	q1 := New(tx1)
+
+	_, err = q1.GetSellRequestForUpdate(context.Background(), sellRequest.SellReqID)
+	require.NoError(t, err)
+
+	done := make(chan struct{})
+	go func() {
+		conn2, err := sqlStore.connPool.Acquire(context.Background())
+		require.NoError(t, err)
+		defer conn2.Release()
+
+		tx2, err := conn2.Begin(context.Background())
+		require.NoError(t, err)
+		q2 := New(tx2)
+
+		start := time.Now()
+		_, err = q2.GetSellRequestForUpdate(context.Background(), sellRequest.SellReqID)
+		require.NoError(t, err)
+		duration := time.Since(start)
+
+		require.GreaterOrEqual(t, duration.Milliseconds(), int64(70))
+
+		tx2.Commit(context.Background())
+		close(done)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	err = tx1.Commit(context.Background())
+	require.NoError(t, err)
+
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("second transaction did not finish in time")
+	}
 }
