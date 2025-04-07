@@ -22,6 +22,7 @@ type Querier interface {
 	GetLockedAmount(ctx context.Context, buyReqID uuid.UUID) (LockedAmount, error)
 	GetLockedAmountBySellRequest(ctx context.Context, sellReqID int32) ([]LockedAmount, error)
 	GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error)
+	GetSellRequestForUpdate(ctx context.Context, sellReqID int32) (SellRequest, error)
 	ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams) ([]BuyRequest, error)
 	ListLockedAmounts(ctx context.Context, arg ListLockedAmountsParams) ([]LockedAmount, error)
 	ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error)
