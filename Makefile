@@ -15,5 +15,6 @@ createdb:
 	docker exec -it postgres17 createdb --username=root --owner=root p2platform
 sqlc:
 	sqlc generate
-
-.PHONY: migrateup new_migration postgres createdb migratedown sqlc
+test:
+	go test -v -cover -short ./...
+.PHONY: migrateup new_migration postgres createdb migratedown sqlc test

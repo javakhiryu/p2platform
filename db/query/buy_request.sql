@@ -1,8 +1,8 @@
 -- name: CreateBuyRequest :one
 INSERT INTO buy_requests (
-   buy_req_id,
+  buy_req_id,
   sell_req_id,
-  buy_amount,
+  buy_total_amount,
   tg_username,
   buy_by_card,
   buy_amount_by_card,
@@ -19,7 +19,7 @@ SELECT * FROM buy_requests WHERE buy_req_id = $1;
 -- name: ListBuyRequests :many
 SELECT * FROM buy_requests
 WHERE sell_req_id = $1
-    AND is_successful = false
+    AND is_closed = false
 ORDER BY created_at DESC
 LIMIT $2 
 OFFSET $3;
@@ -30,13 +30,31 @@ SET tg_username= $1
 WHERE buy_req_id = $2
 RETURNING *;
 
+-- name: CloseConfirmBySeller :exec
+UPDATE buy_requests
+SET
+  close_confirm_by_seller = $1,
+  seller_confirmed_at = now()
+WHERE
+  buy_req_id = $2;
+
+-- name: CloseConfirmByBuyer :exec
+UPDATE buy_requests
+SET
+  close_confirm_by_buyer = $1,
+  buyer_confirmed_at = now()
+WHERE
+  buy_req_id = $2;
 
 -- name: OpenCloseBuyRequest :one
 UPDATE buy_requests
 SET
-  is_successful = $1
+  is_closed = $1,
+  closed_at = now()
 WHERE
   buy_req_id = $2
+  AND close_confirm_by_buyer = true
+  AND close_confirm_by_seller = true
 RETURNING *;
 
 -- name: DeleteBuyRequest :exec

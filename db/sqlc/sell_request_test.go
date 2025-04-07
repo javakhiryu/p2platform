@@ -11,7 +11,7 @@ import (
 func createRandomSellRequest(t *testing.T) SellRequest {
 	SellAmount := util.RandomMoney()
 	arg := CreateSellRequestParams{
-		SellAmount:       SellAmount,
+		SellTotalAmount:       SellAmount,
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
 		TgUsername:       util.RandomTgUsername(),
@@ -25,7 +25,7 @@ func createRandomSellRequest(t *testing.T) SellRequest {
 	sellRequest, err := testStore.CreateSellRequest(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, sellRequest)
-	require.Equal(t, arg.SellAmount, sellRequest.SellAmount)
+	require.Equal(t, arg.SellTotalAmount, sellRequest.SellTotalAmount)
 	require.Equal(t, arg.CurrencyFrom, sellRequest.CurrencyFrom)
 	require.Equal(t, arg.CurrencyTo, sellRequest.CurrencyTo)
 	require.Equal(t, arg.TgUsername, sellRequest.TgUsername)
@@ -49,7 +49,7 @@ func TestGetSellRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, sellRequest2)
 	require.Equal(t, sellRequest1.SellReqID, sellRequest2.SellReqID)
-	require.Equal(t, sellRequest1.SellAmount, sellRequest2.SellAmount)
+	require.Equal(t, sellRequest1.SellTotalAmount, sellRequest2.SellTotalAmount)
 	require.Equal(t, sellRequest1.CurrencyFrom, sellRequest2.CurrencyFrom)
 	require.Equal(t, sellRequest1.CurrencyTo, sellRequest2.CurrencyTo)
 	require.Equal(t, sellRequest1.TgUsername, sellRequest2.TgUsername)
@@ -79,7 +79,7 @@ func TestListSellRequests(t *testing.T) {
 }
 
 func TestUpdateSellRequest(t *testing.T) {
-	newSellAmount := util.RandomMoney()
+	newSellTotalAmount := util.RandomMoney()
 	newCurrencyFrom :=util.RandomCurrency()
 	newCurrencyTo := util.RandomCurrency()
 	newComment := util.RandomString(10)
@@ -87,7 +87,7 @@ func TestUpdateSellRequest(t *testing.T) {
 	sellRequest1 := createRandomSellRequest(t)
 	arg := UpdateSellRequestParams{
 		SellReqID:        sellRequest1.SellReqID,
-		SellAmount:       util.ToPgInt(newSellAmount),
+		SellTotalAmount:       util.ToPgInt(newSellTotalAmount),
 		CurrencyFrom:     util.ToPgText(newCurrencyFrom),
 		CurrencyTo:       util.ToPgText(newCurrencyTo),
 		Comment: 		  util.ToPgText(newComment),
@@ -99,7 +99,7 @@ func TestUpdateSellRequest(t *testing.T) {
 	require.NotEmpty(t, sellRequest2)
 	require.Equal(t, arg.SellReqID, sellRequest2.SellReqID)
 	require.Equal(t, sellRequest1.TgUsername, sellRequest2.TgUsername)
-	require.Equal(t, newSellAmount, sellRequest2.SellAmount)
+	require.Equal(t, newSellTotalAmount, sellRequest2.SellTotalAmount)
 	require.Equal(t, newCurrencyFrom, sellRequest2.CurrencyFrom)
 	require.Equal(t, newCurrencyTo, sellRequest2.CurrencyTo)
 	require.Equal(t, sellRequest1.SellByCard, sellRequest2.SellByCard)

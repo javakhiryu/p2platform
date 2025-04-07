@@ -12,22 +12,39 @@ import (
 )
 
 type BuyRequest struct {
-	BuyReqID        uuid.UUID   `json:"buy_req_id"`
-	SellReqID       int32       `json:"sell_req_id"`
-	BuyAmount       int64       `json:"buy_amount"`
-	TgUsername      string      `json:"tg_username"`
-	BuyByCard       pgtype.Bool `json:"buy_by_card"`
-	BuyAmountByCard pgtype.Int8 `json:"buy_amount_by_card"`
-	BuyByCash       pgtype.Bool `json:"buy_by_cash"`
-	BuyAmountByCash pgtype.Int8 `json:"buy_amount_by_cash"`
-	IsSuccessful    pgtype.Bool `json:"is_successful"`
-	CreatedAt       time.Time   `json:"created_at"`
-	ExpiresAt       time.Time   `json:"expires_at"`
+	BuyReqID             uuid.UUID          `json:"buy_req_id"`
+	SellReqID            int32              `json:"sell_req_id"`
+	BuyTotalAmount       int64              `json:"buy_total_amount"`
+	TgUsername           string             `json:"tg_username"`
+	BuyByCard            pgtype.Bool        `json:"buy_by_card"`
+	BuyAmountByCard      pgtype.Int8        `json:"buy_amount_by_card"`
+	BuyByCash            pgtype.Bool        `json:"buy_by_cash"`
+	BuyAmountByCash      pgtype.Int8        `json:"buy_amount_by_cash"`
+	CloseConfirmBySeller pgtype.Bool        `json:"close_confirm_by_seller"`
+	CloseConfirmByBuyer  pgtype.Bool        `json:"close_confirm_by_buyer"`
+	SellerConfirmedAt    pgtype.Timestamptz `json:"seller_confirmed_at"`
+	BuyerConfirmedAt     pgtype.Timestamptz `json:"buyer_confirmed_at"`
+	IsClosed             pgtype.Bool        `json:"is_closed"`
+	ClosedAt             pgtype.Timestamptz `json:"closed_at"`
+	CreatedAt            time.Time          `json:"created_at"`
+	ExpiresAt            time.Time          `json:"expires_at"`
+}
+
+type LockedAmount struct {
+	ID                int32              `json:"id"`
+	SellReqID         int32              `json:"sell_req_id"`
+	BuyReqID          uuid.UUID          `json:"buy_req_id"`
+	LockedTotalAmount int64              `json:"locked_total_amount"`
+	LockedByCard      pgtype.Int8        `json:"locked_by_card"`
+	LockedByCash      pgtype.Int8        `json:"locked_by_cash"`
+	CreatedAt         time.Time          `json:"created_at"`
+	IsReleased        pgtype.Bool        `json:"is_released"`
+	ReleasedAt        pgtype.Timestamptz `json:"released_at"`
 }
 
 type SellRequest struct {
 	SellReqID        int32       `json:"sell_req_id"`
-	SellAmount       int64       `json:"sell_amount"`
+	SellTotalAmount  int64       `json:"sell_total_amount"`
 	CurrencyFrom     string      `json:"currency_from"`
 	CurrencyTo       string      `json:"currency_to"`
 	TgUsername       string      `json:"tg_username"`
