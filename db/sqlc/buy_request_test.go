@@ -10,12 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomBuyRequest(t *testing.T) BuyRequest { 
-	sellRequest := createRandomSellRequest(t)
+func createRandomBuyRequest(t *testing.T, sellRequest SellRequest) BuyRequest { 
 	arg := CreateBuyRequestParams{
 		BuyReqID: uuid.New(),
 		SellReqID: sellRequest.SellReqID,
-		BuyAmount: sellRequest.SellAmount,
+		BuyTotalAmount: sellRequest.SellTotalAmount,
 		TgUsername: util.RandomTgUsername(),
 		BuyByCard: sellRequest.SellByCard,
 		BuyAmountByCard: sellRequest.SellAmountByCard,
@@ -31,11 +30,11 @@ func createRandomBuyRequest(t *testing.T) BuyRequest {
 }
 
 func TestCreateBuyRequest(t *testing.T){
-	createRandomBuyRequest(t)
+	createRandomBuyRequest(t, createRandomSellRequest(t))
 }
 
 func TestGetBuyRequest(t *testing.T){
-	buyRequest := createRandomBuyRequest(t)
+	buyRequest := createRandomBuyRequest(t, createRandomSellRequest(t))
 	buyRequest2, err := testStore.GetBuyRequestById(context.Background(), buyRequest.BuyReqID)
 	require.NoError(t, err)
 	require.NotEmpty(t, buyRequest2)
@@ -43,25 +42,27 @@ func TestGetBuyRequest(t *testing.T){
 }
 
 func TestListBuyRequests(t *testing.T){
-	var lastBuyRequest BuyRequest
+	sellRequest := createRandomSellRequest(t) 
+	var buyRequests []BuyRequest
 	for i:=0; i<5; i++{
-		lastBuyRequest = createRandomBuyRequest(t)
+		buyRequests = append(buyRequests, createRandomBuyRequest(t, sellRequest)) 
 	}
 	arg := ListBuyRequestsParams{
-		SellReqID: lastBuyRequest.SellReqID,
+		SellReqID: sellRequest.SellReqID,
 		Limit: 5,
 		Offset: 0,
 	}
 	buyRequests, err := testStore.ListBuyRequests(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, buyRequests)
+	require.Len(t, buyRequests, 5)
 	for _,br :=range buyRequests{
-		require.Equal(t, lastBuyRequest.BuyReqID, br.BuyReqID)
+		require.Equal(t, buyRequests[0].SellReqID, br.SellReqID)
 	}
 } 
 
 func TestUpdateBuyRequest(t *testing.T){
-	buyRequest1 := createRandomBuyRequest(t)
+	buyRequest1 := createRandomBuyRequest(t, createRandomSellRequest(t))
 	newTgUsername := util.RandomTgUsername()
 	arg := UpdateBuyRequestParams{
 		BuyReqID: buyRequest1.BuyReqID,
@@ -75,20 +76,32 @@ func TestUpdateBuyRequest(t *testing.T){
 }
 
 func TestOpenCloseBuyRequest(t *testing.T){
-	buyRequest1 := createRandomBuyRequest(t)
+	buyRequest1 := createRandomBuyRequest(t, createRandomSellRequest(t))
 	arg := OpenCloseBuyRequestParams{
 		BuyReqID: buyRequest1.BuyReqID,
-		IsSuccessful: util.ToPgBool(true),
+		IsClosed: util.ToPgBool(true),
 	}
+	arg1 := CloseConfirmByBuyerParams{
+		CloseConfirmByBuyer: util.ToPgBool(true),
+		BuyReqID: buyRequest1.BuyReqID,
+	}
+	arg2 := CloseConfirmBySellerParams{
+		CloseConfirmBySeller: util.ToPgBool(true),
+		BuyReqID: buyRequest1.BuyReqID,
+	}
+	err := testStore.CloseConfirmByBuyer(context.Background(), arg1)
+	require.NoError(t, err)
+	err = testStore.CloseConfirmBySeller(context.Background(), arg2)
+	require.NoError(t, err)
 	buyRequest2, err := testStore.OpenCloseBuyRequest(context.Background(), arg)
 	require.NoError(t, err)
 	require.Equal(t, buyRequest2.BuyReqID, buyRequest1.BuyReqID)
-	require.Equal(t, util.ToPgBool(false), buyRequest1.IsSuccessful)
-	require.Equal(t, util.ToPgBool(true), buyRequest2.IsSuccessful) 
+	require.Equal(t, util.ToPgBool(false), buyRequest1.IsClosed)
+	require.Equal(t, util.ToPgBool(true), buyRequest2.IsClosed) 
 }
 
 func TestDeleteBuyRequest(t *testing.T){
-	buyRequest := createRandomBuyRequest(t)
+	buyRequest := createRandomBuyRequest(t, createRandomSellRequest(t))
 	err :=testStore.DeleteBuyRequest(context.Background(), buyRequest.BuyReqID)
 	require.NoError(t, err)
 	_, err = testStore.GetBuyRequestById(context.Background(), buyRequest.BuyReqID)
