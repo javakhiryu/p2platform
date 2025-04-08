@@ -16,9 +16,7 @@ func createRandomSellRequest(t *testing.T) SellRequest {
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
 		TgUsername:       util.RandomTgUsername(),
-		SellByCard:       util.ToPgBool(true),
 		SellAmountByCard: util.ToPgInt(SellAmount / 2),
-		SellByCash:       util.ToPgBool(true),
 		SellAmountByCash: util.ToPgInt(SellAmount / 2),
 		SellExchangeRate: util.ToPgInt(12950),
 		Comment:          util.RandomString(10),
@@ -31,7 +29,6 @@ func createRandomSellRequest(t *testing.T) SellRequest {
 	require.Equal(t, arg.CurrencyTo, sellRequest.CurrencyTo)
 	require.Equal(t, arg.TgUsername, sellRequest.TgUsername)
 	require.Equal(t, arg.SellAmountByCard, sellRequest.SellAmountByCard)
-	require.Equal(t, arg.SellByCash, sellRequest.SellByCash)
 	require.Equal(t, arg.SellAmountByCash, sellRequest.SellAmountByCash)
 	require.Equal(t, arg.SellExchangeRate, sellRequest.SellExchangeRate)
 	require.Equal(t, arg.Comment, sellRequest.Comment)
@@ -128,10 +125,10 @@ func TestCloseSellRequest(t *testing.T) {
 
 func TestDeleteSellRequest(t *testing.T) {
 	SellRequest1 := createRandomSellRequest(t)
-	SellRequest2, err := testStore.DeleteSellRequest(context.Background(), SellRequest1.SellReqID)
+	isDeleted, err := testStore.DeleteSellRequest(context.Background(), SellRequest1.SellReqID)
 	require.NoError(t, err)
 	require.Equal(t, util.ToPgBool(false), SellRequest1.IsDeleted)
-	require.Equal(t, util.ToPgBool(true), SellRequest2.IsDeleted)
+	require.Equal(t, util.ToPgBool(true), isDeleted)
 }
 
 func TestGetSellRequestForUpdate_Lock(t *testing.T) {

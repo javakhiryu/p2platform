@@ -73,7 +73,7 @@ SET
   updated_at = now()
 WHERE
   sell_req_id = $1
-RETURNING *;
+RETURNING is_deleted;
 
 -- name: GetSellRequestForUpdate :one
 SELECT * FROM sell_requests

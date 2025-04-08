@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -17,7 +18,7 @@ type Querier interface {
 	CreateLockedAmount(ctx context.Context, arg CreateLockedAmountParams) (LockedAmount, error)
 	CreateSellRequest(ctx context.Context, arg CreateSellRequestParams) (SellRequest, error)
 	DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
-	DeleteSellRequest(ctx context.Context, sellReqID int32) (SellRequest, error)
+	DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtype.Bool, error)
 	GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error)
 	GetLockedAmount(ctx context.Context, buyReqID uuid.UUID) (LockedAmount, error)
 	GetLockedAmountBySellRequest(ctx context.Context, sellReqID int32) ([]LockedAmount, error)

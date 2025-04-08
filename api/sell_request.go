@@ -14,28 +14,42 @@ type createSellRequest struct {
 	CurrencyFrom     string `json:"currency_from" binding:"required,currency"`
 	CurrencyTo       string `json:"currency_to" binding:"required,currency"`
 	TgUsername       string `json:"tg_username" binding:"required"`
-	SellByCard       bool   `json:"sell_by_card" binding:"required"`
-	SellAmountByCard int64  `json:"sell_amount_by_card" binding:"required,gte=0"`
-	SellByCash       bool   `json:"sell_by_cash" binding:"required"`
-	SellAmountByCash int64  `json:"sell_amount_by_cash" binding:"required,gte=0"`
-	SellExchangeRate int64  `json:"sell_exchange_rate" binding:"required,gte=0"`
-	Comment          string `json:"comment" binding:"required"`
+	SellAmountByCard int64  `json:"sell_amount_by_card" binding:"gte=0"`
+	SellAmountByCash int64  `json:"sell_amount_by_cash" binding:"gte=0"`
+	SellExchangeRate int64  `json:"sell_exchange_rate" binding:"required,gt=0"`
+	Comment          string `json:"comment" binding:"omitempty"`
 }
 
 func (server *Server) createSellRequest(ctx *gin.Context) {
 	var req createSellRequest
+	sellByCard := false
+	sellByCash := false
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	if !(req.SellAmountByCard+req.SellAmountByCash == req.SellTotalAmount) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "sum of amounts by cash and card is not equal to total amount",
+		})
+		return
+	}
+	if req.SellAmountByCard > 0 {
+		sellByCard = true
+	}
+	if req.SellAmountByCash > 0 {
+		sellByCash = true
+	}
+
 	arg := db.CreateSellRequestParams{
 		SellTotalAmount:  req.SellTotalAmount,
 		CurrencyFrom:     req.CurrencyFrom,
 		CurrencyTo:       req.CurrencyTo,
 		TgUsername:       req.TgUsername,
-		SellByCard:       util.ToPgBool(req.SellByCard),
+		SellByCard:       util.ToPgBool(sellByCard),
 		SellAmountByCard: util.ToPgInt(req.SellAmountByCard),
-		SellByCash:       util.ToPgBool(req.SellByCash),
+		SellByCash:       util.ToPgBool(sellByCash),
 		SellAmountByCash: util.ToPgInt(req.SellAmountByCash),
 		SellExchangeRate: util.ToPgInt(req.SellExchangeRate),
 		Comment:          req.Comment,
@@ -60,6 +74,13 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 		return
 	}
 	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
+	if sellRequest.IsDeleted.Bool {
+		ctx.JSON(http.StatusGone, gin.H{
+			"error":      "sell request has been deleted",
+			"deleted_at": sellRequest.UpdatedAt.UTC(),
+		})
+		return
+	}
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -100,9 +121,7 @@ type updateSellRequestJson struct {
 	CurrencyFrom     *string `json:"currency_from" binding:"omitempty,currency"`
 	CurrencyTo       *string `json:"currency_to" binding:"omitempty,currency"`
 	TgUsername       *string `json:"tg_username"`
-	SellByCard       *bool   `json:"sell_by_card"`
 	SellAmountByCard *int64  `json:"sell_amount_by_card" binding:"omitempty,gte=0"`
-	SellByCash       *bool   `json:"sell_by_cash"`
 	SellAmountByCash *int64  `json:"sell_amount_by_cash" binding:"omitempty,gte=0"`
 	SellExchangeRate *int64  `json:"sell_exchange_rate" binding:"omitempty,min=1"`
 	Comment          *string `json:"comment"`
@@ -111,6 +130,12 @@ type updateSellRequestJson struct {
 func (server *Server) updateSellRequest(ctx *gin.Context) {
 	var reqUri updateSellRequestUri
 	var reqJson updateSellRequestJson
+	var totalAmountToCheckSum int64
+	var amountByCardToCheckSum int64
+	var amountByCashToCheckSum int64
+	var sellByCard pgtype.Bool
+	var sellByCash pgtype.Bool
+
 	err := ctx.ShouldBindUri(&reqUri)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -121,9 +146,59 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+
+	sellRequest, err := server.store.GetSellRequestById(ctx, reqUri.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if reqJson.SellTotalAmount != nil {
+		totalAmountToCheckSum = util.DerefInt64(reqJson.SellTotalAmount)
+	} else {
+		totalAmountToCheckSum = sellRequest.SellTotalAmount
+	}
+	if reqJson.SellAmountByCard != nil {
+		amountByCardToCheckSum = util.DerefInt64(reqJson.SellAmountByCard)
+	} else {
+		amountByCardToCheckSum = sellRequest.SellAmountByCard.Int64
+	}
+	if reqJson.SellAmountByCash != nil {
+		amountByCashToCheckSum = util.DerefInt64(reqJson.SellAmountByCash)
+	} else {
+		amountByCashToCheckSum = sellRequest.SellAmountByCash.Int64
+	}
+
+	if totalAmountToCheckSum != amountByCardToCheckSum+amountByCashToCheckSum {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "sum of amounts by cash and card is not equal to total amount",
+		})
+		return
+	}
+
+	if reqJson.SellAmountByCard != nil {
+		if util.DerefInt64(reqJson.SellAmountByCard) > 0 {
+			sellByCard = util.ToPgBool(true)
+		} else {
+			sellByCard = util.ToPgBool(false)
+		}
+	} else {
+		sellByCard = sellRequest.SellByCard
+	}
+
+	if reqJson.SellAmountByCash != nil {
+		if util.DerefInt64(reqJson.SellAmountByCash) > 0 {
+			sellByCash = util.ToPgBool(true)
+		} else {
+			sellByCash = util.ToPgBool(false)
+		}
+	} else {
+		sellByCash = sellRequest.SellByCash
+	}
+
 	arg := db.UpdateSellRequestParams{
 		SellReqID: reqUri.ID,
-		
+
 		SellTotalAmount: pgtype.Int8{
 			Int64: util.DerefInt64(reqJson.SellTotalAmount),
 			Valid: reqJson.SellTotalAmount != nil,
@@ -140,22 +215,20 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 			String: util.DerefStr(reqJson.TgUsername),
 			Valid:  reqJson.TgUsername != nil,
 		},
-		SellByCard: pgtype.Bool{
-			Bool:  util.DerefBool(reqJson.SellByCard),
-			Valid: reqJson.SellByCard != nil,
-		},
+
+		SellByCard: sellByCard,
+
 		SellAmountByCard: pgtype.Int8{
 			Int64: util.DerefInt64(reqJson.SellAmountByCard),
 			Valid: reqJson.SellAmountByCard != nil,
-		},
-		SellByCash: pgtype.Bool{
-			Bool:  util.DerefBool(reqJson.SellByCash),
-			Valid: reqJson.SellByCash != nil,
 		},
 		SellAmountByCash: pgtype.Int8{
 			Int64: util.DerefInt64(reqJson.SellAmountByCash),
 			Valid: reqJson.SellAmountByCash != nil,
 		},
+
+		SellByCash: sellByCash,
+
 		SellExchangeRate: pgtype.Int8{
 			Int64: util.DerefInt64(reqJson.SellExchangeRate),
 			Valid: reqJson.SellExchangeRate != nil,
@@ -165,10 +238,47 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 			Valid:  reqJson.Comment != nil,
 		},
 	}
-	sellRequest, err := server.store.UpdateSellRequest(ctx, arg)
+	sellRequest, err = server.store.UpdateSellRequest(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, sellRequest)
+}
+
+type deleteSellRequestUri struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
+type deleteSellRequestResponse struct {
+	IsDeleted bool `json:"is_deleted"`
+}
+
+func (server *Server) deleteSellRequest(ctx *gin.Context) {
+	var req deleteSellRequestUri
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	if sellRequest.IsDeleted.Bool {
+		ctx.JSON(http.StatusConflict, gin.H{
+			"error":      "Sell request has been already deleted",
+			"deleted_at": sellRequest.UpdatedAt.UTC(),
+		})
+		return
+	}
+	isDeleted, err := server.store.DeleteSellRequest(ctx, req.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	res := deleteSellRequestResponse{
+		IsDeleted: isDeleted.Bool,
+	}
+	ctx.JSON(http.StatusOK, res)
 }

@@ -35,6 +35,7 @@ func (server *Server) setupRouter() {
 	router.GET("/getSellRequest/:id", server.getSellRequest)
 	router.GET("/listSellRequest", server.listSellRequest)
 	router.PATCH("/updateSellRequest/:id", server.updateSellRequest)
+	router.POST("/deleteSellRequest/:id", server.deleteSellRequest)
 	
 	server.router = router
 }
