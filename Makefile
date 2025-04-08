@@ -19,4 +19,7 @@ test:
 	go test -v -cover -short ./...
 server:
 	go run main.go
-.PHONY: migrateup new_migration postgres createdb migratedown sqlc test server
+mock:
+	mockgen -package mockdb -destination db/mock/store.go p2platform/db/sqlc Store
+
+.PHONY: migrateup new_migration postgres createdb migratedown sqlc test server mock

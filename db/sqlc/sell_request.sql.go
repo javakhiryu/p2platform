@@ -83,30 +83,14 @@ SET
   updated_at = now()
 WHERE
   sell_req_id = $1
-RETURNING sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING is_deleted
 `
 
-func (q *Queries) DeleteSellRequest(ctx context.Context, sellReqID int32) (SellRequest, error) {
+func (q *Queries) DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtype.Bool, error) {
 	row := q.db.QueryRow(ctx, deleteSellRequest, sellReqID)
-	var i SellRequest
-	err := row.Scan(
-		&i.SellReqID,
-		&i.SellTotalAmount,
-		&i.CurrencyFrom,
-		&i.CurrencyTo,
-		&i.TgUsername,
-		&i.SellByCard,
-		&i.SellAmountByCard,
-		&i.SellByCash,
-		&i.SellAmountByCash,
-		&i.SellExchangeRate,
-		&i.IsActual,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.IsDeleted,
-		&i.Comment,
-	)
-	return i, err
+	var is_deleted pgtype.Bool
+	err := row.Scan(&is_deleted)
+	return is_deleted, err
 }
 
 const getSellRequestById = `-- name: GetSellRequestById :one
