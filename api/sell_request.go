@@ -74,6 +74,10 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 		return
 	}
 	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 	if sellRequest.IsDeleted.Bool {
 		ctx.JSON(http.StatusGone, gin.H{
 			"error":      "sell request has been deleted",
@@ -81,28 +85,24 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 		})
 		return
 	}
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
 	ctx.JSON(http.StatusOK, sellRequest)
 }
 
 type listSellRequest struct {
-	Limit  int32 `form:"limit" binding:"required,min=1"`
-	Offset int32 `form:"offset" binding:"required,min=1"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
+	PageId   int32 `form:"page_id" binding:"required,min=1"`
 }
 
 func (server *Server) listSellRequest(ctx *gin.Context) {
 	var req listSellRequest
-	err := ctx.ShouldBindJSON(&req)
+	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 	arg := db.ListSellRequestsParams{
-		Limit:  req.Limit,
-		Offset: req.Offset,
+		Limit:  req.PageSize,
+		Offset: (req.PageId - 1) * req.PageSize,
 	}
 	sellRequests, err := server.store.ListSellRequests(ctx, arg)
 	if err != nil {
@@ -124,7 +124,7 @@ type updateSellRequestJson struct {
 	SellAmountByCard *int64  `json:"sell_amount_by_card" binding:"omitempty,gte=0"`
 	SellAmountByCash *int64  `json:"sell_amount_by_cash" binding:"omitempty,gte=0"`
 	SellExchangeRate *int64  `json:"sell_exchange_rate" binding:"omitempty,min=1"`
-	Comment          *string `json:"comment"`
+	Comment          *string `json:"comment" binding:"omitempty,max=100"`
 }
 
 func (server *Server) updateSellRequest(ctx *gin.Context) {
@@ -150,6 +150,14 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 	sellRequest, err := server.store.GetSellRequestById(ctx, reqUri.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if sellRequest.IsDeleted.Bool {
+		ctx.JSON(http.StatusGone, gin.H{
+			"error":      "sell request has been deleted",
+			"deleted_at": sellRequest.UpdatedAt.UTC(),
+		})
 		return
 	}
 

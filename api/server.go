@@ -31,11 +31,11 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
-	router.POST("/createSellRequest", server.createSellRequest)
-	router.GET("/getSellRequest/:id", server.getSellRequest)
-	router.GET("/listSellRequest", server.listSellRequest)
-	router.PATCH("/updateSellRequest/:id", server.updateSellRequest)
-	router.POST("/deleteSellRequest/:id", server.deleteSellRequest)
+	router.POST("/sell-request", server.createSellRequest)
+	router.GET("/sell-request/:id", server.getSellRequest)
+	router.GET("/sell-requests", server.listSellRequest)
+	router.PATCH("/sell-request/:id", server.updateSellRequest)
+	router.DELETE("/sell-request/:id", server.deleteSellRequest)
 	
 	server.router = router
 }
