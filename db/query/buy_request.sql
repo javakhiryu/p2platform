@@ -57,6 +57,14 @@ WHERE
   AND close_confirm_by_seller = true
 RETURNING *;
 
+-- name: CloseBuyRequestBySellRequest :exec
+UPDATE buy_requests
+SET
+  is_closed = true,
+  closed_at = now()
+WHERE
+  sell_req_id = $1 AND is_closed = false;
+
 -- name: DeleteBuyRequest :exec
 DELETE FROM buy_requests
 WHERE

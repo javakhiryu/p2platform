@@ -37,6 +37,35 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// CloseBuyRequestBySellRequest mocks base method.
+func (m *MockStore) CloseBuyRequestBySellRequest(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CloseBuyRequestBySellRequest", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CloseBuyRequestBySellRequest indicates an expected call of CloseBuyRequestBySellRequest.
+func (mr *MockStoreMockRecorder) CloseBuyRequestBySellRequest(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseBuyRequestBySellRequest", reflect.TypeOf((*MockStore)(nil).CloseBuyRequestBySellRequest), arg0, arg1)
+}
+
+// CloseBuyRequestTx mocks base method.
+func (m *MockStore) CloseBuyRequestTx(arg0 context.Context, arg1 db.CloseBuyRequestTxParams) (db.CloseBuyRequestTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CloseBuyRequestTx", arg0, arg1)
+	ret0, _ := ret[0].(db.CloseBuyRequestTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CloseBuyRequestTx indicates an expected call of CloseBuyRequestTx.
+func (mr *MockStoreMockRecorder) CloseBuyRequestTx(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseBuyRequestTx", reflect.TypeOf((*MockStore)(nil).CloseBuyRequestTx), arg0, arg1)
+}
+
 // CloseConfirmByBuyer mocks base method.
 func (m *MockStore) CloseConfirmByBuyer(arg0 context.Context, arg1 db.CloseConfirmByBuyerParams) error {
 	m.ctrl.T.Helper()
@@ -78,6 +107,21 @@ func (m *MockStore) CreateBuyRequest(arg0 context.Context, arg1 db.CreateBuyRequ
 func (mr *MockStoreMockRecorder) CreateBuyRequest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBuyRequest", reflect.TypeOf((*MockStore)(nil).CreateBuyRequest), arg0, arg1)
+}
+
+// CreateBuyRequestTx mocks base method.
+func (m *MockStore) CreateBuyRequestTx(arg0 context.Context, arg1 db.CreateBuyRequestTxParams) (db.CreateBuyRequestTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBuyRequestTx", arg0, arg1)
+	ret0, _ := ret[0].(db.CreateBuyRequestTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateBuyRequestTx indicates an expected call of CreateBuyRequestTx.
+func (mr *MockStoreMockRecorder) CreateBuyRequestTx(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBuyRequestTx", reflect.TypeOf((*MockStore)(nil).CreateBuyRequestTx), arg0, arg1)
 }
 
 // CreateLockedAmount mocks base method.
@@ -137,6 +181,21 @@ func (m *MockStore) DeleteSellRequest(arg0 context.Context, arg1 int32) (pgtype.
 func (mr *MockStoreMockRecorder) DeleteSellRequest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSellRequest", reflect.TypeOf((*MockStore)(nil).DeleteSellRequest), arg0, arg1)
+}
+
+// DeleteSellRequestTx mocks base method.
+func (m *MockStore) DeleteSellRequestTx(arg0 context.Context, arg1 int32) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSellRequestTx", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteSellRequestTx indicates an expected call of DeleteSellRequestTx.
+func (mr *MockStoreMockRecorder) DeleteSellRequestTx(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSellRequestTx", reflect.TypeOf((*MockStore)(nil).DeleteSellRequestTx), arg0, arg1)
 }
 
 // GetBuyRequestById mocks base method.

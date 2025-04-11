@@ -81,6 +81,7 @@ func (q *Queries) GetLockedAmount(ctx context.Context, buyReqID uuid.UUID) (Lock
 const getLockedAmountBySellRequest = `-- name: GetLockedAmountBySellRequest :many
 SELECT id, sell_req_id, buy_req_id, locked_total_amount, locked_by_card, locked_by_cash, created_at, is_released, released_at FROM locked_amounts
 WHERE sell_req_id = $1
+AND is_released = false
 `
 
 func (q *Queries) GetLockedAmountBySellRequest(ctx context.Context, sellReqID int32) ([]LockedAmount, error) {

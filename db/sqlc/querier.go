@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	CloseBuyRequestBySellRequest(ctx context.Context, sellReqID int32) error
 	CloseConfirmByBuyer(ctx context.Context, arg CloseConfirmByBuyerParams) error
 	CloseConfirmBySeller(ctx context.Context, arg CloseConfirmBySellerParams) error
 	CreateBuyRequest(ctx context.Context, arg CreateBuyRequestParams) (BuyRequest, error)

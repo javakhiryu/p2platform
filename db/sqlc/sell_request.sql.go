@@ -14,6 +14,7 @@ import (
 const createSellRequest = `-- name: CreateSellRequest :one
 INSERT INTO sell_requests (
   sell_total_amount,
+  sell_money_source,
   currency_from,
   currency_to,
   tg_username,
@@ -24,13 +25,14 @@ INSERT INTO sell_requests (
   sell_exchange_rate,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 )
-RETURNING sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type CreateSellRequestParams struct {
 	SellTotalAmount  int64       `json:"sell_total_amount"`
+	SellMoneySource  string      `json:"sell_money_source"`
 	CurrencyFrom     string      `json:"currency_from"`
 	CurrencyTo       string      `json:"currency_to"`
 	TgUsername       string      `json:"tg_username"`
@@ -45,6 +47,7 @@ type CreateSellRequestParams struct {
 func (q *Queries) CreateSellRequest(ctx context.Context, arg CreateSellRequestParams) (SellRequest, error) {
 	row := q.db.QueryRow(ctx, createSellRequest,
 		arg.SellTotalAmount,
+		arg.SellMoneySource,
 		arg.CurrencyFrom,
 		arg.CurrencyTo,
 		arg.TgUsername,
@@ -59,6 +62,7 @@ func (q *Queries) CreateSellRequest(ctx context.Context, arg CreateSellRequestPa
 	err := row.Scan(
 		&i.SellReqID,
 		&i.SellTotalAmount,
+		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
 		&i.TgUsername,
@@ -94,7 +98,7 @@ func (q *Queries) DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtyp
 }
 
 const getSellRequestById = `-- name: GetSellRequestById :one
-SELECT sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests WHERE sell_req_id = $1
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests WHERE sell_req_id = $1
 `
 
 func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error) {
@@ -103,6 +107,7 @@ func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (Sell
 	err := row.Scan(
 		&i.SellReqID,
 		&i.SellTotalAmount,
+		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
 		&i.TgUsername,
@@ -121,7 +126,7 @@ func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (Sell
 }
 
 const getSellRequestForUpdate = `-- name: GetSellRequestForUpdate :one
-SELECT sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
 WHERE sell_req_id = $1
 FOR UPDATE
 `
@@ -132,6 +137,7 @@ func (q *Queries) GetSellRequestForUpdate(ctx context.Context, sellReqID int32) 
 	err := row.Scan(
 		&i.SellReqID,
 		&i.SellTotalAmount,
+		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
 		&i.TgUsername,
@@ -150,7 +156,7 @@ func (q *Queries) GetSellRequestForUpdate(ctx context.Context, sellReqID int32) 
 }
 
 const listSellRequests = `-- name: ListSellRequests :many
-SELECT sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
 WHERE is_deleted = false
 ORDER BY created_at DESC
 LIMIT $1 
@@ -174,6 +180,7 @@ func (q *Queries) ListSellRequests(ctx context.Context, arg ListSellRequestsPara
 		if err := rows.Scan(
 			&i.SellReqID,
 			&i.SellTotalAmount,
+			&i.SellMoneySource,
 			&i.CurrencyFrom,
 			&i.CurrencyTo,
 			&i.TgUsername,
@@ -205,7 +212,7 @@ SET
   updated_at = now()
 WHERE
   sell_req_id = $2
-RETURNING sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type OpenCloseSellRequestParams struct {
@@ -219,6 +226,7 @@ func (q *Queries) OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellReq
 	err := row.Scan(
 		&i.SellReqID,
 		&i.SellTotalAmount,
+		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
 		&i.TgUsername,
@@ -240,18 +248,18 @@ const updateSellRequest = `-- name: UpdateSellRequest :one
 UPDATE sell_requests
 SET
     sell_total_amount = COALESCE($1, sell_total_amount),
-    currency_from = COALESCE($2, currency_from),
-    currency_to = COALESCE($3, currency_to),
-    tg_username = COALESCE($4, tg_username),
-    sell_by_card = COALESCE($5, sell_by_card),
-    sell_amount_by_card = COALESCE($6, sell_amount_by_card),
-    sell_by_cash = COALESCE($7, sell_by_cash),
-    sell_amount_by_cash = COALESCE($8, sell_amount_by_cash),
-    sell_exchange_rate = COALESCE($9, sell_exchange_rate),
-    comment = COALESCE($10, comment),
+    sell_money_source = COALESCE($2, sell_money_source),
+    currency_from = COALESCE($3, currency_from),
+    currency_to = COALESCE($4, currency_to),
+    tg_username = COALESCE($5, tg_username),
+    sell_by_card = COALESCE($6, sell_by_card),
+    sell_amount_by_card = COALESCE($7, sell_amount_by_card),
+    sell_by_cash = COALESCE($8, sell_by_cash),
+    sell_amount_by_cash = COALESCE($9, sell_amount_by_cash),
+    sell_exchange_rate = COALESCE($10, sell_exchange_rate),
+    comment = COALESCE($11, comment),
     updated_at = CASE
         WHEN $1 IS NOT NULL
-          OR $2 IS NOT NULL
           OR $3 IS NOT NULL
           OR $4 IS NOT NULL
           OR $5 IS NOT NULL
@@ -260,15 +268,17 @@ SET
           OR $8 IS NOT NULL
           OR $9 IS NOT NULL
           OR $10 IS NOT NULL
+          OR $11 IS NOT NULL
         THEN now()
         ELSE updated_at
     END
-WHERE sell_req_id = $11
-RETURNING sell_req_id, sell_total_amount, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+WHERE sell_req_id = $12
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type UpdateSellRequestParams struct {
 	SellTotalAmount  pgtype.Int8 `json:"sell_total_amount"`
+	SellMoneySource  pgtype.Text `json:"sell_money_source"`
 	CurrencyFrom     pgtype.Text `json:"currency_from"`
 	CurrencyTo       pgtype.Text `json:"currency_to"`
 	TgUsername       pgtype.Text `json:"tg_username"`
@@ -284,6 +294,7 @@ type UpdateSellRequestParams struct {
 func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestParams) (SellRequest, error) {
 	row := q.db.QueryRow(ctx, updateSellRequest,
 		arg.SellTotalAmount,
+		arg.SellMoneySource,
 		arg.CurrencyFrom,
 		arg.CurrencyTo,
 		arg.TgUsername,
@@ -299,6 +310,7 @@ func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestPa
 	err := row.Scan(
 		&i.SellReqID,
 		&i.SellTotalAmount,
+		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
 		&i.TgUsername,

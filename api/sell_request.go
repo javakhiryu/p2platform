@@ -1,6 +1,8 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 	db "p2platform/db/sqlc"
 	util "p2platform/util"
@@ -10,10 +12,11 @@ import (
 )
 
 type createSellRequest struct {
-	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=1"`
+	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=5"`
+	SellMoneySource  string `json:"sell_money_source" binding:"required,source"`
 	CurrencyFrom     string `json:"currency_from" binding:"required,currency"`
 	CurrencyTo       string `json:"currency_to" binding:"required,currency"`
-	TgUsername       string `json:"tg_username" binding:"required"`
+	TgUsername       string `json:"tg_username" binding:"required,max=100"`
 	SellAmountByCard int64  `json:"sell_amount_by_card" binding:"gte=0"`
 	SellAmountByCash int64  `json:"sell_amount_by_cash" binding:"gte=0"`
 	SellExchangeRate int64  `json:"sell_exchange_rate" binding:"required,gt=0"`
@@ -44,6 +47,7 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 
 	arg := db.CreateSellRequestParams{
 		SellTotalAmount:  req.SellTotalAmount,
+		SellMoneySource:  req.SellMoneySource,
 		CurrencyFrom:     req.CurrencyFrom,
 		CurrencyTo:       req.CurrencyTo,
 		TgUsername:       req.TgUsername,
@@ -75,9 +79,14 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 	}
 	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
 	if err != nil {
+		if err == db.ErrNoRowsFound {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+
 	if sellRequest.IsDeleted.Bool {
 		ctx.JSON(http.StatusGone, gin.H{
 			"error":      "sell request has been deleted",
@@ -106,9 +115,14 @@ func (server *Server) listSellRequest(ctx *gin.Context) {
 	}
 	sellRequests, err := server.store.ListSellRequests(ctx, arg)
 	if err != nil {
+		if err == db.ErrNoRowsFound {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+
 	ctx.JSON(http.StatusOK, sellRequests)
 }
 
@@ -118,6 +132,7 @@ type updateSellRequestUri struct {
 
 type updateSellRequestJson struct {
 	SellTotalAmount  *int64  `json:"sell_total_amount" binding:"omitempty,min=1"`
+	SellMoneySource  *string `json:"sell_money_source" binding:"omitempty,source"`
 	CurrencyFrom     *string `json:"currency_from" binding:"omitempty,currency"`
 	CurrencyTo       *string `json:"currency_to" binding:"omitempty,currency"`
 	TgUsername       *string `json:"tg_username"`
@@ -147,8 +162,28 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 		return
 	}
 
+	buyRequests, err := server.store.ListBuyRequests(ctx, db.ListBuyRequestsParams{
+		SellReqID: reqUri.ID,
+		Limit:     1,
+		Offset:    0,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if len(buyRequests) > 0 {
+		ctx.JSON(http.StatusForbidden, gin.H{
+			"error": "sell request can't be updated because it has buy requests",
+		})
+		return
+	}
+
 	sellRequest, err := server.store.GetSellRequestById(ctx, reqUri.ID)
 	if err != nil {
+		if err == db.ErrNoRowsFound {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -211,6 +246,10 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 			Int64: util.DerefInt64(reqJson.SellTotalAmount),
 			Valid: reqJson.SellTotalAmount != nil,
 		},
+		SellMoneySource: pgtype.Text{
+			String: util.DerefStr(reqJson.SellMoneySource),
+			Valid:  reqJson.SellMoneySource != nil,
+		},
 		CurrencyFrom: pgtype.Text{
 			String: util.DerefStr(reqJson.CurrencyFrom),
 			Valid:  reqJson.CurrencyFrom != nil,
@@ -268,25 +307,22 @@ func (server *Server) deleteSellRequest(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
-	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
+	isDeleted, err := server.store.DeleteSellRequestTx(ctx, req.ID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
-		return
+		switch {
+		case errors.Is(err, db.ErrSellRequestAlreadyDeleted):
+			ctx.JSON(http.StatusConflict, gin.H{"error": db.ErrSellRequestAlreadyDeleted.Error()})
+			return
+		case errors.Is(err, sql.ErrNoRows):
+			ctx.JSON(http.StatusNotFound, gin.H{"error": db.ErrSEllRequestNotFound.Error()})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
-	if sellRequest.IsDeleted.Bool {
-		ctx.JSON(http.StatusConflict, gin.H{
-			"error":      "Sell request has been already deleted",
-			"deleted_at": sellRequest.UpdatedAt.UTC(),
-		})
-		return
+	result := deleteSellRequestResponse{
+		IsDeleted: isDeleted,
 	}
-	isDeleted, err := server.store.DeleteSellRequest(ctx, req.ID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
-		return
-	}
-	res := deleteSellRequestResponse{
-		IsDeleted: isDeleted.Bool,
-	}
-	ctx.JSON(http.StatusOK, res)
+	ctx.JSON(http.StatusOK, result)
 }

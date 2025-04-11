@@ -17,10 +17,24 @@ const (
 	KZT = "KZT" // Казахстанский тенге
 )
 
+var supportedCurrencies = map[string]struct{}{
+	USD: {},
+	EUR: {},
+	UZS: {},
+	RUB: {},
+	GBP: {},
+	JPY: {},
+	CHF: {},
+	CNY: {},
+	AUD: {},
+	CAD: {},
+	SGD: {},
+	AED: {},
+	TRY: {},
+	KZT: {},
+}
+
 func IsSupportedCurrency(currency string) bool {
-	switch currency {
-	case EUR, USD, UZS:
-		return true
-	}
-	return false
+	_, ok := supportedCurrencies[currency]
+	return ok
 }
