@@ -16,7 +16,8 @@ WHERE buy_req_id = $1;
 
 -- name: GetLockedAmountBySellRequest :many
 SELECT * FROM locked_amounts
-WHERE sell_req_id = $1;
+WHERE sell_req_id = $1
+AND is_released = false;
 
 -- name: ListLockedAmounts :many
 SELECT * FROM locked_amounts

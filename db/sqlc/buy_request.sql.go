@@ -12,6 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const closeBuyRequestBySellRequest = `-- name: CloseBuyRequestBySellRequest :exec
+UPDATE buy_requests
+SET
+  is_closed = true,
+  closed_at = now()
+WHERE
+  sell_req_id = $1 AND is_closed = false
+`
+
+func (q *Queries) CloseBuyRequestBySellRequest(ctx context.Context, sellReqID int32) error {
+	_, err := q.db.Exec(ctx, closeBuyRequestBySellRequest, sellReqID)
+	return err
+}
+
 const closeConfirmByBuyer = `-- name: CloseConfirmByBuyer :exec
 UPDATE buy_requests
 SET

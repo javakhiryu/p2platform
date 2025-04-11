@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"p2platform/util"
 
@@ -34,11 +36,15 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 		// 1. Получаем sell_request
 		sellRequest, err := q.GetSellRequestForUpdate(ctx, arg.SellReqID)
 		if err != nil {
-			return fmt.Errorf("failed to get sell request: %v", err)
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("sell request not found: %w", err)
+			}
+			return fmt.Errorf("failed to get sell request: %w", err)
 		}
 		// 2. Получаем все блокировки по sell_request
-		lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, arg.SellReqID)
-		if err != nil {
+		lockedAmounts := []LockedAmount{}
+		lockedAmounts, err = q.GetLockedAmountBySellRequest(ctx, arg.SellReqID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("failed to get locked amounts: %v", err)
 		}
 
@@ -48,6 +54,9 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 
 		if !sellRequest.IsActual.Bool {
 			return fmt.Errorf("sell request is not actual")
+		}
+		if sellRequest.IsDeleted.Bool {
+			return fmt.Errorf("Sell request has been deleted")
 		}
 
 		for _, lockedAmount := range lockedAmounts {

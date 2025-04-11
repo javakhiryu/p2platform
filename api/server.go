@@ -23,6 +23,7 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("currency", validCurrency)
+		v.RegisterValidation("source", validSource)
 	}
 
 	server.setupRouter()
@@ -36,7 +37,13 @@ func (server *Server) setupRouter() {
 	router.GET("/sell-requests", server.listSellRequest)
 	router.PATCH("/sell-request/:id", server.updateSellRequest)
 	router.DELETE("/sell-request/:id", server.deleteSellRequest)
-	
+	router.POST("/buy-request", server.createBuyRequest)
+	router.GET("/buy-request/:id", server.getBuyRequest)
+	router.GET("/buy-requests", server.listBuyRequests)
+	router.POST("/buy-request/:id/close-confirm/seller", server.closeBuyRequestBySeller)
+	router.POST("/buy-request/:id/close-confirm/buyer", server.closeBuyRequestByBuyer)
+	//router.DELETE("/buy-request/:id", server.DeleteBuyRequest)
+
 	server.router = router
 }
 

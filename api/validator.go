@@ -12,3 +12,10 @@ var validCurrency validator.Func = func(fieldLevel validator.FieldLevel) bool {
 	}
 	return false
 }
+
+var validSource validator.Func = func(fieldLevel validator.FieldLevel) bool {
+	if source, ok := fieldLevel.Field().Interface().(string); ok {
+		return util.IsSupportedSource(source)
+	}
+	return false
+}

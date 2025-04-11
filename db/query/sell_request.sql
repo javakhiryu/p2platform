@@ -1,6 +1,7 @@
 -- name: CreateSellRequest :one
 INSERT INTO sell_requests (
   sell_total_amount,
+  sell_money_source,
   currency_from,
   currency_to,
   tg_username,
@@ -11,7 +12,7 @@ INSERT INTO sell_requests (
   sell_exchange_rate,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 )
 RETURNING *;
 
@@ -29,6 +30,7 @@ OFFSET $2;
 UPDATE sell_requests
 SET
     sell_total_amount = COALESCE(sqlc.narg('sell_total_amount'), sell_total_amount),
+    sell_money_source = COALESCE(sqlc.narg('sell_money_source'), sell_money_source),
     currency_from = COALESCE(sqlc.narg('currency_from'), currency_from),
     currency_to = COALESCE(sqlc.narg('currency_to'), currency_to),
     tg_username = COALESCE(sqlc.narg('tg_username'), tg_username),
