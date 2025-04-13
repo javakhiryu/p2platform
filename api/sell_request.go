@@ -77,7 +77,7 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
+	result, err := server.store.GetSellRequestTx(ctx, req.ID)
 	if err != nil {
 		if err == db.ErrNoRowsFound {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -87,14 +87,14 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 		return
 	}
 
-	if sellRequest.IsDeleted.Bool {
+	if result.SellRequest.IsDeleted.Bool {
 		ctx.JSON(http.StatusGone, gin.H{
 			"error":      "sell request has been deleted",
-			"deleted_at": sellRequest.UpdatedAt.UTC(),
+			"deleted_at": result.SellRequest.UpdatedAt.UTC(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, sellRequest)
+	ctx.JSON(http.StatusOK, result)
 }
 
 type listSellRequest struct {
@@ -109,11 +109,11 @@ func (server *Server) listSellRequest(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	arg := db.ListSellRequestsParams{
+	arg := db.ListSellRequeststTxParams{
 		Limit:  req.PageSize,
 		Offset: (req.PageId - 1) * req.PageSize,
 	}
-	sellRequests, err := server.store.ListSellRequests(ctx, arg)
+	sellRequests, err := server.store.ListSellRequeststTx(ctx, arg)
 	if err != nil {
 		if err == db.ErrNoRowsFound {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -314,7 +314,7 @@ func (server *Server) deleteSellRequest(ctx *gin.Context) {
 			ctx.JSON(http.StatusConflict, gin.H{"error": db.ErrSellRequestAlreadyDeleted.Error()})
 			return
 		case errors.Is(err, sql.ErrNoRows):
-			ctx.JSON(http.StatusNotFound, gin.H{"error": db.ErrSEllRequestNotFound.Error()})
+			ctx.JSON(http.StatusNotFound, gin.H{"error": db.ErrSellRequestNotFound.Error()})
 			return
 		default:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

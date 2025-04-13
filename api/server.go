@@ -42,7 +42,7 @@ func (server *Server) setupRouter() {
 	router.GET("/buy-requests", server.listBuyRequests)
 	router.POST("/buy-request/:id/close-confirm/seller", server.closeBuyRequestBySeller)
 	router.POST("/buy-request/:id/close-confirm/buyer", server.closeBuyRequestByBuyer)
-	//router.DELETE("/buy-request/:id", server.DeleteBuyRequest)
+	router.DELETE("/buy-request/:id", server.DeleteBuyRequest)
 
 	server.router = router
 }
