@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	db "p2platform/db/sqlc"
 	"p2platform/util"
@@ -133,7 +135,7 @@ type closeBuyRequestResponse struct {
 func (server *Server) closeBuyRequestBySeller(ctx *gin.Context) {
 	var req closeBuyRequestRequest
 	err := ctx.ShouldBindUri(&req)
-	if err !=nil{
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -144,19 +146,19 @@ func (server *Server) closeBuyRequestBySeller(ctx *gin.Context) {
 	}
 	arg := db.CloseBuyRequestTxParams{
 		BuyRequestId: uid,
-		IsSeller: true,
+		IsSeller:     true,
 	}
 	result, err := server.store.CloseBuyRequestTx(ctx, arg)
-	if err !=nil{
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
-	response :=closeBuyRequestResponse{
+	response := closeBuyRequestResponse{
 		CloseConfirmedBySeller: result.CloseConfirmedBySeller,
-		SellerConfirmedAt: result.SellerConfirmedAt,
-		CloseConfirmedByBuyer: result.CloseConfirmedByBuyer,
-		BuyerConfirmedAt: result.BuyerConfirmedAt,
-		IsClosed: result.IsClosed,
-		ClosedAt: result.ClosedAt,
+		SellerConfirmedAt:      result.SellerConfirmedAt,
+		CloseConfirmedByBuyer:  result.CloseConfirmedByBuyer,
+		BuyerConfirmedAt:       result.BuyerConfirmedAt,
+		IsClosed:               result.IsClosed,
+		ClosedAt:               result.ClosedAt,
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -164,7 +166,7 @@ func (server *Server) closeBuyRequestBySeller(ctx *gin.Context) {
 func (server *Server) closeBuyRequestByBuyer(ctx *gin.Context) {
 	var req closeBuyRequestRequest
 	err := ctx.ShouldBindUri(&req)
-	if err !=nil{
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -175,19 +177,52 @@ func (server *Server) closeBuyRequestByBuyer(ctx *gin.Context) {
 	}
 	arg := db.CloseBuyRequestTxParams{
 		BuyRequestId: uid,
-		IsSeller: false,
+		IsSeller:     false,
 	}
 	result, err := server.store.CloseBuyRequestTx(ctx, arg)
-	if err !=nil{
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
-	response :=closeBuyRequestResponse{
+	response := closeBuyRequestResponse{
 		CloseConfirmedBySeller: result.CloseConfirmedBySeller,
-		SellerConfirmedAt: result.SellerConfirmedAt,
-		CloseConfirmedByBuyer: result.CloseConfirmedByBuyer,
-		BuyerConfirmedAt: result.BuyerConfirmedAt,
-		IsClosed: result.IsClosed,
-		ClosedAt: result.ClosedAt,
+		SellerConfirmedAt:      result.SellerConfirmedAt,
+		CloseConfirmedByBuyer:  result.CloseConfirmedByBuyer,
+		BuyerConfirmedAt:       result.BuyerConfirmedAt,
+		IsClosed:               result.IsClosed,
+		ClosedAt:               result.ClosedAt,
 	}
 	ctx.JSON(http.StatusOK, response)
+}
+
+type deleteBuyRequestRequest struct {
+	BuyRequestId string `uri:"id" binding:"required,uuid"`
+}
+
+func (server *Server) DeleteBuyRequest(ctx *gin.Context) {
+	var req closeBuyRequestRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	uid, err := uuid.Parse(req.BuyRequestId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
+		return
+	}
+
+	isDeleted, err := server.store.DeleteBuyRequestTx(ctx, uid)
+	if err != nil {
+		if errors.Is(err, db.BuyRequestNotFoundOrDeleted) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":    fmt.Sprintf("Buy request with UID %s deleted successfully", uid),
+		"is_deleted": isDeleted,
+	})
 }

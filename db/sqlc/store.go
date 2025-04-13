@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -11,6 +12,9 @@ type Store interface {
 	CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequestTxParams) (CreateBuyRequestTxResult, error)
 	DeleteSellRequestTx(ctx context.Context, sellRequestId int32) (bool, error)
 	CloseBuyRequestTx(ctx context.Context, arg CloseBuyRequestTxParams) (CloseBuyRequestTxResult, error)
+	DeleteBuyRequestTx(ctx context.Context, buyReqID uuid.UUID) (bool, error)
+	GetSellRequestTx(ctx context.Context, sellReqID int32) (GetSellRequestTxResult, error)
+	ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams) (ListSellRequeststTxResults, error)
 }
 
 // Store

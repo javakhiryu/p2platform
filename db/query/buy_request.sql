@@ -66,7 +66,4 @@ WHERE
   sell_req_id = $1 AND is_closed = false;
 
 -- name: DeleteBuyRequest :exec
-DELETE FROM buy_requests
-WHERE
-  buy_req_id = $1;
-
+DELETE FROM buy_requests WHERE buy_req_id = $1;

@@ -23,7 +23,8 @@ var ErrForeighnKeyViolation = &pgconn.PgError{
 }
 
 var ErrSellRequestAlreadyDeleted = errors.New("sell request has been already deleted")
-var ErrSEllRequestNotFound = errors.New("sell request not found")
+var ErrSellRequestNotFound = errors.New("sell request(s) not found")
+var BuyRequestNotFoundOrDeleted = errors.New("buy request not found or was already deleted")
 
 func ErrCode(err error) string {
 	var pgErr *pgconn.PgError

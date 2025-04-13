@@ -36,14 +36,13 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 		// 1. Получаем sell_request
 		sellRequest, err := q.GetSellRequestForUpdate(ctx, arg.SellReqID)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+			if errors.Is(err, ErrNoRowsFound) {
 				return fmt.Errorf("sell request not found: %w", err)
 			}
 			return fmt.Errorf("failed to get sell request: %w", err)
 		}
 		// 2. Получаем все блокировки по sell_request
-		lockedAmounts := []LockedAmount{}
-		lockedAmounts, err = q.GetLockedAmountBySellRequest(ctx, arg.SellReqID)
+		lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, arg.SellReqID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("failed to get locked amounts: %v", err)
 		}
@@ -117,6 +116,11 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 			if err != nil {
 				return fmt.Errorf("failed to close sell request: %v", err)
 			}
+		}
+
+		sellRequest, err = q.GetSellRequestById(ctx, arg.SellReqID)
+		if err != nil {
+			return fmt.Errorf("failed to get sell request: %v", err)
 		}
 
 		result = CreateBuyRequestTxResult{

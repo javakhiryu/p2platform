@@ -125,9 +125,7 @@ func (q *Queries) CreateBuyRequest(ctx context.Context, arg CreateBuyRequestPara
 }
 
 const deleteBuyRequest = `-- name: DeleteBuyRequest :exec
-DELETE FROM buy_requests
-WHERE
-  buy_req_id = $1
+DELETE FROM buy_requests WHERE buy_req_id = $1
 `
 
 func (q *Queries) DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) error {
