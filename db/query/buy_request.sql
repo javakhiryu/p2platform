@@ -53,8 +53,6 @@ SET
   closed_at = now()
 WHERE
   buy_req_id = $2
-  AND close_confirm_by_buyer = true
-  AND close_confirm_by_seller = true
 RETURNING *;
 
 -- name: CloseBuyRequestBySellRequest :exec
@@ -67,3 +65,9 @@ WHERE
 
 -- name: DeleteBuyRequest :exec
 DELETE FROM buy_requests WHERE buy_req_id = $1;
+
+-- name: ListExpiredBuyRequests :many
+SELECT * FROM buy_requests
+WHERE expires_at < now()
+  AND is_closed = false;
+

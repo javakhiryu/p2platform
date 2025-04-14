@@ -51,12 +51,12 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 			}
 			err := store.CloseConfirmByBuyer(ctx, buyerArgs)
 			if err != nil {
-				return fmt.Errorf("Close confirmatin by buyer failed")
+				return fmt.Errorf("Close confirmation by buyer failed")
 			}
 		}
 		buyRequest, err := store.GetBuyRequestById(ctx, arg.BuyRequestId)
 		if err != nil {
-			return fmt.Errorf("failed to re-fetch buy request: %w", err)
+			return fmt.Errorf("Failed to re-fetch buy request: %w", err)
 		}
 
 
@@ -82,6 +82,10 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 				BuyerConfirmedAt:       &closedBuyRequest.BuyerConfirmedAt.Time,
 				IsClosed:               closedBuyRequest.IsClosed.Bool,
 				ClosedAt:               &closedBuyRequest.ClosedAt.Time,
+			}
+			err =store.ReleaseLockedAmountByBuyRequest(ctx, closeBuyRequestArgs.BuyReqID)
+			if err !=nil{
+				return fmt.Errorf("Failed to release locked amount")
 			}
 		} else {
 			result = CloseBuyRequestTxResult{

@@ -165,6 +165,7 @@ SET
   released_at = now()
 WHERE
   buy_req_id = $1
+  AND is_released = false
 `
 
 func (q *Queries) ReleaseLockedAmountByBuyRequest(ctx context.Context, buyReqID uuid.UUID) error {
