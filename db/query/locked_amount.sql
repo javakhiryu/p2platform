@@ -32,7 +32,8 @@ SET
   is_released = true,
   released_at = now()
 WHERE
-  buy_req_id = $1;
+  buy_req_id = $1
+  AND is_released = false;
 
 -- name: ReleaseLockedAmountsBySellRequest :exec
 UPDATE locked_amounts

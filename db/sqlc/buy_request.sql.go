@@ -213,6 +213,49 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 	return items, nil
 }
 
+const listExpiredBuyRequests = `-- name: ListExpiredBuyRequests :many
+SELECT buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
+WHERE expires_at < now()
+  AND is_closed = false
+`
+
+func (q *Queries) ListExpiredBuyRequests(ctx context.Context) ([]BuyRequest, error) {
+	rows, err := q.db.Query(ctx, listExpiredBuyRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BuyRequest{}
+	for rows.Next() {
+		var i BuyRequest
+		if err := rows.Scan(
+			&i.BuyReqID,
+			&i.SellReqID,
+			&i.BuyTotalAmount,
+			&i.TgUsername,
+			&i.BuyByCard,
+			&i.BuyAmountByCard,
+			&i.BuyByCash,
+			&i.BuyAmountByCash,
+			&i.CloseConfirmBySeller,
+			&i.CloseConfirmByBuyer,
+			&i.SellerConfirmedAt,
+			&i.BuyerConfirmedAt,
+			&i.IsClosed,
+			&i.ClosedAt,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const openCloseBuyRequest = `-- name: OpenCloseBuyRequest :one
 UPDATE buy_requests
 SET
@@ -220,8 +263,6 @@ SET
   closed_at = now()
 WHERE
   buy_req_id = $2
-  AND close_confirm_by_buyer = true
-  AND close_confirm_by_seller = true
 RETURNING buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at
 `
 

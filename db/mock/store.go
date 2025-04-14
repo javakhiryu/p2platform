@@ -318,6 +318,21 @@ func (mr *MockStoreMockRecorder) ListBuyRequests(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBuyRequests", reflect.TypeOf((*MockStore)(nil).ListBuyRequests), arg0, arg1)
 }
 
+// ListExpiredBuyRequests mocks base method.
+func (m *MockStore) ListExpiredBuyRequests(arg0 context.Context) ([]db.BuyRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListExpiredBuyRequests", arg0)
+	ret0, _ := ret[0].([]db.BuyRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListExpiredBuyRequests indicates an expected call of ListExpiredBuyRequests.
+func (mr *MockStoreMockRecorder) ListExpiredBuyRequests(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExpiredBuyRequests", reflect.TypeOf((*MockStore)(nil).ListExpiredBuyRequests), arg0)
+}
+
 // ListLockedAmounts mocks base method.
 func (m *MockStore) ListLockedAmounts(arg0 context.Context, arg1 db.ListLockedAmountsParams) ([]db.LockedAmount, error) {
 	m.ctrl.T.Helper()
@@ -405,6 +420,21 @@ func (m *MockStore) ReleaseLockedAmountByBuyRequest(arg0 context.Context, arg1 u
 func (mr *MockStoreMockRecorder) ReleaseLockedAmountByBuyRequest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseLockedAmountByBuyRequest", reflect.TypeOf((*MockStore)(nil).ReleaseLockedAmountByBuyRequest), arg0, arg1)
+}
+
+// ReleaseLockedAmountTx mocks base method.
+func (m *MockStore) ReleaseLockedAmountTx(arg0 context.Context, arg1 uuid.UUID) (db.ReleaseLockedAmountTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReleaseLockedAmountTx", arg0, arg1)
+	ret0, _ := ret[0].(db.ReleaseLockedAmountTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReleaseLockedAmountTx indicates an expected call of ReleaseLockedAmountTx.
+func (mr *MockStoreMockRecorder) ReleaseLockedAmountTx(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseLockedAmountTx", reflect.TypeOf((*MockStore)(nil).ReleaseLockedAmountTx), arg0, arg1)
 }
 
 // ReleaseLockedAmountsBySellRequest mocks base method.

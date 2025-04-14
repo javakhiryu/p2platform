@@ -6,6 +6,8 @@ import (
 	"p2platform/api"
 	db "p2platform/db/sqlc"
 	"p2platform/util"
+	"p2platform/worker"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
@@ -25,7 +27,12 @@ func main() {
 		log.Fatal().Err(err).Msg("cannot connect to database")
 	}
 	store := db.NewStore(conn)
+	worker :=worker.NewAutoReleaseWorker(store, 1*time.Minute)
+	worker.Start()
 	runGinServer(config, store)
+
+	defer worker.Stop()
+
 }
 
 func runGinServer(config util.Config, store db.Store) {

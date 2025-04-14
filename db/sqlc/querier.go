@@ -26,6 +26,7 @@ type Querier interface {
 	GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error)
 	GetSellRequestForUpdate(ctx context.Context, sellReqID int32) (SellRequest, error)
 	ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams) ([]BuyRequest, error)
+	ListExpiredBuyRequests(ctx context.Context) ([]BuyRequest, error)
 	ListLockedAmounts(ctx context.Context, arg ListLockedAmountsParams) ([]LockedAmount, error)
 	ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error)
 	OpenCloseBuyRequest(ctx context.Context, arg OpenCloseBuyRequestParams) (BuyRequest, error)
