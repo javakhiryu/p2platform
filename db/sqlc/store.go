@@ -16,6 +16,7 @@ type Store interface {
 	GetSellRequestTx(ctx context.Context, sellReqID int32) (GetSellRequestTxResult, error)
 	ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams) (ListSellRequeststTxResults, error)
 	ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.UUID) (result ReleaseLockedAmountTxResult, err error)
+	ListMySellRequeststTx(ctx context.Context, params ListMySellRequestsTxParams) (ListSellRequeststTxResults, error)
 }
 
 // Store

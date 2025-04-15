@@ -34,15 +34,21 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 	router.POST("/sell-request", server.createSellRequest)
 	router.GET("/sell-request/:id", server.getSellRequest)
-	router.GET("/sell-requests", server.listSellRequest)
-	router.PATCH("/sell-request/:id", server.updateSellRequest)
-	router.DELETE("/sell-request/:id", server.deleteSellRequest)
+	router.GET("/sell-requests", server.listSellRequests)
 	router.POST("/buy-request", server.createBuyRequest)
 	router.GET("/buy-request/:id", server.getBuyRequest)
 	router.GET("/buy-requests", server.listBuyRequests)
-	router.POST("/buy-request/:id/close-confirm/seller", server.closeBuyRequestBySeller)
-	router.POST("/buy-request/:id/close-confirm/buyer", server.closeBuyRequestByBuyer)
-	router.DELETE("/buy-request/:id", server.DeleteBuyRequest)
+	router.POST("/users/telegram", server.telegramAuth)
+
+	authRoutes := router.Group("/").Use(CookieAuthMiddleware())
+
+	authRoutes.PATCH("/sell-request/:id", server.updateSellRequest)
+	authRoutes.DELETE("/sell-request/:id", server.deleteSellRequest)
+	authRoutes.POST("/buy-request/:id/close-confirm/seller", server.closeBuyRequestBySeller)
+	authRoutes.POST("/buy-request/:id/close-confirm/buyer", server.closeBuyRequestByBuyer)
+	authRoutes.DELETE("/buy-request/:id", server.DeleteBuyRequest)
+	authRoutes.GET("/sell-requests/my", server.listMySellRequests)
+	authRoutes.GET("/buy-requests/my", server.listMyBuyRequests)
 
 	server.router = router
 }

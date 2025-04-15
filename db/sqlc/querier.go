@@ -18,23 +18,28 @@ type Querier interface {
 	CreateBuyRequest(ctx context.Context, arg CreateBuyRequestParams) (BuyRequest, error)
 	CreateLockedAmount(ctx context.Context, arg CreateLockedAmountParams) (LockedAmount, error)
 	CreateSellRequest(ctx context.Context, arg CreateSellRequestParams) (SellRequest, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
 	DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtype.Bool, error)
+	DeleteUser(ctx context.Context, telegramID int64) error
 	GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error)
 	GetLockedAmount(ctx context.Context, buyReqID uuid.UUID) (LockedAmount, error)
 	GetLockedAmountBySellRequest(ctx context.Context, sellReqID int32) ([]LockedAmount, error)
 	GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error)
 	GetSellRequestForUpdate(ctx context.Context, sellReqID int32) (SellRequest, error)
+	GetUser(ctx context.Context, telegramID int64) (User, error)
 	ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams) ([]BuyRequest, error)
+	ListBuyRequestsByTelegramId(ctx context.Context, arg ListBuyRequestsByTelegramIdParams) ([]BuyRequest, error)
 	ListExpiredBuyRequests(ctx context.Context) ([]BuyRequest, error)
 	ListLockedAmounts(ctx context.Context, arg ListLockedAmountsParams) ([]LockedAmount, error)
 	ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error)
+	ListSellRequestsByTelegramId(ctx context.Context, arg ListSellRequestsByTelegramIdParams) ([]SellRequest, error)
 	OpenCloseBuyRequest(ctx context.Context, arg OpenCloseBuyRequestParams) (BuyRequest, error)
 	OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellRequestParams) (SellRequest, error)
 	ReleaseLockedAmountByBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
 	ReleaseLockedAmountsBySellRequest(ctx context.Context, sellReqID int32) error
-	UpdateBuyRequest(ctx context.Context, arg UpdateBuyRequestParams) (BuyRequest, error)
 	UpdateSellRequest(ctx context.Context, arg UpdateSellRequestParams) (SellRequest, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

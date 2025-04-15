@@ -102,7 +102,7 @@ type listSellRequest struct {
 	PageId   int32 `form:"page_id" binding:"required,min=1"`
 }
 
-func (server *Server) listSellRequest(ctx *gin.Context) {
+func (server *Server) listSellRequests(ctx *gin.Context) {
 	var req listSellRequest
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -126,6 +126,40 @@ func (server *Server) listSellRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, sellRequests)
 }
 
+type listMySellRequest struct {
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
+	PageId   int32 `form:"page_id" binding:"required,min=1"`
+}
+
+func (server *Server) listMySellRequests(ctx *gin.Context) {
+	var req listSellRequest
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok{
+		return
+	}
+	arg := db.ListMySellRequestsTxParams{
+		Limit:      req.PageSize,
+		Offset:     (req.PageId - 1) * req.PageSize,
+		TelegramId: telegramId,
+	}
+	sellRequests, err := server.store.ListMySellRequeststTx(ctx, arg)
+	if err != nil {
+		if err == db.ErrNoRowsFound {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, sellRequests)
+}
+
 type updateSellRequestUri struct {
 	ID int32 `uri:"id" binding:"required,min=1"`
 }
@@ -135,7 +169,6 @@ type updateSellRequestJson struct {
 	SellMoneySource  *string `json:"sell_money_source" binding:"omitempty,source"`
 	CurrencyFrom     *string `json:"currency_from" binding:"omitempty,currency"`
 	CurrencyTo       *string `json:"currency_to" binding:"omitempty,currency"`
-	TgUsername       *string `json:"tg_username"`
 	SellAmountByCard *int64  `json:"sell_amount_by_card" binding:"omitempty,gte=0"`
 	SellAmountByCash *int64  `json:"sell_amount_by_cash" binding:"omitempty,gte=0"`
 	SellExchangeRate *int64  `json:"sell_exchange_rate" binding:"omitempty,min=1"`
@@ -162,6 +195,11 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 		return
 	}
 
+	telegramId, ok :=GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
 	buyRequests, err := server.store.ListBuyRequests(ctx, db.ListBuyRequestsParams{
 		SellReqID: reqUri.ID,
 		Limit:     1,
@@ -185,6 +223,11 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if telegramId != sellRequest.TelegramID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the owner of this sell request"})
 		return
 	}
 
@@ -258,10 +301,6 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 			String: util.DerefStr(reqJson.CurrencyTo),
 			Valid:  reqJson.CurrencyTo != nil,
 		},
-		TgUsername: pgtype.Text{
-			String: util.DerefStr(reqJson.TgUsername),
-			Valid:  reqJson.TgUsername != nil,
-		},
 
 		SellByCard: sellByCard,
 
@@ -307,6 +346,27 @@ func (server *Server) deleteSellRequest(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
+
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
+	if err != nil {
+		if err == db.ErrNoRowsFound {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if telegramId != sellRequest.TelegramID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the owner of this sell request"})
+		return
+	}
+
 	isDeleted, err := server.store.DeleteSellRequestTx(ctx, req.ID)
 	if err != nil {
 		switch {

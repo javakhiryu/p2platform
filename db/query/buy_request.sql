@@ -3,13 +3,14 @@ INSERT INTO buy_requests (
   buy_req_id,
   sell_req_id,
   buy_total_amount,
+  telegram_id,
   tg_username,
   buy_by_card,
   buy_amount_by_card,
   buy_by_cash,
   buy_amount_by_cash
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 RETURNING *;
 
@@ -20,15 +21,17 @@ SELECT * FROM buy_requests WHERE buy_req_id = $1;
 SELECT * FROM buy_requests
 WHERE sell_req_id = $1
     AND is_closed = false
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3;
 
--- name: UpdateBuyRequest :one
-UPDATE buy_requests
-SET tg_username= $1
-WHERE buy_req_id = $2
-RETURNING *;
+-- name: ListBuyRequestsByTelegramId :many
+SELECT * FROM buy_requests
+WHERE telegram_id = $1
+    AND is_closed = false
+ORDER BY created_at ASC
+LIMIT $2 
+OFFSET $3;
 
 -- name: CloseConfirmBySeller :exec
 UPDATE buy_requests
