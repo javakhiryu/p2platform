@@ -17,6 +17,7 @@ INSERT INTO sell_requests (
   sell_money_source,
   currency_from,
   currency_to,
+  telegram_id,
   tg_username,
   sell_by_card,
   sell_amount_by_card,
@@ -25,9 +26,9 @@ INSERT INTO sell_requests (
   sell_exchange_rate,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 )
-RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type CreateSellRequestParams struct {
@@ -35,6 +36,7 @@ type CreateSellRequestParams struct {
 	SellMoneySource  string      `json:"sell_money_source"`
 	CurrencyFrom     string      `json:"currency_from"`
 	CurrencyTo       string      `json:"currency_to"`
+	TelegramID       int64       `json:"telegram_id"`
 	TgUsername       string      `json:"tg_username"`
 	SellByCard       pgtype.Bool `json:"sell_by_card"`
 	SellAmountByCard pgtype.Int8 `json:"sell_amount_by_card"`
@@ -50,6 +52,7 @@ func (q *Queries) CreateSellRequest(ctx context.Context, arg CreateSellRequestPa
 		arg.SellMoneySource,
 		arg.CurrencyFrom,
 		arg.CurrencyTo,
+		arg.TelegramID,
 		arg.TgUsername,
 		arg.SellByCard,
 		arg.SellAmountByCard,
@@ -65,6 +68,7 @@ func (q *Queries) CreateSellRequest(ctx context.Context, arg CreateSellRequestPa
 		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.SellByCard,
 		&i.SellAmountByCard,
@@ -98,7 +102,7 @@ func (q *Queries) DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtyp
 }
 
 const getSellRequestById = `-- name: GetSellRequestById :one
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests WHERE sell_req_id = $1
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests WHERE sell_req_id = $1
 `
 
 func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error) {
@@ -110,6 +114,7 @@ func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (Sell
 		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.SellByCard,
 		&i.SellAmountByCard,
@@ -126,7 +131,7 @@ func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (Sell
 }
 
 const getSellRequestForUpdate = `-- name: GetSellRequestForUpdate :one
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
 WHERE sell_req_id = $1
 FOR UPDATE
 `
@@ -140,6 +145,7 @@ func (q *Queries) GetSellRequestForUpdate(ctx context.Context, sellReqID int32) 
 		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.SellByCard,
 		&i.SellAmountByCard,
@@ -156,9 +162,9 @@ func (q *Queries) GetSellRequestForUpdate(ctx context.Context, sellReqID int32) 
 }
 
 const listSellRequests = `-- name: ListSellRequests :many
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
 WHERE is_deleted = false
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT $1 
 OFFSET $2
 `
@@ -183,6 +189,59 @@ func (q *Queries) ListSellRequests(ctx context.Context, arg ListSellRequestsPara
 			&i.SellMoneySource,
 			&i.CurrencyFrom,
 			&i.CurrencyTo,
+			&i.TelegramID,
+			&i.TgUsername,
+			&i.SellByCard,
+			&i.SellAmountByCard,
+			&i.SellByCash,
+			&i.SellAmountByCash,
+			&i.SellExchangeRate,
+			&i.IsActual,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsDeleted,
+			&i.Comment,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSellRequestsByTelegramId = `-- name: ListSellRequestsByTelegramId :many
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+WHERE telegram_id = $1 AND is_deleted = false
+ORDER BY created_at ASC
+LIMIT $2 
+OFFSET $3
+`
+
+type ListSellRequestsByTelegramIdParams struct {
+	TelegramID int64 `json:"telegram_id"`
+	Limit      int32 `json:"limit"`
+	Offset     int32 `json:"offset"`
+}
+
+func (q *Queries) ListSellRequestsByTelegramId(ctx context.Context, arg ListSellRequestsByTelegramIdParams) ([]SellRequest, error) {
+	rows, err := q.db.Query(ctx, listSellRequestsByTelegramId, arg.TelegramID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SellRequest{}
+	for rows.Next() {
+		var i SellRequest
+		if err := rows.Scan(
+			&i.SellReqID,
+			&i.SellTotalAmount,
+			&i.SellMoneySource,
+			&i.CurrencyFrom,
+			&i.CurrencyTo,
+			&i.TelegramID,
 			&i.TgUsername,
 			&i.SellByCard,
 			&i.SellAmountByCard,
@@ -212,7 +271,7 @@ SET
   updated_at = now()
 WHERE
   sell_req_id = $2
-RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type OpenCloseSellRequestParams struct {
@@ -229,6 +288,7 @@ func (q *Queries) OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellReq
 		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.SellByCard,
 		&i.SellAmountByCard,
@@ -251,44 +311,43 @@ SET
     sell_money_source = COALESCE($2, sell_money_source),
     currency_from = COALESCE($3, currency_from),
     currency_to = COALESCE($4, currency_to),
-    tg_username = COALESCE($5, tg_username),
-    sell_by_card = COALESCE($6, sell_by_card),
-    sell_amount_by_card = COALESCE($7, sell_amount_by_card),
-    sell_by_cash = COALESCE($8, sell_by_cash),
-    sell_amount_by_cash = COALESCE($9, sell_amount_by_cash),
-    sell_exchange_rate = COALESCE($10, sell_exchange_rate),
-    comment = COALESCE($11, comment),
+    sell_by_card = COALESCE($5, sell_by_card),
+    sell_amount_by_card = COALESCE($6, sell_amount_by_card),
+    sell_by_cash = COALESCE($7, sell_by_cash),
+    sell_amount_by_cash = COALESCE($8, sell_amount_by_cash),
+    sell_exchange_rate = COALESCE($9, sell_exchange_rate),
+    comment = COALESCE($10, comment),
     updated_at = CASE
         WHEN $1 IS NOT NULL
           OR $3 IS NOT NULL
           OR $4 IS NOT NULL
+          OR $11 IS NOT NULL
           OR $5 IS NOT NULL
           OR $6 IS NOT NULL
           OR $7 IS NOT NULL
           OR $8 IS NOT NULL
           OR $9 IS NOT NULL
           OR $10 IS NOT NULL
-          OR $11 IS NOT NULL
         THEN now()
         ELSE updated_at
     END
 WHERE sell_req_id = $12
-RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type UpdateSellRequestParams struct {
-	SellTotalAmount  pgtype.Int8 `json:"sell_total_amount"`
-	SellMoneySource  pgtype.Text `json:"sell_money_source"`
-	CurrencyFrom     pgtype.Text `json:"currency_from"`
-	CurrencyTo       pgtype.Text `json:"currency_to"`
-	TgUsername       pgtype.Text `json:"tg_username"`
-	SellByCard       pgtype.Bool `json:"sell_by_card"`
-	SellAmountByCard pgtype.Int8 `json:"sell_amount_by_card"`
-	SellByCash       pgtype.Bool `json:"sell_by_cash"`
-	SellAmountByCash pgtype.Int8 `json:"sell_amount_by_cash"`
-	SellExchangeRate pgtype.Int8 `json:"sell_exchange_rate"`
-	Comment          pgtype.Text `json:"comment"`
-	SellReqID        int32       `json:"sell_req_id"`
+	SellTotalAmount  pgtype.Int8        `json:"sell_total_amount"`
+	SellMoneySource  pgtype.Text        `json:"sell_money_source"`
+	CurrencyFrom     pgtype.Text        `json:"currency_from"`
+	CurrencyTo       pgtype.Text        `json:"currency_to"`
+	SellByCard       pgtype.Bool        `json:"sell_by_card"`
+	SellAmountByCard pgtype.Int8        `json:"sell_amount_by_card"`
+	SellByCash       pgtype.Bool        `json:"sell_by_cash"`
+	SellAmountByCash pgtype.Int8        `json:"sell_amount_by_cash"`
+	SellExchangeRate pgtype.Int8        `json:"sell_exchange_rate"`
+	Comment          pgtype.Text        `json:"comment"`
+	TgUsername       pgtype.Timestamptz `json:"tg_username"`
+	SellReqID        int32              `json:"sell_req_id"`
 }
 
 func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestParams) (SellRequest, error) {
@@ -297,13 +356,13 @@ func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestPa
 		arg.SellMoneySource,
 		arg.CurrencyFrom,
 		arg.CurrencyTo,
-		arg.TgUsername,
 		arg.SellByCard,
 		arg.SellAmountByCard,
 		arg.SellByCash,
 		arg.SellAmountByCash,
 		arg.SellExchangeRate,
 		arg.Comment,
+		arg.TgUsername,
 		arg.SellReqID,
 	)
 	var i SellRequest
@@ -313,6 +372,7 @@ func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestPa
 		&i.SellMoneySource,
 		&i.CurrencyFrom,
 		&i.CurrencyTo,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.SellByCard,
 		&i.SellAmountByCard,

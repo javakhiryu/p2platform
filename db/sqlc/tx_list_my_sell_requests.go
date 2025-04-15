@@ -6,25 +6,23 @@ import (
 	"fmt"
 )
 
-type ListSellRequeststTxParams struct {
-	Limit  int32
-	Offset int32
+type ListMySellRequestsTxParams struct {
+	Limit      int32
+	Offset     int32
+	TelegramId int64
 }
 
-type ListSellRequeststTxResults struct {
-	SellRequests []GetSellRequestTxResult `json:"sell_requests"`
-}
-
-func (store *SQLStore) ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams) (ListSellRequeststTxResults, error) {
+func (store *SQLStore) ListMySellRequeststTx(ctx context.Context, params ListMySellRequestsTxParams) (ListSellRequeststTxResults, error) {
 	var results ListSellRequeststTxResults
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		arg := ListSellRequestsParams{
-			Limit:  params.Limit,
-			Offset: params.Offset,
+		arg := ListSellRequestsByTelegramIdParams{
+			Limit:      params.Limit,
+			Offset:     params.Offset,
+			TelegramID: params.TelegramId,
 		}
-		sellRequests, err := q.ListSellRequests(ctx, arg)
+		sellRequests, err := q.ListSellRequestsByTelegramId(ctx, arg)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
 				return fmt.Errorf(ErrSellRequestNotFound.Error(), err)

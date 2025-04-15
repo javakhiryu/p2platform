@@ -15,6 +15,7 @@ type BuyRequest struct {
 	BuyReqID             uuid.UUID          `json:"buy_req_id"`
 	SellReqID            int32              `json:"sell_req_id"`
 	BuyTotalAmount       int64              `json:"buy_total_amount"`
+	TelegramID           int64              `json:"telegram_id"`
 	TgUsername           string             `json:"tg_username"`
 	BuyByCard            pgtype.Bool        `json:"buy_by_card"`
 	BuyAmountByCard      pgtype.Int8        `json:"buy_amount_by_card"`
@@ -48,6 +49,7 @@ type SellRequest struct {
 	SellMoneySource  string      `json:"sell_money_source"`
 	CurrencyFrom     string      `json:"currency_from"`
 	CurrencyTo       string      `json:"currency_to"`
+	TelegramID       int64       `json:"telegram_id"`
 	TgUsername       string      `json:"tg_username"`
 	SellByCard       pgtype.Bool `json:"sell_by_card"`
 	SellAmountByCard pgtype.Int8 `json:"sell_amount_by_card"`
@@ -59,4 +61,12 @@ type SellRequest struct {
 	UpdatedAt        time.Time   `json:"updated_at"`
 	IsDeleted        pgtype.Bool `json:"is_deleted"`
 	Comment          string      `json:"comment"`
+}
+
+type User struct {
+	TelegramID int64       `json:"telegram_id"`
+	TgUsername string      `json:"tg_username"`
+	FirstName  pgtype.Text `json:"first_name"`
+	LastName   pgtype.Text `json:"last_name"`
+	CreatedAt  time.Time   `json:"created_at"`
 }

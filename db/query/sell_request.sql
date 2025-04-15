@@ -4,6 +4,7 @@ INSERT INTO sell_requests (
   sell_money_source,
   currency_from,
   currency_to,
+  telegram_id,
   tg_username,
   sell_by_card,
   sell_amount_by_card,
@@ -12,7 +13,7 @@ INSERT INTO sell_requests (
   sell_exchange_rate,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 )
 RETURNING *;
 
@@ -22,9 +23,16 @@ SELECT * FROM sell_requests WHERE sell_req_id = $1;
 -- name: ListSellRequests :many
 SELECT * FROM sell_requests
 WHERE is_deleted = false
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT $1 
 OFFSET $2;
+
+-- name: ListSellRequestsByTelegramId :many
+SELECT * FROM sell_requests
+WHERE telegram_id = $1 AND is_deleted = false
+ORDER BY created_at ASC
+LIMIT $2 
+OFFSET $3;
 
 -- name: UpdateSellRequest :one
 UPDATE sell_requests
@@ -33,7 +41,6 @@ SET
     sell_money_source = COALESCE(sqlc.narg('sell_money_source'), sell_money_source),
     currency_from = COALESCE(sqlc.narg('currency_from'), currency_from),
     currency_to = COALESCE(sqlc.narg('currency_to'), currency_to),
-    tg_username = COALESCE(sqlc.narg('tg_username'), tg_username),
     sell_by_card = COALESCE(sqlc.narg('sell_by_card'), sell_by_card),
     sell_amount_by_card = COALESCE(sqlc.narg('sell_amount_by_card'), sell_amount_by_card),
     sell_by_cash = COALESCE(sqlc.narg('sell_by_cash'), sell_by_cash),

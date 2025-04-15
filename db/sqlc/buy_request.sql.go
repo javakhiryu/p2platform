@@ -69,21 +69,23 @@ INSERT INTO buy_requests (
   buy_req_id,
   sell_req_id,
   buy_total_amount,
+  telegram_id,
   tg_username,
   buy_by_card,
   buy_amount_by_card,
   buy_by_cash,
   buy_amount_by_cash
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
-RETURNING buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at
+RETURNING buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at
 `
 
 type CreateBuyRequestParams struct {
 	BuyReqID        uuid.UUID   `json:"buy_req_id"`
 	SellReqID       int32       `json:"sell_req_id"`
 	BuyTotalAmount  int64       `json:"buy_total_amount"`
+	TelegramID      int64       `json:"telegram_id"`
 	TgUsername      string      `json:"tg_username"`
 	BuyByCard       pgtype.Bool `json:"buy_by_card"`
 	BuyAmountByCard pgtype.Int8 `json:"buy_amount_by_card"`
@@ -96,6 +98,7 @@ func (q *Queries) CreateBuyRequest(ctx context.Context, arg CreateBuyRequestPara
 		arg.BuyReqID,
 		arg.SellReqID,
 		arg.BuyTotalAmount,
+		arg.TelegramID,
 		arg.TgUsername,
 		arg.BuyByCard,
 		arg.BuyAmountByCard,
@@ -107,6 +110,7 @@ func (q *Queries) CreateBuyRequest(ctx context.Context, arg CreateBuyRequestPara
 		&i.BuyReqID,
 		&i.SellReqID,
 		&i.BuyTotalAmount,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.BuyByCard,
 		&i.BuyAmountByCard,
@@ -134,7 +138,7 @@ func (q *Queries) DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) erro
 }
 
 const getBuyRequestById = `-- name: GetBuyRequestById :one
-SELECT buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests WHERE buy_req_id = $1
+SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests WHERE buy_req_id = $1
 `
 
 func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error) {
@@ -144,6 +148,7 @@ func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (Bu
 		&i.BuyReqID,
 		&i.SellReqID,
 		&i.BuyTotalAmount,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.BuyByCard,
 		&i.BuyAmountByCard,
@@ -162,10 +167,10 @@ func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (Bu
 }
 
 const listBuyRequests = `-- name: ListBuyRequests :many
-SELECT buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
+SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
 WHERE sell_req_id = $1
     AND is_closed = false
-ORDER BY created_at DESC
+ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3
 `
@@ -189,6 +194,60 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 			&i.BuyReqID,
 			&i.SellReqID,
 			&i.BuyTotalAmount,
+			&i.TelegramID,
+			&i.TgUsername,
+			&i.BuyByCard,
+			&i.BuyAmountByCard,
+			&i.BuyByCash,
+			&i.BuyAmountByCash,
+			&i.CloseConfirmBySeller,
+			&i.CloseConfirmByBuyer,
+			&i.SellerConfirmedAt,
+			&i.BuyerConfirmedAt,
+			&i.IsClosed,
+			&i.ClosedAt,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBuyRequestsByTelegramId = `-- name: ListBuyRequestsByTelegramId :many
+SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
+WHERE telegram_id = $1
+    AND is_closed = false
+ORDER BY created_at ASC
+LIMIT $2 
+OFFSET $3
+`
+
+type ListBuyRequestsByTelegramIdParams struct {
+	TelegramID int64 `json:"telegram_id"`
+	Limit      int32 `json:"limit"`
+	Offset     int32 `json:"offset"`
+}
+
+func (q *Queries) ListBuyRequestsByTelegramId(ctx context.Context, arg ListBuyRequestsByTelegramIdParams) ([]BuyRequest, error) {
+	rows, err := q.db.Query(ctx, listBuyRequestsByTelegramId, arg.TelegramID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BuyRequest{}
+	for rows.Next() {
+		var i BuyRequest
+		if err := rows.Scan(
+			&i.BuyReqID,
+			&i.SellReqID,
+			&i.BuyTotalAmount,
+			&i.TelegramID,
 			&i.TgUsername,
 			&i.BuyByCard,
 			&i.BuyAmountByCard,
@@ -214,7 +273,7 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 }
 
 const listExpiredBuyRequests = `-- name: ListExpiredBuyRequests :many
-SELECT buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
+SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
 WHERE expires_at < now()
   AND is_closed = false
 `
@@ -232,6 +291,7 @@ func (q *Queries) ListExpiredBuyRequests(ctx context.Context) ([]BuyRequest, err
 			&i.BuyReqID,
 			&i.SellReqID,
 			&i.BuyTotalAmount,
+			&i.TelegramID,
 			&i.TgUsername,
 			&i.BuyByCard,
 			&i.BuyAmountByCard,
@@ -263,7 +323,7 @@ SET
   closed_at = now()
 WHERE
   buy_req_id = $2
-RETURNING buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at
+RETURNING buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at
 `
 
 type OpenCloseBuyRequestParams struct {
@@ -278,42 +338,7 @@ func (q *Queries) OpenCloseBuyRequest(ctx context.Context, arg OpenCloseBuyReque
 		&i.BuyReqID,
 		&i.SellReqID,
 		&i.BuyTotalAmount,
-		&i.TgUsername,
-		&i.BuyByCard,
-		&i.BuyAmountByCard,
-		&i.BuyByCash,
-		&i.BuyAmountByCash,
-		&i.CloseConfirmBySeller,
-		&i.CloseConfirmByBuyer,
-		&i.SellerConfirmedAt,
-		&i.BuyerConfirmedAt,
-		&i.IsClosed,
-		&i.ClosedAt,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-	)
-	return i, err
-}
-
-const updateBuyRequest = `-- name: UpdateBuyRequest :one
-UPDATE buy_requests
-SET tg_username= $1
-WHERE buy_req_id = $2
-RETURNING buy_req_id, sell_req_id, buy_total_amount, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at
-`
-
-type UpdateBuyRequestParams struct {
-	TgUsername string    `json:"tg_username"`
-	BuyReqID   uuid.UUID `json:"buy_req_id"`
-}
-
-func (q *Queries) UpdateBuyRequest(ctx context.Context, arg UpdateBuyRequestParams) (BuyRequest, error) {
-	row := q.db.QueryRow(ctx, updateBuyRequest, arg.TgUsername, arg.BuyReqID)
-	var i BuyRequest
-	err := row.Scan(
-		&i.BuyReqID,
-		&i.SellReqID,
-		&i.BuyTotalAmount,
+		&i.TelegramID,
 		&i.TgUsername,
 		&i.BuyByCard,
 		&i.BuyAmountByCard,

@@ -61,20 +61,6 @@ func TestListBuyRequests(t *testing.T){
 	}
 } 
 
-func TestUpdateBuyRequest(t *testing.T){
-	buyRequest1 := createRandomBuyRequest(t, createRandomSellRequest(t))
-	newTgUsername := util.RandomTgUsername()
-	arg := UpdateBuyRequestParams{
-		BuyReqID: buyRequest1.BuyReqID,
-		TgUsername: newTgUsername,
-	}
-	buyRequest2, err := testStore.UpdateBuyRequest(context.Background(), arg)
-	require.NoError(t, err)
-	require.Equal(t, buyRequest2.BuyReqID, buyRequest1.BuyReqID)
-	require.NotEqual(t, buyRequest2.TgUsername, buyRequest1.TgUsername)
-	require.Equal(t, newTgUsername, buyRequest2.TgUsername)
-}
-
 func TestOpenCloseBuyRequest(t *testing.T){
 	buyRequest1 := createRandomBuyRequest(t, createRandomSellRequest(t))
 	arg := OpenCloseBuyRequestParams{

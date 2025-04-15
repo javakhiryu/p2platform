@@ -89,14 +89,14 @@ func (server *Server) getBuyRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, buyRequest)
 }
 
-type listBuyRequest struct {
+type listBuyRequests struct {
 	SellReqId int32 `form:"sell_req_id" binding:"min=1"`
 	PageId    int32 `form:"page_id" binding:"min=1"`
 	PageSize  int32 `form:"page_size" binding:"min=5,max=10"`
 }
 
 func (server *Server) listBuyRequests(ctx *gin.Context) {
-	var req listBuyRequest
+	var req listBuyRequests
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -108,6 +108,40 @@ func (server *Server) listBuyRequests(ctx *gin.Context) {
 		Offset:    (req.PageId - 1) * req.PageSize,
 	}
 	buyRequests, err := server.store.ListBuyRequests(ctx, arg)
+	if err != nil {
+		if err == db.ErrNoRowsFound {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, buyRequests)
+}
+
+type listMyBuyRequests struct {
+	PageId   int32 `form:"page_id" binding:"min=1"`
+	PageSize int32 `form:"page_size" binding:"min=5,max=10"`
+}
+
+func (server *Server) listMyBuyRequests(ctx *gin.Context) {
+	var req listBuyRequests
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	arg := db.ListBuyRequestsByTelegramIdParams{
+		TelegramID: telegramId,
+		Limit:      req.PageSize,
+		Offset:     (req.PageId - 1) * req.PageSize,
+	}
+	buyRequests, err := server.store.ListBuyRequestsByTelegramId(ctx, arg)
 	if err != nil {
 		if err == db.ErrNoRowsFound {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -139,11 +173,32 @@ func (server *Server) closeBuyRequestBySeller(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+
 	uid, err := uuid.Parse(req.BuyRequestId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
 		return
 	}
+
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	buyRequest, err := server.store.GetBuyRequestById(ctx, uid)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+	sellRequest, err := server.store.GetSellRequestById(ctx, buyRequest.SellReqID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	if telegramId != sellRequest.TelegramID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the seller for this buy request"})
+		return
+	}
+
 	arg := db.CloseBuyRequestTxParams{
 		BuyRequestId: uid,
 		IsSeller:     true,
@@ -175,6 +230,23 @@ func (server *Server) closeBuyRequestByBuyer(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
 		return
 	}
+
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	buyRequest, err := server.store.GetBuyRequestById(ctx, uid)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if telegramId != buyRequest.TelegramID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the owner of this buy request"})
+		return
+	}
+
 	arg := db.CloseBuyRequestTxParams{
 		BuyRequestId: uid,
 		IsSeller:     false,
@@ -208,6 +280,22 @@ func (server *Server) DeleteBuyRequest(ctx *gin.Context) {
 	uid, err := uuid.Parse(req.BuyRequestId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
+		return
+	}
+
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	buyRequest, err := server.store.GetBuyRequestById(ctx, uid)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if telegramId != buyRequest.TelegramID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the owner of this buy request"})
 		return
 	}
 
