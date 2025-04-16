@@ -1,0 +1,49 @@
+name: Run unit test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request: 
+    branches: [ "main" ]
+
+jobs:
+  build:
+      name: Test
+      runs-on: ubuntu-latest
+      services:
+          postgres:
+              image: postgres:17-alpine
+              env:
+                POSTGRES_USER: root
+                POSTGRES_PASSWORD: secret
+                POSTGRES_DB: simplebank
+              ports:
+                - 5432:5432
+              options: >-
+                --helth-cmd pg-isready
+                --health-interval 10s
+                --health-timeout 5s
+                --health-retries 5
+      steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+        id: go
+      
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Go-Migrate install
+        run: |
+          make migrateinstall
+          sudo mv migrate /usr/bin/
+          which migrate
+      
+      - name: Run migrations
+        run: make migrateup
+
+      - name: Test
+        run: make test
+          

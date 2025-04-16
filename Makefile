@@ -1,4 +1,6 @@
 DB_URL=postgres://root:secret@localhost:5432/p2platform?sslmode=disable
+migrateinstall:
+	$ curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.2/migrate.linux-amd64.tar.gz | tar xvz
 migrateup:
 	migrate -path db/migration -database "$(DB_URL)" -verbose up
 migratedown:
@@ -22,4 +24,4 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go p2platform/db/sqlc Store
 
-.PHONY: migrateup new_migration postgres createdb migratedown sqlc test server mock
+.PHONY: migrateinstall migrateup new_migration postgres createdb migratedown sqlc test server mock
