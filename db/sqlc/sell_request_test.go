@@ -9,13 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomSellRequest(t *testing.T) SellRequest {
+func CreateRandomSellRequest(t *testing.T, user User) SellRequest {
 	SellAmount := util.RandomMoney()
 	arg := CreateSellRequestParams{
 		SellTotalAmount:  SellAmount,
 		SellMoneySource:  "card",
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
+		TelegramID:       user.TelegramID,
 		TgUsername:       util.RandomTgUsername(),
 		SellAmountByCard: util.ToPgInt(SellAmount / 2),
 		SellAmountByCash: util.ToPgInt(SellAmount / 2),
@@ -29,6 +30,7 @@ func createRandomSellRequest(t *testing.T) SellRequest {
 	require.Equal(t, arg.SellMoneySource, sellRequest.SellMoneySource)
 	require.Equal(t, arg.CurrencyFrom, sellRequest.CurrencyFrom)
 	require.Equal(t, arg.CurrencyTo, sellRequest.CurrencyTo)
+	require.Equal(t, arg.TelegramID, sellRequest.TelegramID)
 	require.Equal(t, arg.TgUsername, sellRequest.TgUsername)
 	require.Equal(t, arg.SellAmountByCard, sellRequest.SellAmountByCard)
 	require.Equal(t, arg.SellAmountByCash, sellRequest.SellAmountByCash)
@@ -40,11 +42,11 @@ func createRandomSellRequest(t *testing.T) SellRequest {
 }
 
 func TestCreateSellReqest(t *testing.T) {
-	createRandomSellRequest(t)
+	CreateRandomSellRequest(t, CreateRandomUser(t))
 }
 
 func TestGetSellRequest(t *testing.T) {
-	sellRequest1 := createRandomSellRequest(t)
+	sellRequest1 := CreateRandomSellRequest(t, CreateRandomUser(t))
 	sellRequest2, err := testStore.GetSellRequestById(context.Background(), sellRequest1.SellReqID)
 	require.NoError(t, err)
 	require.NotEmpty(t, sellRequest2)
@@ -52,6 +54,7 @@ func TestGetSellRequest(t *testing.T) {
 	require.Equal(t, sellRequest1.SellTotalAmount, sellRequest2.SellTotalAmount)
 	require.Equal(t, sellRequest1.CurrencyFrom, sellRequest2.CurrencyFrom)
 	require.Equal(t, sellRequest1.CurrencyTo, sellRequest2.CurrencyTo)
+	require.Equal(t, sellRequest1.TelegramID, sellRequest2.TelegramID)
 	require.Equal(t, sellRequest1.TgUsername, sellRequest2.TgUsername)
 	require.Equal(t, sellRequest1.SellByCard, sellRequest2.SellByCard)
 	require.Equal(t, sellRequest1.SellAmountByCard, sellRequest2.SellAmountByCard)
@@ -63,8 +66,9 @@ func TestGetSellRequest(t *testing.T) {
 }
 
 func TestListSellRequests(t *testing.T) {
+	user := CreateRandomUser(t)
 	for i := 0; i < 10; i++ {
-		createRandomSellRequest(t)
+		CreateRandomSellRequest(t, user)
 	}
 	arg := ListSellRequestsParams{
 		Limit:  5,
@@ -78,13 +82,31 @@ func TestListSellRequests(t *testing.T) {
 	}
 }
 
+func TestListSellReuqestsByTelegramId(t *testing.T) {
+	user := CreateRandomUser(t)
+	for i := 0; i < 10; i++ {
+		CreateRandomSellRequest(t, user)
+	}
+	arg := ListBuyRequestsByTelegramIdParams{
+		TelegramID: user.TelegramID,
+		Limit: 5,
+		Offset: 0,
+	}
+	sellRequests, err := testStore.ListSellRequestsByTelegramId(context.Background(), ListSellRequestsByTelegramIdParams(arg))
+	require.NoError(t, err)
+	for _, sellRequest := range sellRequests {
+		require.Equal(t, user.TelegramID, sellRequest.TelegramID)
+	}
+	require.Len(t, sellRequests, 5)
+}
+
 func TestUpdateSellRequest(t *testing.T) {
 	newSellTotalAmount := util.RandomMoney()
 	newCurrencyFrom := util.RandomCurrency()
 	newCurrencyTo := util.RandomCurrency()
 	newComment := util.RandomString(10)
 
-	sellRequest1 := createRandomSellRequest(t)
+	sellRequest1 := CreateRandomSellRequest(t, CreateRandomUser(t))
 	arg := UpdateSellRequestParams{
 		SellReqID:       sellRequest1.SellReqID,
 		SellTotalAmount: util.ToPgInt(newSellTotalAmount),
@@ -96,6 +118,7 @@ func TestUpdateSellRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, sellRequest2)
 	require.Equal(t, arg.SellReqID, sellRequest2.SellReqID)
+	require.Equal(t, sellRequest1.TelegramID, sellRequest2.TelegramID)
 	require.Equal(t, sellRequest1.TgUsername, sellRequest2.TgUsername)
 	require.Equal(t, newSellTotalAmount, sellRequest2.SellTotalAmount)
 	require.Equal(t, newCurrencyFrom, sellRequest2.CurrencyFrom)
@@ -112,7 +135,7 @@ func TestUpdateSellRequest(t *testing.T) {
 }
 
 func TestCloseSellRequest(t *testing.T) {
-	sellRequest1 := createRandomSellRequest(t)
+	sellRequest1 := CreateRandomSellRequest(t, CreateRandomUser(t))
 	arg := OpenCloseSellRequestParams{
 		IsActual:  util.ToPgBool(false),
 		SellReqID: sellRequest1.SellReqID,
@@ -126,7 +149,7 @@ func TestCloseSellRequest(t *testing.T) {
 }
 
 func TestDeleteSellRequest(t *testing.T) {
-	SellRequest1 := createRandomSellRequest(t)
+	SellRequest1 := CreateRandomSellRequest(t, CreateRandomUser(t))
 	isDeleted, err := testStore.DeleteSellRequest(context.Background(), SellRequest1.SellReqID)
 	require.NoError(t, err)
 	require.Equal(t, util.ToPgBool(false), SellRequest1.IsDeleted)
@@ -134,7 +157,7 @@ func TestDeleteSellRequest(t *testing.T) {
 }
 
 func TestGetSellRequestForUpdate_Lock(t *testing.T) {
-	sellRequest := createRandomSellRequest(t)
+	sellRequest := CreateRandomSellRequest(t, CreateRandomUser(t))
 	sqlStore := testStore.(*SQLStore)
 	conn1, err := sqlStore.connPool.Acquire(context.Background())
 	require.NoError(t, err)

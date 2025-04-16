@@ -32,16 +32,17 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
-	router.POST("/sell-request", server.createSellRequest)
+
 	router.GET("/sell-request/:id", server.getSellRequest)
 	router.GET("/sell-requests", server.listSellRequests)
-	router.POST("/buy-request", server.createBuyRequest)
 	router.GET("/buy-request/:id", server.getBuyRequest)
 	router.GET("/buy-requests", server.listBuyRequests)
 	router.POST("/users/telegram", server.telegramAuth)
 
 	authRoutes := router.Group("/").Use(CookieAuthMiddleware())
 
+	authRoutes.POST("/sell-request", server.createSellRequest)
+	authRoutes.POST("/buy-request", server.createBuyRequest)
 	authRoutes.PATCH("/sell-request/:id", server.updateSellRequest)
 	authRoutes.DELETE("/sell-request/:id", server.deleteSellRequest)
 	authRoutes.POST("/buy-request/:id/close-confirm/seller", server.closeBuyRequestBySeller)

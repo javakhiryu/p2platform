@@ -30,6 +30,11 @@ func (server *Server) createBuyRequest(ctx *gin.Context) {
 		return
 	}
 
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
 	if !(req.BuyAmountByCard+req.BuyAmountByCash == req.BuyTotalAmount) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "sum of amounts by cash and card is not equal to total buy amount",
@@ -47,7 +52,7 @@ func (server *Server) createBuyRequest(ctx *gin.Context) {
 		BuyReqID:        uuid.New(),
 		SellReqID:       req.SellReqID,
 		BuyTotalAmount:  req.BuyTotalAmount,
-		TgUsername:      req.TgUsername,
+		TelegramId:      telegramId,
 		BuyByCard:       util.ToPgBool(buyByCard),
 		BuyAmountByCard: util.ToPgInt(req.BuyAmountByCard),
 		BuyByCash:       util.ToPgBool(buyByCash),

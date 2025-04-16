@@ -24,50 +24,53 @@ func createRandomLockedAmount(t *testing.T, buyRequest BuyRequest) LockedAmount 
 }
 
 func TestCreateLockedAmount(t *testing.T) {
-	createRandomLockedAmount(t, createRandomBuyRequest(t, createRandomSellRequest(t)))
+	createRandomLockedAmount(t, CreateRandomBuyRequest(t, CreateRandomSellRequest(t, CreateRandomUser(t)), CreateRandomUser(t)))
 }
 
 func TestGetLockedAmount(t *testing.T) {
-	lockedAmount := createRandomLockedAmount(t, createRandomBuyRequest(t, createRandomSellRequest(t)))
+	lockedAmount := createRandomLockedAmount(t, CreateRandomBuyRequest(t, CreateRandomSellRequest(t, CreateRandomUser(t)), CreateRandomUser(t)))
 	lockedAmount2, err := testStore.GetLockedAmount(context.Background(), lockedAmount.BuyReqID)
 	require.NoError(t, err)
 	require.NotEmpty(t, lockedAmount2)
 	require.Equal(t, lockedAmount.BuyReqID, lockedAmount2.BuyReqID)
 }
 func TestGetLockedAmountBySellRequest(t *testing.T) {
-	sellRequest := createRandomSellRequest(t)
-	lockedAmount := createRandomLockedAmount(t, createRandomBuyRequest(t, sellRequest))
+	sellRequest := CreateRandomSellRequest(t, CreateRandomUser(t))
+	user := CreateRandomUser(t)
+	lockedAmount := createRandomLockedAmount(t, CreateRandomBuyRequest(t, sellRequest, user))
 	lockedAmount2, err := testStore.GetLockedAmountBySellRequest(context.Background(), sellRequest.SellReqID)
 	require.NoError(t, err)
 	require.NotEmpty(t, lockedAmount2)
-	for _,la :=range lockedAmount2{
+	for _, la := range lockedAmount2 {
 		require.Equal(t, sellRequest.SellReqID, la.SellReqID)
 		require.Equal(t, lockedAmount.ID, la.ID)
 	}
 }
 
 func TestListLockedAmounts(t *testing.T) {
-	sellRequest := createRandomSellRequest(t)
+	sellRequest := CreateRandomSellRequest(t, CreateRandomUser(t))
+	user :=CreateRandomUser(t)
 	var lockedAmounts []LockedAmount
-	for i:=0; i<5; i++{
-		lockedAmounts = append(lockedAmounts, createRandomLockedAmount(t, createRandomBuyRequest(t, sellRequest)))
+	for i := 0; i < 5; i++ {
+		lockedAmounts = append(lockedAmounts, createRandomLockedAmount(t, CreateRandomBuyRequest(t, sellRequest, user)))
 	}
 	arg := ListLockedAmountsParams{
 		SellReqID: lockedAmounts[0].SellReqID,
-		Limit: 5,
-		Offset: 0,
+		Limit:     5,
+		Offset:    0,
 	}
 	lockedAmounts, err := testStore.ListLockedAmounts(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, lockedAmounts)
-	for _,la :=range lockedAmounts{
+	for _, la := range lockedAmounts {
 		require.Equal(t, sellRequest.SellReqID, la.SellReqID)
 	}
 }
 
-func TestReleaseLockedAmountByBuyRequest(t *testing.T){
-	sellRequest := createRandomSellRequest(t)
-	buyRequest := createRandomBuyRequest(t, sellRequest) 
+func TestReleaseLockedAmountByBuyRequest(t *testing.T) {
+	sellRequest := CreateRandomSellRequest(t, CreateRandomUser(t))
+	user := CreateRandomUser(t)
+	buyRequest := CreateRandomBuyRequest(t, sellRequest, user)
 	lockedAmount1 := createRandomLockedAmount(t, buyRequest)
 	err := testStore.ReleaseLockedAmountByBuyRequest(context.Background(), buyRequest.BuyReqID)
 	require.NoError(t, err)
@@ -78,18 +81,19 @@ func TestReleaseLockedAmountByBuyRequest(t *testing.T){
 
 }
 
-func TestReleaseLockedAmountBySellRequest(t *testing.T){
-	sellRequest := createRandomSellRequest(t)
+func TestReleaseLockedAmountBySellRequest(t *testing.T) {
+	sellRequest := CreateRandomSellRequest(t, CreateRandomUser(t))
+	user := CreateRandomUser(t)
 	var buyRequests []BuyRequest
-	for i:=0; i<5; i++{
-		buyRequests = append(buyRequests, createRandomBuyRequest(t, sellRequest))
+	for i := 0; i < 5; i++ {
+		buyRequests = append(buyRequests, CreateRandomBuyRequest(t, sellRequest, user))
 	}
 	var lockedAmounts []LockedAmount
-	for i:=0; i<5; i++{
+	for i := 0; i < 5; i++ {
 		lockedAmounts = append(lockedAmounts, createRandomLockedAmount(t, buyRequests[i]))
 	}
 
-	for _,la :=range lockedAmounts{
+	for _, la := range lockedAmounts {
 		require.Equal(t, util.ToPgBool(false), la.IsReleased)
 	}
 
@@ -98,9 +102,8 @@ func TestReleaseLockedAmountBySellRequest(t *testing.T){
 
 	lockedAmounts2, err := testStore.GetLockedAmountBySellRequest(context.Background(), sellRequest.SellReqID)
 	require.NoError(t, err)
-	for _,la :=range lockedAmounts2{
+	for _, la := range lockedAmounts2 {
 		require.Equal(t, util.ToPgBool(true), la.IsReleased)
 	}
-	
-	
+
 }

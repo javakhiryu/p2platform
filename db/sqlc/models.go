@@ -69,4 +69,5 @@ type User struct {
 	FirstName  pgtype.Text `json:"first_name"`
 	LastName   pgtype.Text `json:"last_name"`
 	CreatedAt  time.Time   `json:"created_at"`
+	UpdatedAt  time.Time   `json:"updated_at"`
 }

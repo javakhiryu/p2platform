@@ -51,7 +51,6 @@ SET
         WHEN sqlc.narg('sell_total_amount') IS NOT NULL
           OR sqlc.narg('currency_from') IS NOT NULL
           OR sqlc.narg('currency_to') IS NOT NULL
-          OR sqlc.narg('tg_username') IS NOT NULL
           OR sqlc.narg('sell_by_card') IS NOT NULL
           OR sqlc.narg('sell_amount_by_card') IS NOT NULL
           OR sqlc.narg('sell_by_cash') IS NOT NULL
