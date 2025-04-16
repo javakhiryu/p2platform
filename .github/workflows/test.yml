@@ -20,7 +20,7 @@ jobs:
               ports:
                 - 5432:5432
               options: >-
-                --helth-cmd pg-isready
+                --health-cmd pg-isready
                 --health-interval 10s
                 --health-timeout 5s
                 --health-retries 5
@@ -31,10 +31,7 @@ jobs:
         with:
           go-version: '1.24.1'
         id: go
-      
-      - name: Checkout
-        uses: actions/checkout@v4
-      
+    
       - name: Go-Migrate install
         run: |
           make migrateinstall
