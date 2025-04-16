@@ -14,6 +14,7 @@ type GetSellRequestTxResult struct {
 	LockedAmountByCash int64       `json:"locked_amount_by_cash"`
 }
 
+
 func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32) (GetSellRequestTxResult, error) {
 	var result GetSellRequestTxResult
 	err := store.execTx(ctx, func(q *Queries) error {

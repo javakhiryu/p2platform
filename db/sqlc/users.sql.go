@@ -20,7 +20,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4
 )
-RETURNING telegram_id, tg_username, first_name, last_name, created_at
+RETURNING telegram_id, tg_username, first_name, last_name, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -44,6 +44,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.FirstName,
 		&i.LastName,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -58,7 +59,7 @@ func (q *Queries) DeleteUser(ctx context.Context, telegramID int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT telegram_id, tg_username, first_name, last_name, created_at FROM users WHERE telegram_id = $1
+SELECT telegram_id, tg_username, first_name, last_name, created_at, updated_at FROM users WHERE telegram_id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, telegramID int64) (User, error) {
@@ -70,6 +71,7 @@ func (q *Queries) GetUser(ctx context.Context, telegramID int64) (User, error) {
 		&i.FirstName,
 		&i.LastName,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -88,7 +90,7 @@ SET
         ELSE updated_at
     END
 WHERE telegram_id = $4
-RETURNING telegram_id, tg_username, first_name, last_name, created_at
+RETURNING telegram_id, tg_username, first_name, last_name, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -112,6 +114,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.FirstName,
 		&i.LastName,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

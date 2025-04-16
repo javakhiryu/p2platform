@@ -1,11 +1,11 @@
 package api
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	db "p2platform/db/sqlc"
-	"p2platform/auth"
+
+	//"p2platform/auth"
 	"p2platform/util"
 
 	"github.com/gin-gonic/gin"
@@ -22,30 +22,29 @@ type user struct {
 
 func (s *Server) telegramAuth(ctx *gin.Context) {
 	user := user{}
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load config"})
-	}
+	//config, err := util.LoadConfig(".")
+	//if err != nil {
+	//	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load config"})
+	//}
 	if err := ctx.BindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
 		return
 	}
 
-	ok := auth.VerifyTelegramAuth(map[string]string{
-		"id":         fmt.Sprint(user.ID),
-		"username":   user.Username,
-		"first_name": user.FirstName,
-		"last_name":  user.LastName,
-		"auth_date":  fmt.Sprint(user.AuthDate),
-	}, user.Hash, config.TelegramBotToken)
+	//ok := auth.VerifyTelegramAuth(map[string]string{
+	//	"id":         fmt.Sprint(user.ID),
+	//	"username":   user.Username,
+	//	"first_name": user.FirstName,
+	//	"last_name":  user.LastName,
+	//	"auth_date":  fmt.Sprint(user.AuthDate),
+	//}, user.Hash, config.TelegramBotToken)
+	//if !ok {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid hash"})
+	//	return
+	//}
 
-	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid hash"})
-		return
-	}
-
-	_, err = s.store.GetUser(ctx, user.ID)
-	if err == sql.ErrNoRows {
+	_, err := s.store.GetUser(ctx, user.ID)
+	if err == db.ErrNoRowsFound {
 		_, err := s.store.CreateUser(ctx, db.CreateUserParams{
 			TelegramID: user.ID,
 			TgUsername: user.Username,

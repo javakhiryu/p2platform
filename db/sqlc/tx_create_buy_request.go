@@ -15,7 +15,7 @@ type CreateBuyRequestTxParams struct {
 	BuyReqID        uuid.UUID   `json:"buy_req_id"`
 	SellReqID       int32       `json:"sell_req_id"`
 	BuyTotalAmount  int64       `json:"buy_total_amount"`
-	TgUsername      string      `json:"tg_username"`
+	TelegramId      int64       `json:"telegram_id"`
 	BuyByCard       pgtype.Bool `json:"buy_by_card"`
 	BuyAmountByCard pgtype.Int8 `json:"buy_amount_by_card"`
 	BuyByCash       pgtype.Bool `json:"buy_by_cash"`
@@ -81,12 +81,21 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 			}
 		}
 
+		user, err := q.GetUser(ctx, arg.TelegramId)
+		if err != nil {
+			if errors.Is(err, ErrNoRowsFound) {
+				return fmt.Errorf("user not found: %w", err)
+			}
+			return fmt.Errorf("failed to get user: %w", err)
+		}
+
 		// 5. Создаём buy_request
 		buyRequest, err := q.CreateBuyRequest(ctx, CreateBuyRequestParams{
 			BuyReqID:        arg.BuyReqID,
 			SellReqID:       arg.SellReqID,
 			BuyTotalAmount:  arg.BuyTotalAmount,
-			TgUsername:      arg.TgUsername,
+			TelegramID:      arg.TelegramId,
+			TgUsername:      user.TgUsername,
 			BuyByCard:       arg.BuyByCard,
 			BuyAmountByCard: arg.BuyAmountByCard,
 			BuyByCash:       arg.BuyByCash,

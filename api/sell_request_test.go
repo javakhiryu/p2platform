@@ -19,7 +19,8 @@ import (
 )
 
 func TestCreateSellRequestAPI(t *testing.T) {
-	sellRequest := randomSellRequest()
+	user := randomUser()
+	sellRequest := randomSellRequest(user)
 	testCases := []struct {
 		name          string
 		body          gin.H
@@ -45,7 +46,8 @@ func TestCreateSellRequestAPI(t *testing.T) {
 					SellMoneySource:  sellRequest.SellMoneySource,
 					CurrencyFrom:     sellRequest.CurrencyFrom,
 					CurrencyTo:       sellRequest.CurrencyTo,
-					TgUsername:       sellRequest.TgUsername,
+					TelegramID:       user.TelegramID,
+					TgUsername:       user.TgUsername,
 					SellByCard:       sellRequest.SellByCard,
 					SellAmountByCard: sellRequest.SellAmountByCard,
 					SellByCash:       sellRequest.SellByCash,
@@ -53,6 +55,7 @@ func TestCreateSellRequestAPI(t *testing.T) {
 					SellExchangeRate: sellRequest.SellExchangeRate,
 					Comment:          sellRequest.Comment,
 				}
+				store.EXPECT().GetUser(gomock.Any(), gomock.Eq(user.TelegramID)).Times(1).Return(user, nil)
 				store.EXPECT().
 					CreateSellRequest(gomock.Any(), gomock.Eq(arg)).
 					Times(1).
@@ -61,6 +64,52 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 				requireBodyMatchSellRequest(t, recorder.Body, sellRequest)
+			},
+		},
+		{
+			name: "User not found",
+			body: gin.H{
+				"sell_total_amount":   sellRequest.SellTotalAmount,
+				"sell_money_source":   sellRequest.SellMoneySource,
+				"currency_from":       sellRequest.CurrencyFrom,
+				"currency_to":         sellRequest.CurrencyTo,
+				"tg_username":         sellRequest.TgUsername,
+				"sell_amount_by_card": sellRequest.SellAmountByCard,
+				"sell_amount_by_cash": sellRequest.SellAmountByCash,
+				"sell_exchange_rate":  sellRequest.SellExchangeRate,
+				"comment":             sellRequest.Comment,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Any()).Times(1).Return(db.User{}, sql.ErrNoRows)
+				store.EXPECT().
+					CreateSellRequest(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "Internal server error on get user",
+			body: gin.H{
+				"sell_total_amount":   sellRequest.SellTotalAmount,
+				"sell_money_source":   sellRequest.SellMoneySource,
+				"currency_from":       sellRequest.CurrencyFrom,
+				"currency_to":         sellRequest.CurrencyTo,
+				"tg_username":         sellRequest.TgUsername,
+				"sell_amount_by_card": sellRequest.SellAmountByCard,
+				"sell_amount_by_cash": sellRequest.SellAmountByCash,
+				"sell_exchange_rate":  sellRequest.SellExchangeRate,
+				"comment":             sellRequest.Comment,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Any()).Times(1).Return(db.User{}, sql.ErrConnDone)
+				store.EXPECT().
+					CreateSellRequest(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
 		{
@@ -75,6 +124,30 @@ func TestCreateSellRequestAPI(t *testing.T) {
 				"comment":             sellRequest.Comment,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Any()).Times(0)
+				store.EXPECT().
+					CreateSellRequest(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "Sum of money and card is not equal to total amount ",
+			body: gin.H{
+				"sell_total_amount":   util.ToPgInt(300),
+				"sell_money_source":   sellRequest.SellMoneySource,
+				"currency_from":       sellRequest.CurrencyFrom,
+				"currency_to":         sellRequest.CurrencyTo,
+				"tg_username":         sellRequest.TgUsername,
+				"sell_amount_by_card": util.ToPgInt(100),
+				"sell_amount_by_cash": util.ToPgInt(100),
+				"sell_exchange_rate":  sellRequest.SellExchangeRate,
+				"comment":             sellRequest.Comment,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Eq(user.TelegramID)).Times(1).Return(user, nil)
 				store.EXPECT().
 					CreateSellRequest(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -95,6 +168,7 @@ func TestCreateSellRequestAPI(t *testing.T) {
 				"sell_exchange_rate":  sellRequest.SellExchangeRate,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().CreateSellRequest(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -121,7 +195,8 @@ func TestCreateSellRequestAPI(t *testing.T) {
 					SellMoneySource:  sellRequest.SellMoneySource,
 					CurrencyFrom:     sellRequest.CurrencyFrom,
 					CurrencyTo:       sellRequest.CurrencyTo,
-					TgUsername:       sellRequest.TgUsername,
+					TelegramID:       user.TelegramID,
+					TgUsername:       user.TgUsername,
 					SellByCard:       sellRequest.SellByCard,
 					SellAmountByCard: sellRequest.SellAmountByCard,
 					SellByCash:       sellRequest.SellByCash,
@@ -129,10 +204,8 @@ func TestCreateSellRequestAPI(t *testing.T) {
 					SellExchangeRate: sellRequest.SellExchangeRate,
 					Comment:          sellRequest.Comment,
 				}
-				store.EXPECT().
-					CreateSellRequest(gomock.Any(), gomock.Eq(arg)).
-					Times(1).
-					Return(db.SellRequest{}, sql.ErrConnDone)
+				store.EXPECT().GetUser(gomock.Any(), gomock.Eq(user.TelegramID)).Times(1).Return(user, nil)
+				store.EXPECT().CreateSellRequest(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.SellRequest{}, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -157,6 +230,12 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			url := fmt.Sprintf("/sell-request")
 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
+
+			request.AddCookie(&http.Cookie{
+				Name:  "telegram_id",
+				Value: fmt.Sprintf("%d", user.TelegramID),
+			})
+
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(recorder)
 		})
@@ -164,8 +243,9 @@ func TestCreateSellRequestAPI(t *testing.T) {
 }
 
 func TestGetSellRequestAPI(t *testing.T) {
-	sellRequest := randomSellRequest()
-	deletedSellRequest := deletedSellRequest()
+	user := randomUser()
+	sellRequest := randomSellRequest(user)
+	deletedSellRequest := deletedSellRequest(user)
 	testCases := []struct {
 		name          string
 		sellRequestID int32
@@ -177,9 +257,9 @@ func TestGetSellRequestAPI(t *testing.T) {
 			sellRequestID: sellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).
+					GetSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).
 					Times(1).
-					Return(sellRequest, nil)
+					Return(db.GetSellRequestTxResult{}, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -189,17 +269,30 @@ func TestGetSellRequestAPI(t *testing.T) {
 			name:          "Bad Request",
 			sellRequestID: -1,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Any()).Times(0)
+				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
 		{
+			name:          "Not Found",
+			sellRequestID: 1000,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetSellRequestTx(gomock.Any(), gomock.Eq(int32(1000))).
+					Times(1).
+					Return(db.GetSellRequestTxResult{}, db.ErrNoRowsFound)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
 			name:          "Internal Server Error",
 			sellRequestID: sellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(db.SellRequest{}, sql.ErrConnDone)
+				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(db.GetSellRequestTxResult{}, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -209,7 +302,9 @@ func TestGetSellRequestAPI(t *testing.T) {
 			name:          "Deleted Sell Request",
 			sellRequestID: deletedSellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(deletedSellRequest, nil)
+				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(db.GetSellRequestTxResult{
+					SellRequest: deletedSellRequest,
+				}, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusGone, recorder.Code)
@@ -241,8 +336,9 @@ func TestListSellRequestsAPI(t *testing.T) {
 
 	n := 10
 	var sellRequests = make([]db.SellRequest, n)
+	user := randomUser()
 	for i := 0; i < n; i++ {
-		sellRequests[i] = randomSellRequest()
+		sellRequests[i] = randomSellRequest(user)
 	}
 
 	type Query struct {
@@ -263,15 +359,14 @@ func TestListSellRequestsAPI(t *testing.T) {
 				PageId:   1,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				arg := db.ListSellRequestsParams{
+				arg := db.ListSellRequeststTxParams{
 					Limit:  int32(n),
 					Offset: 0,
 				}
-				store.EXPECT().ListSellRequests(gomock.Any(), gomock.Eq(arg)).Times(1).Return(sellRequests, nil)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchSellRequests(t, recorder.Body, sellRequests)
 			},
 		},
 		{
@@ -282,10 +377,26 @@ func TestListSellRequestsAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 
-				store.EXPECT().ListSellRequests(gomock.Any(), gomock.Any()).Times(0)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "Not Found",
+			query: Query{
+				PageSize: n,
+				PageId:   10,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.ListSellRequeststTxParams{
+					Limit:  int32(n),
+					Offset: 90,
+				}
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, db.ErrNoRowsFound)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
 			},
 		},
 		{
@@ -295,11 +406,11 @@ func TestListSellRequestsAPI(t *testing.T) {
 				PageId:   1,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				arg := db.ListSellRequestsParams{
+				arg := db.ListSellRequeststTxParams{
 					Limit:  int32(n),
 					Offset: 0,
 				}
-				store.EXPECT().ListSellRequests(gomock.Any(), gomock.Eq(arg)).Times(1).Return(sellRequests, sql.ErrConnDone)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -332,9 +443,127 @@ func TestListSellRequestsAPI(t *testing.T) {
 	}
 }
 
+func TestListMySellRequestsAPI(t *testing.T) {
+
+	n := 10
+	var sellRequests = make([]db.SellRequest, n)
+	user := randomUser()
+	for i := 0; i < n; i++ {
+		sellRequests[i] = randomSellRequest(user)
+	}
+
+	type Query struct {
+		PageSize int
+		PageId   int
+	}
+
+	testCases := []struct {
+		name          string
+		query         Query
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			query: Query{
+				PageSize: n,
+				PageId:   1,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.ListMySellRequestsTxParams{
+					Limit:      int32(n),
+					Offset:     0,
+					TelegramId: user.TelegramID,
+				}
+				store.EXPECT().ListMySellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, nil)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+			},
+		},
+		{
+			name: "Bad Request",
+			query: Query{
+				PageSize: 20,
+				PageId:   0,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListMySellRequeststTx(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+			},
+		},
+		{
+			name: "Not Found",
+			query: Query{
+				PageSize: n,
+				PageId:   10,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.ListMySellRequestsTxParams{
+					Limit:      int32(n),
+					Offset:     90,
+					TelegramId: user.TelegramID,
+				}
+				store.EXPECT().ListMySellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, db.ErrNoRowsFound)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "Internal Server Error",
+			query: Query{
+				PageSize: n,
+				PageId:   1,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.ListMySellRequestsTxParams{
+					Limit:      int32(n),
+					Offset:     0,
+					TelegramId: user.TelegramID,
+				}
+				store.EXPECT().ListMySellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+	}
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+			server := newTestServer(t, store)
+			recorder := httptest.NewRecorder()
+
+			url := fmt.Sprintf("/sell-requests/my")
+			request, err := http.NewRequest(http.MethodGet, url, nil)
+			request.AddCookie(&http.Cookie{
+				Name:  "telegram_id",
+				Value: fmt.Sprintf("%d", user.TelegramID),
+			})
+			require.NoError(t, err)
+
+			q := request.URL.Query()
+			q.Add("page_id", fmt.Sprintf("%d", tc.query.PageId))
+			q.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
+			request.URL.RawQuery = q.Encode()
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(recorder)
+
+		})
+	}
+}
+
 func TestUpdateSellRequestAPI(t *testing.T) {
-	sellRequest := randomSellRequest()
-	deletedSellRequest := deletedSellRequest()
+	user := randomUser()
+	sellRequest := randomSellRequest(user)
+	deletedSellRequest := deletedSellRequest(user)
 	testCases := []struct {
 		name          string
 		sellRequestID int32
@@ -357,7 +586,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 					SellByCard:       util.ToPgBool(true),
 					SellByCash:       util.ToPgBool(true),
 				}
-
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(sellRequest, nil)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.SellRequest{}, nil)
 			},
@@ -373,6 +602,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 				"comment":            "new comment",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -388,11 +618,72 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 				"comment":       "new comment",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name:          "Update Forbidden Buy Request Exist",
+			sellRequestID: sellRequest.SellReqID,
+			body: gin.H{
+				"sell_exchange_rate": 1,
+				"comment":            "new comment",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.UpdateSellRequestParams{
+					SellReqID:        sellRequest.SellReqID,
+					SellExchangeRate: util.ToPgInt(1),
+					Comment:          util.ToPgText("new comment"),
+				}
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{
+					db.BuyRequest{},
+				}, nil)
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(0)
+				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Eq(arg)).Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
+			},
+		},
+		{
+			name:          "Not Found",
+			sellRequestID: int32(1000),
+			body: gin.H{
+				"sell_exchange_rate": 1,
+				"comment":            "new comment",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(int32(1000))).Times(1).Return(db.SellRequest{}, sql.ErrNoRows)
+				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name:          "Internal Server Error on List",
+			sellRequestID: sellRequest.SellReqID,
+			body: gin.H{
+				"sell_exchange_rate": 1,
+				"comment":            "new comment",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				arg := db.UpdateSellRequestParams{
+					SellReqID:        sellRequest.SellReqID,
+					SellExchangeRate: util.ToPgInt(1),
+					Comment:          util.ToPgText("new comment"),
+				}
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, sql.ErrConnDone)
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(0)
+				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Eq(arg)).Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
 		{
@@ -408,6 +699,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 					SellExchangeRate: util.ToPgInt(1),
 					Comment:          util.ToPgText("new comment"),
 				}
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(db.SellRequest{}, sql.ErrConnDone)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Eq(arg)).Times(0)
 			},
@@ -423,6 +715,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 				"comment":            "new comment",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(deletedSellRequest, nil)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -439,6 +732,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 				"sell_amount_by_cash": 100,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(sellRequest, nil)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -463,6 +757,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 					SellByCard:       util.ToPgBool(true),
 					SellByCash:       util.ToPgBool(false),
 				}
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(sellRequest, nil)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Eq(arg)).
 					Times(1).Return(sellRequest, nil)
@@ -488,6 +783,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 					SellByCard:       util.ToPgBool(false),
 					SellByCash:       util.ToPgBool(true),
 				}
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).
 					Times(1).
 					Return(sellRequest, nil)
@@ -514,6 +810,7 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 					SellByCard:       util.ToPgBool(true),
 					SellByCash:       util.ToPgBool(true),
 				}
+				store.EXPECT().ListBuyRequests(gomock.Any(), gomock.Any()).Times(1).Return([]db.BuyRequest{}, nil)
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(sellRequest, nil)
 				store.EXPECT().UpdateSellRequest(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.SellRequest{}, sql.ErrConnDone)
 			},
@@ -539,6 +836,10 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 
 			url := fmt.Sprintf("/sell-request/%d", tc.sellRequestID)
 			request, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
+			request.AddCookie(&http.Cookie{
+				Name:  "telegram_id",
+				Value: fmt.Sprintf("%d", user.TelegramID),
+			})
 			require.NoError(t, err)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(recorder)
@@ -547,8 +848,9 @@ func TestUpdateSellRequestAPI(t *testing.T) {
 }
 
 func TestDeleteSellRequest(t *testing.T) {
-	sellRequest := randomSellRequest()
-	deletedSellRequest := deletedSellRequest()
+	user := randomUser()
+	sellRequest := randomSellRequest(user)
+	deletedSellRequest := deletedSellRequest(user)
 	testCases := []struct {
 		name          string
 		sellReqID     int32
@@ -559,6 +861,7 @@ func TestDeleteSellRequest(t *testing.T) {
 			name:      "OK",
 			sellReqID: sellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(sellRequest, nil)
 				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(true, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -569,6 +872,7 @@ func TestDeleteSellRequest(t *testing.T) {
 			name:      "Bad Request",
 			sellReqID: -1,
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(0)
 				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -579,6 +883,18 @@ func TestDeleteSellRequest(t *testing.T) {
 			name:      "Internal Server Error On Update",
 			sellReqID: sellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Any()).Times(1).Return(db.SellRequest{}, sql.ErrConnDone)
+				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:      "Internal Server Error On Update",
+			sellReqID: sellRequest.SellReqID,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(sellRequest, nil)
 				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Any()).Times(1).Return(false, sql.ErrTxDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -589,6 +905,7 @@ func TestDeleteSellRequest(t *testing.T) {
 			name:      "Deleted Sell Request",
 			sellReqID: deletedSellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(deletedSellRequest, nil)
 				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(false, db.ErrSellRequestAlreadyDeleted)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -596,10 +913,11 @@ func TestDeleteSellRequest(t *testing.T) {
 			},
 		},
 		{
-			name:      "Sell Request Not Found",
+			name:      "Sell Request Not Found On Get",
 			sellReqID: 1000,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Eq(int32(1000))).Times(1).Return(false, sql.ErrNoRows)
+				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(int32(1000))).Times(1).Return(db.SellRequest{}, sql.ErrNoRows)
+				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Eq(int32(1000))).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, recorder.Code)
@@ -620,6 +938,10 @@ func TestDeleteSellRequest(t *testing.T) {
 			server := newTestServer(t, store)
 
 			request, err := http.NewRequest(http.MethodDelete, url, nil)
+			request.AddCookie(&http.Cookie{
+				Name:  "telegram_id",
+				Value: fmt.Sprintf("%d", user.TelegramID),
+			})
 			require.NoError(t, err)
 			recorder := httptest.NewRecorder()
 			server.router.ServeHTTP(recorder, request)
@@ -628,14 +950,24 @@ func TestDeleteSellRequest(t *testing.T) {
 	}
 }
 
-func randomSellRequest() db.SellRequest {
+func randomUser() db.User {
+	return db.User{
+		TelegramID: util.RandomInt(10000, 9999999),
+		TgUsername: util.RandomTgUsername(),
+		FirstName:  util.ToPgText(util.RandomString(7)),
+		LastName:   util.ToPgText(util.RandomString(8)),
+	}
+}
+
+func randomSellRequest(user db.User) db.SellRequest {
 	return db.SellRequest{
 		SellReqID:        int32(util.RandomInt(1, 1000)),
 		SellTotalAmount:  1000,
 		SellMoneySource:  "cash",
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
-		TgUsername:       util.RandomTgUsername(),
+		TgUsername:       user.TgUsername,
+		TelegramID:       user.TelegramID,
 		SellByCard:       util.ToPgBool(true),
 		SellAmountByCard: util.ToPgInt(500),
 		SellByCash:       util.ToPgBool(true),
@@ -645,13 +977,14 @@ func randomSellRequest() db.SellRequest {
 	}
 }
 
-func deletedSellRequest() db.SellRequest {
+func deletedSellRequest(user db.User) db.SellRequest {
 	return db.SellRequest{
 		SellReqID:        int32(util.RandomInt(1, 1000)),
 		SellTotalAmount:  1000,
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
-		TgUsername:       util.RandomTgUsername(),
+		TgUsername:       user.TgUsername,
+		TelegramID:       user.TelegramID,
 		SellByCard:       util.ToPgBool(true),
 		SellAmountByCard: util.ToPgInt(500),
 		SellByCash:       util.ToPgBool(true),

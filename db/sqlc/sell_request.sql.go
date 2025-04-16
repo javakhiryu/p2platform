@@ -321,7 +321,6 @@ SET
         WHEN $1 IS NOT NULL
           OR $3 IS NOT NULL
           OR $4 IS NOT NULL
-          OR $11 IS NOT NULL
           OR $5 IS NOT NULL
           OR $6 IS NOT NULL
           OR $7 IS NOT NULL
@@ -331,23 +330,22 @@ SET
         THEN now()
         ELSE updated_at
     END
-WHERE sell_req_id = $12
+WHERE sell_req_id = $11
 RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
 `
 
 type UpdateSellRequestParams struct {
-	SellTotalAmount  pgtype.Int8        `json:"sell_total_amount"`
-	SellMoneySource  pgtype.Text        `json:"sell_money_source"`
-	CurrencyFrom     pgtype.Text        `json:"currency_from"`
-	CurrencyTo       pgtype.Text        `json:"currency_to"`
-	SellByCard       pgtype.Bool        `json:"sell_by_card"`
-	SellAmountByCard pgtype.Int8        `json:"sell_amount_by_card"`
-	SellByCash       pgtype.Bool        `json:"sell_by_cash"`
-	SellAmountByCash pgtype.Int8        `json:"sell_amount_by_cash"`
-	SellExchangeRate pgtype.Int8        `json:"sell_exchange_rate"`
-	Comment          pgtype.Text        `json:"comment"`
-	TgUsername       pgtype.Timestamptz `json:"tg_username"`
-	SellReqID        int32              `json:"sell_req_id"`
+	SellTotalAmount  pgtype.Int8 `json:"sell_total_amount"`
+	SellMoneySource  pgtype.Text `json:"sell_money_source"`
+	CurrencyFrom     pgtype.Text `json:"currency_from"`
+	CurrencyTo       pgtype.Text `json:"currency_to"`
+	SellByCard       pgtype.Bool `json:"sell_by_card"`
+	SellAmountByCard pgtype.Int8 `json:"sell_amount_by_card"`
+	SellByCash       pgtype.Bool `json:"sell_by_cash"`
+	SellAmountByCash pgtype.Int8 `json:"sell_amount_by_cash"`
+	SellExchangeRate pgtype.Int8 `json:"sell_exchange_rate"`
+	Comment          pgtype.Text `json:"comment"`
+	SellReqID        int32       `json:"sell_req_id"`
 }
 
 func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestParams) (SellRequest, error) {
@@ -362,7 +360,6 @@ func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestPa
 		arg.SellAmountByCash,
 		arg.SellExchangeRate,
 		arg.Comment,
-		arg.TgUsername,
 		arg.SellReqID,
 	)
 	var i SellRequest
