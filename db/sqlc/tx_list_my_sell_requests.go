@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
+	appErr "p2platform/errors"
 )
 
 type ListMySellRequestsTxParams struct {
@@ -25,14 +25,17 @@ func (store *SQLStore) ListMySellRequeststTx(ctx context.Context, params ListMyS
 		sellRequests, err := q.ListSellRequestsByTelegramId(ctx, arg)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
-				return fmt.Errorf(ErrSellRequestNotFound.Error(), err)
+				return appErr.ErrSellRequestNotFound
 			}
-			return fmt.Errorf("failed to list sell requests: %w", err)
+			return appErr.ErrInternalServer
 		}
 		for _, sellRequest := range sellRequests {
 			lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, sellRequest.SellReqID)
 			if err != nil {
-				return fmt.Errorf("failed to get locked amounts for sell_request_id %d: %w", sellRequest.SellReqID, err)
+				if errors.Is(err, ErrNoRowsFound) {
+					continue
+				}
+				return appErr.ErrFailedToGetLockedAmountBySellRequest
 			}
 
 			var totalLockedAmount int64

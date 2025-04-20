@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
+	appErr "p2platform/errors"
 	"p2platform/util"
 	"time"
 
@@ -21,13 +21,12 @@ type ReleaseLockedAmountTxResult struct {
 
 func (store *SQLStore) ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.UUID) (result ReleaseLockedAmountTxResult, err error) {
 	err = store.execTx(ctx, func(q *Queries) error {
-		// Закрываем заявку всегда
 		buyRequest, err := q.OpenCloseBuyRequest(ctx, OpenCloseBuyRequestParams{
 			IsClosed: util.ToPgBool(true),
 			BuyReqID: buyReqID,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to close buy request: %w", err)
+			return appErr.ErrFailedToCloseBuyRequests
 		}
 
 		result.BuyRequestID = buyRequest.BuyReqID
@@ -36,23 +35,14 @@ func (store *SQLStore) ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.
 			result.BuyRequestClosedAt = buyRequest.ClosedAt.Time
 		}
 
-		// Пробуем освободить заблокированную сумму, но это не обязательно
 		err = q.ReleaseLockedAmountByBuyRequest(ctx, buyReqID)
-		if err != nil {
-			if errors.Is(err, ErrNoRowsFound) {
-				// Не найдено — просто логируем, не прерываем транзакцию
-				return nil
-			}
-			return fmt.Errorf("failed to release locked amount: %w", err)
+		if err != nil && !errors.Is(err, ErrNoRowsFound) {
+			return appErr.ErrFailedToReleaseLockedAmount
 		}
 
 		lockedAmount, err := q.GetLockedAmount(ctx, buyReqID)
-		if err != nil {
-			if errors.Is(err, ErrNoRowsFound) {
-				// Не найдено — допустимо
-				return nil
-			}
-			return fmt.Errorf("failed to get locked amount: %w", err)
+		if err != nil && !errors.Is(err, ErrNoRowsFound) {
+			return appErr.ErrFailedToGetLockedAmountByBuyRequest
 		}
 
 		result.LockedAmountID = lockedAmount.ID

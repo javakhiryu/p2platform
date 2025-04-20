@@ -1,5 +1,11 @@
 package util
 
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 func DerefInt64(p *int64) int64 {
 	if p == nil {
 		return 0
@@ -19,4 +25,11 @@ func DerefBool(p *bool) bool {
 		return false
 	}
 	return *p
+}
+
+func GetValidTime(t pgtype.Timestamptz) *time.Time {
+	if t.Valid {
+		return &t.Time
+	}
+	return nil
 }

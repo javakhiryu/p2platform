@@ -1,0 +1,121 @@
+basePath: /
+definitions:
+  api.ErrorResponse:
+    properties:
+      error:
+        example: something went wrong
+        type: string
+    type: object
+  api.createSellRequest:
+    properties:
+      comment:
+        type: string
+      currency_from:
+        type: string
+      currency_to:
+        type: string
+      sell_amount_by_card:
+        minimum: 0
+        type: integer
+      sell_amount_by_cash:
+        minimum: 0
+        type: integer
+      sell_exchange_rate:
+        type: integer
+      sell_money_source:
+        type: string
+      sell_total_amount:
+        minimum: 1
+        type: integer
+    required:
+    - currency_from
+    - currency_to
+    - sell_exchange_rate
+    - sell_money_source
+    - sell_total_amount
+    type: object
+  api.sellRequestResponse:
+    properties:
+      comment:
+        type: string
+      created_at:
+        type: string
+      currency_from:
+        type: string
+      currency_to:
+        type: string
+      is_actual:
+        type: boolean
+      sell_amount_by_card:
+        type: integer
+      sell_amount_by_cash:
+        type: integer
+      sell_by_card:
+        type: boolean
+      sell_by_cash:
+        type: boolean
+      sell_exchange_rate:
+        type: integer
+      sell_money_source:
+        type: string
+      sell_req_id:
+        type: integer
+      sell_total_amount:
+        type: integer
+      tg_username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: javakhiryulchibaev@gmail.com
+    name: Javakhir Yu
+    url: https://github.com/javakhiryu/p2platform
+  description: |-
+    This is a simple API for a P2P platform.
+
+    Feel free to contact me if you have any questions
+
+    GitHub Repository:
+  title: P2Platform API
+  version: "1.0"
+paths:
+  /sell-request:
+    post:
+      consumes:
+      - application/json
+      description: Create a new sell request with Telegram ID and username
+      parameters:
+      - description: Create sell request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.createSellRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.sellRequestResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create a new sell request
+      tags:
+      - sell-request
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
+	appErr "p2platform/errors"
 )
 
 type GetSellRequestTxResult struct {
@@ -14,7 +14,6 @@ type GetSellRequestTxResult struct {
 	LockedAmountByCash int64       `json:"locked_amount_by_cash"`
 }
 
-
 func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32) (GetSellRequestTxResult, error) {
 	var result GetSellRequestTxResult
 	err := store.execTx(ctx, func(q *Queries) error {
@@ -22,14 +21,14 @@ func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32) (G
 		sellRequest, err := q.GetSellRequestById(ctx, sellReqID)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
-				return fmt.Errorf(ErrSellRequestNotFound.Error(), err)
+				return appErr.ErrSellRequestNotFound
 			}
-			return fmt.Errorf("failed to get sell request: %w", err)
+			return appErr.ErrFailedToGetSellRequests
 		}
 		result.SellRequest = sellRequest
 		lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, sellReqID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("failed to get locked amounts: %v", err)
+			return appErr.ErrFailedToGetLockedAmountBySellRequest
 		}
 		var totalLockedAmount int64
 		var lockedAmountByCard int64

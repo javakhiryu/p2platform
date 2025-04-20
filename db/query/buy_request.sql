@@ -20,7 +20,6 @@ SELECT * FROM buy_requests WHERE buy_req_id = $1;
 -- name: ListBuyRequests :many
 SELECT * FROM buy_requests
 WHERE sell_req_id = $1
-    AND is_closed = false
 ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3;
@@ -28,7 +27,6 @@ OFFSET $3;
 -- name: ListBuyRequestsByTelegramId :many
 SELECT * FROM buy_requests
 WHERE telegram_id = $1
-    AND is_closed = false
 ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3;

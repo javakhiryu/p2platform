@@ -1,12 +1,16 @@
 package api
 
 import (
+	"net/http"
 	db "p2platform/db/sqlc"
+	"p2platform/errors"
 	"p2platform/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Server struct {
@@ -33,6 +37,8 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 func (server *Server) setupRouter() {
 	router := gin.Default()
 
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
 	router.GET("/sell-request/:id", server.getSellRequest)
 	router.GET("/sell-requests", server.listSellRequests)
 	router.GET("/buy-request/:id", server.getBuyRequest)
@@ -58,7 +64,28 @@ func (server *Server) Start(address string) error {
 	return server.router.Run(address)
 }
 
-func errorResponse(err error) gin.H {
-	return gin.H{"error": err.Error()}
+func ErrorResponse(err error) gin.H {
+	if e, ok := err.(*errors.AppError); ok {
+		return gin.H{
+			"error": gin.H{
+				"code":    e.Code,
+				"message": e.Message,
+			},
+		}
+	}
+	// fallback
+	return gin.H{
+		"error": gin.H{
+			"code":    "UNKNOWN_ERROR",
+			"message": err.Error(),
+		},
+	}
+}
 
+func HandleAppError(ctx *gin.Context, err error) {
+	if ae, ok := err.(*errors.AppError); ok {
+		ctx.JSON(ae.Status, ErrorResponse(ae))
+	} else {
+		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err))
+	}
 }
