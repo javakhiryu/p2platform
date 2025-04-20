@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
+	appErr "p2platform/errors"
 	"p2platform/util"
 
 	"github.com/google/uuid"
@@ -18,14 +18,14 @@ func (store *SQLStore) DeleteBuyRequestTx(ctx context.Context, buyReqID uuid.UUI
 		buyRequest, err = q.GetBuyRequestById(ctx, buyReqID)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
-				return BuyRequestNotFoundOrDeleted
+				return appErr.ErrBuyRequestsNotFound
 			}
-			return fmt.Errorf("failed to get buy request: %w", err)
+			return appErr.ErrFailedToGetBuyRequests
 		}
 
 		sellRequest, err := q.GetSellRequestForUpdate(ctx, buyRequest.SellReqID)
 		if err != nil {
-			return fmt.Errorf("failed to get sell request: %w", err)
+			return appErr.ErrFailedToGetSellRequests
 		}
 
 		if !sellRequest.IsDeleted.Bool && !sellRequest.IsActual.Bool {
@@ -35,13 +35,13 @@ func (store *SQLStore) DeleteBuyRequestTx(ctx context.Context, buyReqID uuid.UUI
 			}
 			_, err = q.OpenCloseSellRequest(ctx, arg)
 			if err != nil {
-				return fmt.Errorf("failed to open sell request: %w", err)
+				return appErr.ErrFailedToOpenSellRequest
 			}
 		}
 
 		err = q.DeleteBuyRequest(ctx, buyReqID)
 		if err != nil {
-			return fmt.Errorf("failed to delete buy request: %w", err)
+			return appErr.ErrFailedToDeleteBuyRequest
 		}
 		result = true
 		return nil

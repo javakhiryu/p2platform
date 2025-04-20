@@ -2,9 +2,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
+	appErr "p2platform/errors"
 	"p2platform/util"
 
 	"github.com/google/uuid"
@@ -33,18 +32,16 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
-		// 1. Получаем sell_request
 		sellRequest, err := q.GetSellRequestForUpdate(ctx, arg.SellReqID)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
-				return fmt.Errorf("sell request not found: %w", err)
+				return appErr.ErrSellRequestNotFound
 			}
-			return fmt.Errorf("failed to get sell request: %w", err)
+			return appErr.ErrFailedToGetSellRequests
 		}
-		// 2. Получаем все блокировки по sell_request
 		lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, arg.SellReqID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("failed to get locked amounts: %v", err)
+		if err != nil && !errors.Is(err, ErrNoRowsFound) {
+			return appErr.ErrFailedToGetLockedAmountBySellRequest
 		}
 
 		var totalLockedAmount int64
@@ -52,24 +49,24 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 		var lockedAmountByCash int64
 
 		if !sellRequest.IsActual.Bool {
-			return fmt.Errorf("sell request is not actual")
+			return appErr.ErrSellRequestIsNotActual
 		}
 		if sellRequest.IsDeleted.Bool {
-			return fmt.Errorf("Sell request has been deleted")
+			return appErr.ErrSellRequestDeleted
 		}
 
 		for _, lockedAmount := range lockedAmounts {
 			totalLockedAmount += lockedAmount.LockedTotalAmount
 		}
 		if sellRequest.SellTotalAmount-totalLockedAmount < arg.BuyTotalAmount {
-			return fmt.Errorf("insufficient funds: not enough available amount in sell request")
+			return appErr.ErrInsuficientTotalFunds
 		}
 		if arg.BuyByCard.Bool == true {
 			for _, lockedAmount := range lockedAmounts {
 				lockedAmountByCard += lockedAmount.LockedByCard.Int64
 			}
 			if sellRequest.SellAmountByCard.Int64-lockedAmountByCard < arg.BuyAmountByCard.Int64 {
-				return fmt.Errorf("insufficient funds: not enough available amount by card in sell request")
+				return appErr.ErrInsuficientCardFunds
 			}
 		}
 		if arg.BuyByCash.Bool == true {
@@ -77,16 +74,16 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 				lockedAmountByCash += lockedAmount.LockedByCash.Int64
 			}
 			if sellRequest.SellAmountByCash.Int64-lockedAmountByCash < arg.BuyAmountByCard.Int64 {
-				return fmt.Errorf("insufficient funds: not enough available amount by cash in sell request")
+				return appErr.ErrInsuficientCashFunds
 			}
 		}
 
 		user, err := q.GetUser(ctx, arg.TelegramId)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
-				return fmt.Errorf("user not found: %w", err)
+				return appErr.ErrUserNotFound
 			}
-			return fmt.Errorf("failed to get user: %w", err)
+			return appErr.ErrInternalServer
 		}
 
 		// 5. Создаём buy_request
@@ -102,7 +99,7 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 			BuyAmountByCash: arg.BuyAmountByCash,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create buy request: %v", err)
+			return appErr.ErrFailedToCreateBuyRequest
 		}
 		lockedAmount, err := q.CreateLockedAmount(ctx, CreateLockedAmountParams{
 			SellReqID:         arg.SellReqID,
@@ -112,7 +109,7 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 			LockedByCash:      arg.BuyAmountByCash,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create locked amount: %v", err)
+			return appErr.ErrFailedToCreateLockedAmount
 		}
 
 		remainingAmount := sellRequest.SellTotalAmount - (totalLockedAmount + arg.BuyTotalAmount)
@@ -123,13 +120,13 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 				SellReqID: arg.SellReqID,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to close sell request: %v", err)
+				return appErr.ErrFailedToCloseSellRequest
 			}
 		}
 
 		sellRequest, err = q.GetSellRequestById(ctx, arg.SellReqID)
 		if err != nil {
-			return fmt.Errorf("failed to get sell request: %v", err)
+			return appErr.ErrFailedToGetSellRequests
 		}
 
 		result = CreateBuyRequestTxResult{

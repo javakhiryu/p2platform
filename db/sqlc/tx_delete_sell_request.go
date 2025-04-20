@@ -2,10 +2,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
-
+	appErr "p2platform/errors"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -17,24 +15,24 @@ func (store *SQLStore) DeleteSellRequestTx(ctx context.Context, sellRequestId in
 
 		sellRequest, err := q.GetSellRequestForUpdate(ctx, sellRequestId)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return err
+			if errors.Is(err, ErrNoRowsFound) {
+				return appErr.ErrSellRequestNotFound
 			}
-			return err
+			return appErr.ErrFailedToGetSellRequests
 		}
 
 		if sellRequest.IsDeleted.Bool {
-			return ErrSellRequestAlreadyDeleted
+			return appErr.ErrSellRequestAlreadyDeleted
 		}
 
 		result, err = q.DeleteSellRequest(ctx, sellRequestId)
 		if err != nil {
-			return fmt.Errorf("failed to delete sell request: %w", err)
+			return appErr.ErrFailedToDeleteSellRequest
 		}
 
 		err = q.CloseBuyRequestBySellRequest(ctx, sellRequestId)
 		if err != nil {
-			return fmt.Errorf("failed to close buy request(s): %w", err)
+			return appErr.ErrFailedToCloseBuyRequests
 		}
 
 		return nil

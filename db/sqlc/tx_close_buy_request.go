@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	appErr "p2platform/errors"
 	"p2platform/util"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CloseBuyRequestTxParams struct {
@@ -31,9 +31,9 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 		_, err := store.GetBuyRequestById(ctx, arg.BuyRequestId)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
-				return fmt.Errorf("buy request not found: %w", err)
+				return appErr.ErrBuyRequestsNotFound
 			}
-			return fmt.Errorf("failed to get buy request: %w", err)
+			return appErr.ErrFailedToGetBuyRequests
 		}
 		if arg.IsSeller {
 			sellerArgs := CloseConfirmBySellerParams{
@@ -42,7 +42,7 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 			}
 			err := store.CloseConfirmBySeller(ctx, sellerArgs)
 			if err != nil {
-				return fmt.Errorf("Close confirmation by seller failed")
+				return appErr.ErrFailedToCloseBuyRequests
 			}
 		} else {
 			buyerArgs := CloseConfirmByBuyerParams{
@@ -51,19 +51,18 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 			}
 			err := store.CloseConfirmByBuyer(ctx, buyerArgs)
 			if err != nil {
-				return fmt.Errorf("Close confirmation by buyer failed")
+				return appErr.ErrFailedToCloseBuyRequests
 			}
 		}
 		buyRequest, err := store.GetBuyRequestById(ctx, arg.BuyRequestId)
 		if err != nil {
-			return fmt.Errorf("Failed to re-fetch buy request: %w", err)
+			return appErr.ErrFailedToGetBuyRequests
 		}
 
-
 		var (
-			sellerConfirmedAt = getValidTime(buyRequest.SellerConfirmedAt)
-			buyerConfirmedAt  = getValidTime(buyRequest.BuyerConfirmedAt)
-			closedAt          = getValidTime(buyRequest.ClosedAt)
+			sellerConfirmedAt = util.GetValidTime(buyRequest.SellerConfirmedAt)
+			buyerConfirmedAt  = util.GetValidTime(buyRequest.BuyerConfirmedAt)
+			closedAt          = util.GetValidTime(buyRequest.ClosedAt)
 		)
 
 		if buyRequest.CloseConfirmByBuyer.Bool && buyRequest.CloseConfirmBySeller.Bool {
@@ -83,8 +82,8 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 				IsClosed:               closedBuyRequest.IsClosed.Bool,
 				ClosedAt:               &closedBuyRequest.ClosedAt.Time,
 			}
-			err =store.ReleaseLockedAmountByBuyRequest(ctx, closeBuyRequestArgs.BuyReqID)
-			if err !=nil{
+			err = store.ReleaseLockedAmountByBuyRequest(ctx, closeBuyRequestArgs.BuyReqID)
+			if err != nil {
 				return fmt.Errorf("Failed to release locked amount")
 			}
 		} else {
@@ -101,11 +100,4 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 		return nil
 	})
 	return result, err
-}
-
-func getValidTime(t pgtype.Timestamptz) *time.Time {
-	if t.Valid {
-		return &t.Time
-	}
-	return nil
 }

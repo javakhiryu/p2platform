@@ -1,18 +1,19 @@
 package api
 
 import (
-	"database/sql"
-	"errors"
 	"net/http"
+	"errors"
 	db "p2platform/db/sqlc"
+	appErr "p2platform/errors"
 	util "p2platform/util"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type createSellRequest struct {
-	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=5"`
+	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=1"`
 	SellMoneySource  string `json:"sell_money_source" binding:"required,source"`
 	CurrencyFrom     string `json:"currency_from" binding:"required,currency"`
 	CurrencyTo       string `json:"currency_to" binding:"required,currency"`
@@ -22,13 +23,47 @@ type createSellRequest struct {
 	Comment          string `json:"comment" binding:"omitempty"`
 }
 
+type sellRequestResponse struct {
+	SellReqID        int32     `json:"sell_req_id"`
+	SellTotalAmount  int64     `json:"sell_total_amount"`
+	SellMoneySource  string    `json:"sell_money_source"`
+	CurrencyFrom     string    `json:"currency_from"`
+	CurrencyTo       string    `json:"currency_to"`
+	TgUsername       string    `json:"tg_username"`
+	SellByCard       bool      `json:"sell_by_card"`
+	SellAmountByCard int64     `json:"sell_amount_by_card"`
+	SellByCash       bool      `json:"sell_by_cash"`
+	SellAmountByCash int64     `json:"sell_amount_by_cash"`
+	SellExchangeRate int64     `json:"sell_exchange_rate"`
+	Comment          string    `json:"comment"`
+	IsActual         bool      `json:"is_actual"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type ErrResponse struct {
+	Error string `json:"error" example:"something went wrong"`
+}
+
+// createSellRequest godoc
+//
+//	@Summary      Create a new sell request
+//	@Description  Create a new sell request with Telegram ID and username
+//	@Tags         sell-request
+//	@Accept       json
+//	@Produce      json
+//	@Param        request  body      createSellRequest  true  "Create sell request"
+//	@Success      200      {object}  sellRequestResponse
+//	@Failure      400      {object}  ErrResponse
+//	@Failure      404      {object}  ErrResponse
+//	@Failure      500      {object}  ErrResponse
+//	@Router       /sell-request [post]
 func (server *Server) createSellRequest(ctx *gin.Context) {
 	var req createSellRequest
 	sellByCard := false
 	sellByCash := false
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
 		return
 	}
 	telegramId, ok := GetTelegramIDFromContext(ctx)
@@ -37,17 +72,15 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 	}
 	user, err := server.store.GetUser(ctx, telegramId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrUserNotFound.Status, ErrorResponse(appErr.ErrUserNotFound))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
 	if !(req.SellAmountByCard+req.SellAmountByCash == req.SellTotalAmount) {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "sum of amounts by cash and card is not equal to total amount",
-		})
+		ctx.JSON(appErr.ErrSellAmountMismatch.Status, ErrorResponse(appErr.ErrSellAmountMismatch))
 		return
 	}
 	if req.SellAmountByCard > 0 {
@@ -73,10 +106,26 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 	}
 	sellRequest, err := server.store.CreateSellRequest(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
-	ctx.JSON(http.StatusOK, sellRequest)
+	result := sellRequestResponse{
+		SellReqID:        sellRequest.SellReqID,
+		SellTotalAmount:  sellRequest.SellTotalAmount,
+		SellMoneySource:  sellRequest.SellMoneySource,
+		CurrencyFrom:     sellRequest.CurrencyFrom,
+		CurrencyTo:       sellRequest.CurrencyTo,
+		TgUsername:       sellRequest.TgUsername,
+		SellByCard:       sellRequest.SellByCard.Bool,
+		SellAmountByCard: sellRequest.SellAmountByCard.Int64,
+		SellByCash:       sellRequest.SellByCash.Bool,
+		SellAmountByCash: sellRequest.SellAmountByCash.Int64,
+		SellExchangeRate: sellRequest.SellExchangeRate.Int64,
+		Comment:          sellRequest.CurrencyTo,
+		IsActual:         sellRequest.IsActual.Bool,
+		CreatedAt:        sellRequest.CreatedAt,
+	}
+	ctx.JSON(http.StatusOK, result)
 }
 
 type getSellRequest struct {
@@ -87,24 +136,16 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 	var req getSellRequest
 	err := ctx.ShouldBindUri(&req)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err))
 		return
 	}
 	result, err := server.store.GetSellRequestTx(ctx, req.ID)
 	if err != nil {
-		if err == db.ErrNoRowsFound {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		HandleAppError(ctx, err)
 	}
 
 	if result.SellRequest.IsDeleted.Bool {
-		ctx.JSON(http.StatusGone, gin.H{
-			"error":      "sell request has been deleted",
-			"deleted_at": result.SellRequest.UpdatedAt.UTC(),
-		})
+		ctx.JSON(appErr.ErrSellRequestDeleted.Status, ErrorResponse(appErr.ErrSellRequestDeleted))
 		return
 	}
 	ctx.JSON(http.StatusOK, result)
@@ -119,7 +160,7 @@ func (server *Server) listSellRequests(ctx *gin.Context) {
 	var req listSellRequest
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(appErr.ErrInvalidQuery.Status, ErrorResponse(appErr.ErrInvalidQuery))
 		return
 	}
 	arg := db.ListSellRequeststTxParams{
@@ -128,11 +169,7 @@ func (server *Server) listSellRequests(ctx *gin.Context) {
 	}
 	sellRequests, err := server.store.ListSellRequeststTx(ctx, arg)
 	if err != nil {
-		if err == db.ErrNoRowsFound {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		HandleAppError(ctx, err)
 		return
 	}
 
@@ -148,7 +185,7 @@ func (server *Server) listMySellRequests(ctx *gin.Context) {
 	var req listSellRequest
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(appErr.ErrInvalidQuery.Status, ErrorResponse(appErr.ErrInvalidQuery))
 		return
 	}
 	telegramId, ok := GetTelegramIDFromContext(ctx)
@@ -162,11 +199,7 @@ func (server *Server) listMySellRequests(ctx *gin.Context) {
 	}
 	sellRequests, err := server.store.ListMySellRequeststTx(ctx, arg)
 	if err != nil {
-		if err == db.ErrNoRowsFound {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		HandleAppError(ctx, err)
 		return
 	}
 
@@ -199,12 +232,12 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 
 	err := ctx.ShouldBindUri(&reqUri)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(appErr.ErrInvalidUri.Status, ErrorResponse(appErr.ErrInvalidUri))
 		return
 	}
 	err = ctx.ShouldBindJSON(&reqJson)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
 		return
 	}
 
@@ -219,36 +252,31 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 		Offset:    0,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
 	if len(buyRequests) > 0 {
-		ctx.JSON(http.StatusForbidden, gin.H{
-			"error": "sell request can't be updated because it has buy requests",
-		})
+		ctx.JSON(appErr.ErrSellRequestHasBuyRequests.Status, ErrorResponse(appErr.ErrSellRequestHasBuyRequests))
 		return
 	}
 
 	sellRequest, err := server.store.GetSellRequestById(ctx, reqUri.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrSellRequestNotFound.Status, ErrorResponse(appErr.ErrSellRequestNotFound))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(appErr.ErrFailedToGetSellRequests.Status, ErrorResponse(appErr.ErrFailedToGetSellRequests))
 		return
 	}
 
 	if telegramId != sellRequest.TelegramID {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the owner of this sell request"})
+		ctx.JSON(appErr.ErrNotSellRequestOwner.Status, ErrorResponse(appErr.ErrNotSellRequestOwner))
 		return
 	}
 
 	if sellRequest.IsDeleted.Bool {
-		ctx.JSON(http.StatusGone, gin.H{
-			"error":      "sell request has been deleted",
-			"deleted_at": sellRequest.UpdatedAt.UTC(),
-		})
+		ctx.JSON(appErr.ErrSellRequestDeleted.Status, ErrorResponse(appErr.ErrSellRequestDeleted))
 		return
 	}
 
@@ -269,9 +297,7 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 	}
 
 	if totalAmountToCheckSum != amountByCardToCheckSum+amountByCashToCheckSum {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "sum of amounts by cash and card is not equal to total amount",
-		})
+		ctx.JSON(appErr.ErrSellAmountMismatch.Status, ErrorResponse(appErr.ErrSellAmountMismatch))
 		return
 	}
 
@@ -339,7 +365,7 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 	}
 	sellRequest, err = server.store.UpdateSellRequest(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
 	ctx.JSON(http.StatusOK, sellRequest)
@@ -356,7 +382,7 @@ func (server *Server) deleteSellRequest(ctx *gin.Context) {
 	var req deleteSellRequestUri
 	err := ctx.ShouldBindUri(&req)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, err)
+		ctx.JSON(appErr.ErrInvalidUri.Status, ErrorResponse(appErr.ErrInvalidUri))
 		return
 	}
 
@@ -367,26 +393,22 @@ func (server *Server) deleteSellRequest(ctx *gin.Context) {
 
 	sellRequest, err := server.store.GetSellRequestById(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrSellRequestNotFound.Status, ErrorResponse(appErr.ErrSellRequestNotFound))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(appErr.ErrFailedToGetSellRequests.Status, ErrorResponse(appErr.ErrFailedToGetSellRequests))
 		return
 	}
 
 	if telegramId != sellRequest.TelegramID {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "you are not the owner of this sell request"})
+		ctx.JSON(appErr.ErrNotSellRequestOwner.Status, ErrorResponse(appErr.ErrNotSellRequestOwner))
 		return
 	}
 
 	isDeleted, err := server.store.DeleteSellRequestTx(ctx, req.ID)
 	if err != nil {
-		if errors.Is(err, db.ErrSellRequestAlreadyDeleted) {
-			ctx.JSON(http.StatusConflict, gin.H{"error": db.ErrSellRequestAlreadyDeleted.Error()})
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		HandleAppError(ctx, err)
 		return
 	}
 	result := deleteSellRequestResponse{

@@ -7,6 +7,8 @@ services:
       POSTGRES_DB: p2platform
     ports:
       - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
   
   api:
     build: 
@@ -20,3 +22,5 @@ services:
       - postgres
     entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
     command: ["/app/main"]
+volumes:
+  db-data:

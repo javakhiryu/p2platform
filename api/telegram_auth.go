@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	db "p2platform/db/sqlc"
-
-	//"p2platform/auth"
+	"p2platform/errors"
 	"p2platform/util"
 
 	"github.com/gin-gonic/gin"
@@ -24,10 +23,10 @@ func (s *Server) telegramAuth(ctx *gin.Context) {
 	user := user{}
 	//config, err := util.LoadConfig(".")
 	//if err != nil {
-	//	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load config"})
+	//ctx.JSON(errors.ErrInternalServer.Status, errors.ErrInternalServer)
 	//}
 	if err := ctx.BindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		ctx.JSON(errors.ErrInvalidPayload.Status, ErrorResponse(errors.ErrInvalidPayload))
 		return
 	}
 
@@ -52,11 +51,11 @@ func (s *Server) telegramAuth(ctx *gin.Context) {
 			LastName:   util.ToPgText(user.LastName),
 		})
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save user"})
+			ctx.JSON(errors.ErrFailedToSaveUser.Status, errors.ErrFailedToSaveUser)
 			return
 		}
 	} else if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check user"})
+		ctx.JSON(errors.ErrFailedToCheckUser.Status, errors.ErrFailedToCheckUser)
 		return
 	}
 

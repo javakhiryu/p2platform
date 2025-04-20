@@ -169,7 +169,6 @@ func (q *Queries) GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (Bu
 const listBuyRequests = `-- name: ListBuyRequests :many
 SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
 WHERE sell_req_id = $1
-    AND is_closed = false
 ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3
@@ -222,7 +221,6 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 const listBuyRequestsByTelegramId = `-- name: ListBuyRequestsByTelegramId :many
 SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, is_closed, closed_at, created_at, expires_at FROM buy_requests
 WHERE telegram_id = $1
-    AND is_closed = false
 ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3

@@ -11,6 +11,7 @@ import (
 	mockdb "p2platform/db/mock"
 	db "p2platform/db/sqlc"
 	util "p2platform/util"
+	dbErr "p2platform/errors"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -906,7 +907,7 @@ func TestDeleteSellRequest(t *testing.T) {
 			sellReqID: deletedSellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetSellRequestById(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(deletedSellRequest, nil)
-				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(false, db.ErrSellRequestAlreadyDeleted)
+				store.EXPECT().DeleteSellRequestTx(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(false, dbErr.ErrSellRequestAlreadyDeleted)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusConflict, recorder.Code)

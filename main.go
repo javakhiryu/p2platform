@@ -12,7 +12,24 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	_ "p2platform/docs"
 )
+
+//	@title			P2Platform API
+//	@description	This is a simple API for a P2P platform.
+//	@description
+//	@description	Feel free to contact me if you have any questions
+//	@description
+//	@description				GitHub Repository:
+//	@contact.name				Javakhir Yu
+//	@contact.url				https://github.com/javakhiryu/p2platform
+//	@contact.email				javakhiryulchibaev@gmail.com
+//	@host						localhost:8080
+//	@version					1.0
+//	@BasePath					/
+//	@schemes					http
+//	@produce					json
+//	@consumes					json
 
 func main() {
 	config, err := util.LoadConfig(".")
@@ -27,7 +44,7 @@ func main() {
 		log.Fatal().Err(err).Msg("cannot connect to database")
 	}
 	store := db.NewStore(conn)
-	worker :=worker.NewAutoReleaseWorker(store, 1*time.Minute)
+	worker := worker.NewAutoReleaseWorker(store, 1*time.Minute)
 	worker.Start()
 	runGinServer(config, store)
 
