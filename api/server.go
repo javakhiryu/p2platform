@@ -1,11 +1,14 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	db "p2platform/db/sqlc"
 	"p2platform/errors"
 	"p2platform/util"
+	"strings"
 
+	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -14,15 +17,25 @@ import (
 )
 
 type Server struct {
-	config util.Config
-	store  db.Store
-	router *gin.Engine
+	config   util.Config
+	store    db.Store
+	router   *gin.Engine
+	producer sarama.SyncProducer
 }
 
 func NewServer(store db.Store, config util.Config) (*Server, error) {
+	saramaConfig := sarama.NewConfig()
+	saramaConfig.Producer.Return.Successes = true
+
+	producer, err :=sarama.NewSyncProducer(strings.Split(config.KafkaBrokers, ","), saramaConfig)
+	if err != nil{
+		return nil, fmt.Errorf("cannot create Kafka producer: %w", err)
+	}
 	server := &Server{
 		config: config,
 		store:  store,
+		producer: producer,
+
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {

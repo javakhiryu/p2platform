@@ -5,14 +5,18 @@ import (
 	"os"
 	"p2platform/api"
 	db "p2platform/db/sqlc"
+	"p2platform/notification/kafka"
+	"p2platform/notification/telegram"
 	"p2platform/util"
 	"p2platform/worker"
+	"strings"
 	"time"
+
+	_ "p2platform/docs"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	_ "p2platform/docs"
 )
 
 //	@title			P2Platform API
@@ -44,6 +48,17 @@ func main() {
 		log.Fatal().Err(err).Msg("cannot connect to database")
 	}
 	store := db.NewStore(conn)
+
+	tg := telegram.New(config.TelegramBotToken)
+
+	go func(){
+		log.Info().Msg("Starting Telegram Kafka consumer...")
+		err := kafka.StartConsumer(strings.Split(config.KafkaBrokers, ","), "notifications", tg)
+		if err !=nil{
+			log.Error().Err(err).Msg("Kafka consumer error")
+		}
+	}()
+
 	worker := worker.NewAutoReleaseWorker(store, 1*time.Minute)
 	worker.Start()
 	runGinServer(config, store)
