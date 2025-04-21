@@ -9,6 +9,7 @@ type Config struct {
 	HTTPServerAddress string `mapstructure:"HTTP_SERVER_ADDRESS"`
 	Environment       string `mapstructure:"ENVIRONMENT"`
 	TelegramBotToken  string `mapstructure:"TELEGRAM_BOT_TOKEN"`
+	KafkaBrokers      string `mapstructure:"KAFKA_BROKERS"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

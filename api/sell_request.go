@@ -1,10 +1,13 @@
 package api
 
 import (
-	"net/http"
 	"errors"
+	"fmt"
+	"net/http"
 	db "p2platform/db/sqlc"
 	appErr "p2platform/errors"
+	"p2platform/notification/kafka"
+	"p2platform/notification/model"
 	util "p2platform/util"
 	"time"
 
@@ -126,6 +129,13 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 		CreatedAt:        sellRequest.CreatedAt,
 	}
 	ctx.JSON(http.StatusOK, result)
+
+	_ = kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
+		TelegramId: telegramId,
+		Message: fmt.Sprintf("Sell request #%d успешно создан!", sellRequest.SellReqID),
+		EventType: "sell_request_created",
+	})
+	
 }
 
 type getSellRequest struct {
