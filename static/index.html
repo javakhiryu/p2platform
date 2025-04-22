@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telegram Auth</title>
+</head>
+<body>
+  <h1>Telegram Login</h1>
+
+  <script async src="https://telegram.org/js/telegram-widget.js?22"
+    data-telegram-login="p2platform_bot"
+    data-size="large"
+    data-onauth="onTelegramAuth(user)"
+    data-request-access="write">
+  </script>
+
+  <pre id="output"></pre>
+
+  <hr>
+  <h2>Create Sell Request</h2>
+  <form id="sellForm">
+    <label>Sell Total Amount: <input type="number" name="sell_total_amount" required min="1"></label><br>
+    <label>Sell Money Source: <input type="text" name="sell_money_source" required></label><br>
+    <label>Currency From: <input type="text" name="currency_from" required></label><br>
+    <label>Currency To: <input type="text" name="currency_to" required></label><br>
+    <label>Sell Amount by Card: <input type="number" name="sell_amount_by_card" min="0"></label><br>
+    <label>Sell Amount by Cash: <input type="number" name="sell_amount_by_cash" min="0"></label><br>
+    <label>Sell Exchange Rate: <input type="number" name="sell_exchange_rate" required min="1"></label><br>
+    <label>Comment: <input type="text" name="comment"></label><br>
+    <button type="submit">Submit</button>
+  </form>
+
+  <pre id="sellOutput"></pre>
+
+  <script>
+    async function onTelegramAuth(user) {
+      const output = document.getElementById('output');
+      output.textContent = JSON.stringify(user, null, 2);
+
+      try {
+        const res = await fetch('http://localhost:8080/users/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user)
+        });
+
+        const data = await res.json();
+        output.textContent += '\n\nVerification response:\n' + JSON.stringify(data, null, 2);
+      } catch (err) {
+        output.textContent += '\n\nError contacting backend:\n' + err.message;
+      }
+    }
+
+    document.getElementById('sellForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        sell_total_amount: parseInt(form.sell_total_amount.value),
+        sell_money_source: form.sell_money_source.value,
+        currency_from: form.currency_from.value,
+        currency_to: form.currency_to.value,
+        sell_amount_by_card: parseInt(form.sell_amount_by_card.value || 0),
+        sell_amount_by_cash: parseInt(form.sell_amount_by_cash.value || 0),
+        sell_exchange_rate: parseInt(form.sell_exchange_rate.value),
+        comment: form.comment.value
+      };
+
+      const sellOutput = document.getElementById('sellOutput');
+      sellOutput.textContent = 'Sending request...\n' + JSON.stringify(data, null, 2);
+
+      try {
+        const res = await fetch('http://localhost:8080/sell-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        sellOutput.textContent += '\n\nServer response:\n' + JSON.stringify(result, null, 2);
+      } catch (err) {
+        sellOutput.textContent += '\n\nError:\n' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

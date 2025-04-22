@@ -3,8 +3,10 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"p2platform/auth"
 	db "p2platform/db/sqlc"
 	"p2platform/errors"
+	appErr "p2platform/errors"
 	"p2platform/util"
 
 	"github.com/gin-gonic/gin"
@@ -15,38 +17,41 @@ type user struct {
 	Username  string `json:"username"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	PhotoUrl  string `json:"photo_url"`
 	Hash      string `json:"hash" binding:"required"`
 	AuthDate  int64  `json:"auth_date" binding:"required"`
 }
 
 func (s *Server) telegramAuth(ctx *gin.Context) {
 	user := user{}
-	//config, err := util.LoadConfig(".")
-	//if err != nil {
-	//ctx.JSON(errors.ErrInternalServer.Status, errors.ErrInternalServer)
-	//}
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		ctx.JSON(errors.ErrInternalServer.Status, errors.ErrInternalServer)
+	}
 	if err := ctx.BindJSON(&user); err != nil {
 		ctx.JSON(errors.ErrInvalidPayload.Status, ErrorResponse(errors.ErrInvalidPayload))
 		return
 	}
 
-	//ok := auth.VerifyTelegramAuth(map[string]string{
-	//	"id":         fmt.Sprint(user.ID),
-	//	"username":   user.Username,
-	//	"first_name": user.FirstName,
-	//	"last_name":  user.LastName,
-	//	"auth_date":  fmt.Sprint(user.AuthDate),
-	//}, user.Hash, config.TelegramBotToken)
-	//if !ok {
-	//	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid hash"})
-	//	return
-	//}
+	ok := auth.VerifyTelegramAuth(map[string]string{
+		"id":         fmt.Sprint(user.ID),
+		"username":   user.Username,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"photo_url":  user.PhotoUrl,
+		"auth_date":  fmt.Sprint(user.AuthDate),
+	}, user.Hash, config.TelegramBotToken)
+	if !ok {
+		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
+		return
+	}
 
-	_, err := s.store.GetUser(ctx, user.ID)
+	_, err = s.store.GetUser(ctx, user.ID)
 	if err == db.ErrNoRowsFound {
 		_, err := s.store.CreateUser(ctx, db.CreateUserParams{
 			TelegramID: user.ID,
 			TgUsername: user.Username,
+			PhotoUrl:   util.ToPgText(user.PhotoUrl),
 			FirstName:  util.ToPgText(user.FirstName),
 			LastName:   util.ToPgText(user.LastName),
 		})
@@ -66,7 +71,7 @@ func (s *Server) telegramAuth(ctx *gin.Context) {
 		"/",
 		"",
 		false,
-		true,
+		false,
 	)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -27,15 +28,14 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Return.Successes = true
 
-	producer, err :=sarama.NewSyncProducer(strings.Split(config.KafkaBrokers, ","), saramaConfig)
-	if err != nil{
+	producer, err := sarama.NewSyncProducer(strings.Split(config.KafkaBrokers, ","), saramaConfig)
+	if err != nil {
 		return nil, fmt.Errorf("cannot create Kafka producer: %w", err)
 	}
 	server := &Server{
-		config: config,
-		store:  store,
+		config:   config,
+		store:    store,
 		producer: producer,
-
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -49,6 +49,13 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8081", "https://facf-37-110-210-189.ngrok-free.app"},
+		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		AllowCredentials: true,
+	}))
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
