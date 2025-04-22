@@ -16,17 +16,19 @@ INSERT INTO users (
     telegram_id,
     tg_username,
     first_name,
+    photo_url,
     last_name
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5
 )
-RETURNING telegram_id, tg_username, first_name, last_name, created_at, updated_at
+RETURNING telegram_id, tg_username, first_name, last_name, photo_url, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	TelegramID int64       `json:"telegram_id"`
 	TgUsername string      `json:"tg_username"`
 	FirstName  pgtype.Text `json:"first_name"`
+	PhotoUrl   pgtype.Text `json:"photo_url"`
 	LastName   pgtype.Text `json:"last_name"`
 }
 
@@ -35,6 +37,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.TelegramID,
 		arg.TgUsername,
 		arg.FirstName,
+		arg.PhotoUrl,
 		arg.LastName,
 	)
 	var i User
@@ -43,6 +46,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.TgUsername,
 		&i.FirstName,
 		&i.LastName,
+		&i.PhotoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -59,7 +63,7 @@ func (q *Queries) DeleteUser(ctx context.Context, telegramID int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT telegram_id, tg_username, first_name, last_name, created_at, updated_at FROM users WHERE telegram_id = $1
+SELECT telegram_id, tg_username, first_name, last_name, photo_url, created_at, updated_at FROM users WHERE telegram_id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, telegramID int64) (User, error) {
@@ -70,6 +74,7 @@ func (q *Queries) GetUser(ctx context.Context, telegramID int64) (User, error) {
 		&i.TgUsername,
 		&i.FirstName,
 		&i.LastName,
+		&i.PhotoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -82,21 +87,24 @@ SET
     tg_username = COALESCE($1, tg_username),
     first_name = COALESCE($2, first_name),
     last_name = COALESCE($3, last_name),
+    photo_url = COALESCE($4, photo_url),
     updated_at = CASE
         WHEN $1 IS NOT NULL
           OR $2 IS NOT NULL
           OR $3 IS NOT NULL
+          OR $4 IS NOT NULL
         THEN now()
         ELSE updated_at
     END
-WHERE telegram_id = $4
-RETURNING telegram_id, tg_username, first_name, last_name, created_at, updated_at
+WHERE telegram_id = $5
+RETURNING telegram_id, tg_username, first_name, last_name, photo_url, created_at, updated_at
 `
 
 type UpdateUserParams struct {
 	TgUsername pgtype.Text `json:"tg_username"`
 	FirstName  pgtype.Text `json:"first_name"`
 	LastName   pgtype.Text `json:"last_name"`
+	PhotoUrl   pgtype.Text `json:"photo_url"`
 	TelegramID int64       `json:"telegram_id"`
 }
 
@@ -105,6 +113,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.TgUsername,
 		arg.FirstName,
 		arg.LastName,
+		arg.PhotoUrl,
 		arg.TelegramID,
 	)
 	var i User
@@ -113,6 +122,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.TgUsername,
 		&i.FirstName,
 		&i.LastName,
+		&i.PhotoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

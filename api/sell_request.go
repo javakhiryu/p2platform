@@ -131,11 +131,11 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result)
 
 	_ = kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
-		TelegramId: telegramId,
+		TelegramId: 86674601,
 		Message: fmt.Sprintf("Sell request #%d успешно создан!", sellRequest.SellReqID),
 		EventType: "sell_request_created",
 	})
-	
+
 }
 
 type getSellRequest struct {

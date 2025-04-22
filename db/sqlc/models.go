@@ -68,6 +68,7 @@ type User struct {
 	TgUsername string      `json:"tg_username"`
 	FirstName  pgtype.Text `json:"first_name"`
 	LastName   pgtype.Text `json:"last_name"`
+	PhotoUrl   pgtype.Text `json:"photo_url"`
 	CreatedAt  time.Time   `json:"created_at"`
 	UpdatedAt  time.Time   `json:"updated_at"`
 }
