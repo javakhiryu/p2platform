@@ -22,12 +22,8 @@ type user struct {
 	AuthDate  int64  `json:"auth_date" binding:"required"`
 }
 
-func (s *Server) telegramAuth(ctx *gin.Context) {
+func (server *Server) telegramAuth(ctx *gin.Context) {
 	user := user{}
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		ctx.JSON(errors.ErrInternalServer.Status, errors.ErrInternalServer)
-	}
 	if err := ctx.BindJSON(&user); err != nil {
 		ctx.JSON(errors.ErrInvalidPayload.Status, ErrorResponse(errors.ErrInvalidPayload))
 		return
@@ -40,15 +36,15 @@ func (s *Server) telegramAuth(ctx *gin.Context) {
 		"last_name":  user.LastName,
 		"photo_url":  user.PhotoUrl,
 		"auth_date":  fmt.Sprint(user.AuthDate),
-	}, user.Hash, config.TelegramBotToken)
+	}, user.Hash, server.config.TelegramBotToken)
 	if !ok {
 		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
 		return
 	}
 
-	_, err = s.store.GetUser(ctx, user.ID)
+	_, err := server.store.GetUser(ctx, user.ID)
 	if err == db.ErrNoRowsFound {
-		_, err := s.store.CreateUser(ctx, db.CreateUserParams{
+		_, err := server.store.CreateUser(ctx, db.CreateUserParams{
 			TelegramID: user.ID,
 			TgUsername: user.Username,
 			PhotoUrl:   util.ToPgText(user.PhotoUrl),
@@ -70,8 +66,8 @@ func (s *Server) telegramAuth(ctx *gin.Context) {
 		3600*24*30,
 		"/",
 		"",
-		false,
-		false,
+		true,
+		true,
 	)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
