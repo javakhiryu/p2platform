@@ -11,6 +11,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countOfSellRequests = `-- name: CountOfSellRequests :one
+SELECT COUNT(*) FROM sell_requests WHERE is_deleted = false
+`
+
+func (q *Queries) CountOfSellRequests(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfSellRequests)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countOfSellRequestsByTelegramId = `-- name: CountOfSellRequestsByTelegramId :one
+SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND is_deleted = false
+`
+
+func (q *Queries) CountOfSellRequestsByTelegramId(ctx context.Context, telegramID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfSellRequestsByTelegramId, telegramID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createSellRequest = `-- name: CreateSellRequest :one
 INSERT INTO sell_requests (
   sell_total_amount,

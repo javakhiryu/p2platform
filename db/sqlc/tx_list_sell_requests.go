@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"math"
 	appErr "p2platform/errors"
 )
 
@@ -13,6 +14,7 @@ type ListSellRequeststTxParams struct {
 
 type ListSellRequeststTxResults struct {
 	SellRequests []GetSellRequestTxResult `json:"sell_requests"`
+	TotalPages   int32                    `json:"total_pages"`
 }
 
 func (store *SQLStore) ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams) (ListSellRequeststTxResults, error) {
@@ -55,6 +57,12 @@ func (store *SQLStore) ListSellRequeststTx(ctx context.Context, params ListSellR
 				LockedAmountByCash: lockedAmountByCash,
 			})
 		}
+
+		totalCount, err := q.CountOfSellRequests(ctx)
+		if err != nil {
+			return appErr.ErrFailedToGetSellRequests
+		}
+		results.TotalPages = int32(math.Ceil(float64(totalCount) / float64(params.Limit)))
 		return nil
 	})
 	return results, err

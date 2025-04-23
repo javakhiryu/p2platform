@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sell Request Details</title>
+    <style>
+        :root {
+            --tg-bg: #ffffff;
+            --tg-accent: #0088cc;
+            --tg-accent-hover: #007bb3;
+            --tg-border: #e0e0e0;
+            --tg-text: #222;
+            --tg-text-secondary: #707579;
+            --tg-shadow: rgba(0, 0, 0, 0.05);
+            --tg-green: #31b545;
+            --tg-red: #ff3b30;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --border-radius-sm: 8px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 15px;
+            --font-size-lg: 16px;
+            --font-size-xl: 20px;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        header {
+            background-color: var(--tg-accent);
+            color: white;
+            padding: var(--spacing-md);
+            width: 100%;
+            text-align: center;
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .container {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            width: 92%;
+            max-width: 480px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 2px 10px var(--tg-shadow);
+            border: 1px solid var(--tg-border);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .section {
+            width: 100%;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-md);
+            color: var(--tg-accent);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--tg-border);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--tg-border);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--tg-text-secondary);
+            font-size: var(--font-size-md);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .info-value {
+            color: var(--tg-text);
+            font-size: var(--font-size-md);
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .boolean-value.true {
+            color: var(--tg-green);
+        }
+
+        .boolean-value.false {
+            color: var(--tg-red);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .status-active {
+            background-color: rgba(49, 181, 69, 0.1);
+            color: var(--tg-green);
+        }
+
+        .status-inactive {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: var(--tg-red);
+        }
+
+        .button {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            margin-top: var(--spacing-lg);
+            font-size: var(--font-size-lg);
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+            box-sizing: border-box;
+            text-decoration: none;
+        }
+
+        .button:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .back-button {
+            margin-top: var(--spacing-md);
+            background-color: #f1f1f1;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>Sell Request Details</header>
+
+    <div class="container">
+        <div class="section">
+            <div class="section-title">Transaction Info</div>
+            <div class="info-row">
+                <span class="info-label">Request ID</span>
+                <span class="info-value" id="sellReqId"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Total Amount</span>
+                <span class="info-value" id="sellTotalAmount"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Exchange Rate</span>
+                <span class="info-value" id="sellExchangeRate"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="info-value" id="isActual"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Payment Details</div>
+            <div class="info-row">
+                <span class="info-label">Money Source</span>
+                <span class="info-value" id="sellMoneySource"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Currency From</span>
+                <span class="info-value" id="currencyFrom"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Currency To</span>
+                <span class="info-value" id="currencyTo"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">By Card</span>
+                <span class="info-value boolean-value" id="sellByCard"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Card Amount</span>
+                <span class="info-value" id="sellAmountByCard"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">By Cash</span>
+                <span class="info-value boolean-value" id="sellByCash"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Cash Amount</span>
+                <span class="info-value" id="sellAmountByCash"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">User Info</div>
+            <div class="info-row">
+                <span class="info-label">Telegram Username</span>
+                <a class="info-value" id="tgUsername" href="#" target="_blank"></a>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Additional Info</div>
+            <div class="info-row">
+                <span class="info-label">Created At</span>
+                <span class="info-value" id="createdAt"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Comment</span>
+                <span class="info-value" id="comment"></span>
+            </div>
+        </div>
+
+        <a href="https://facf-37-110-210-189.ngrok-free.app/list-sell-requests" class="button back-button">← Go to Sell Requests</a>
+    </div>
+
+    <script>
+        const pathParts = window.location.pathname.split('/');
+        const sellRequestId = pathParts[pathParts.length - 1];
+
+        if (!sellRequestId) {
+            document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: ID is missing from the URL.</div>";
+        } else {
+            const apiUrl = `http://localhost:8081/api/v1/sell-request/${sellRequestId}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.sell_request) {
+                        const sellRequest = data.sell_request;
+
+                        document.getElementById('sellReqId').textContent = sellRequest.sell_req_id || 'N/A';
+                        document.getElementById('sellTotalAmount').textContent = sellRequest.sell_total_amount || '0';
+                        document.getElementById('sellMoneySource').textContent = sellRequest.sell_money_source || 'N/A';
+                        document.getElementById('currencyFrom').textContent = sellRequest.currency_from || 'N/A';
+                        document.getElementById('currencyTo').textContent = sellRequest.currency_to || 'N/A';
+                        const tgUsernameElement = document.getElementById('tgUsername');
+                        if (sellRequest.tg_username) {
+                            tgUsernameElement.textContent = `@${sellRequest.tg_username}`;
+                            tgUsernameElement.href = `https://t.me/${sellRequest.tg_username}`;
+                        } else {
+                            tgUsernameElement.textContent = 'N/A';
+                            tgUsernameElement.removeAttribute('href');
+                        }
+
+
+                        const sellByCardElement = document.getElementById('sellByCard');
+                        sellByCardElement.textContent = sellRequest.sell_by_card ? 'Yes' : 'No';
+                        sellByCardElement.classList.add(sellRequest.sell_by_card ? 'true' : 'false');
+
+                        document.getElementById('sellAmountByCard').textContent = sellRequest.sell_amount_by_card || '0';
+
+                        const sellByCashElement = document.getElementById('sellByCash');
+                        sellByCashElement.textContent = sellRequest.sell_by_cash ? 'Yes' : 'No';
+                        sellByCashElement.classList.add(sellRequest.sell_by_cash ? 'true' : 'false');
+
+                        document.getElementById('sellAmountByCash').textContent = sellRequest.sell_amount_by_cash || '0';
+                        document.getElementById('sellExchangeRate').textContent = sellRequest.sell_exchange_rate || '0';
+
+                        const isActualElement = document.getElementById('isActual');
+                        if (sellRequest.is_actual) {
+                            isActualElement.textContent = 'Active';
+                            isActualElement.classList.add('status-badge', 'status-active');
+                        } else {
+                            isActualElement.textContent = 'Inactive';
+                            isActualElement.classList.add('status-badge', 'status-inactive');
+                        }
+
+                        document.getElementById('comment').textContent = sellRequest.comment || 'No comments';
+                        
+                        const createdAt = sellRequest.created_at ? new Date(sellRequest.created_at) : new Date();
+                        document.getElementById('createdAt').textContent = createdAt.toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    } else {
+                        document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: Sell request data not found in response.</div>";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching sell request:', error);
+                    document.body.innerHTML = `
+                        <div class="container">
+                            <div class="section">
+                                <div class="section-title">Error</div>
+                                <div class="info-row">
+                                    <span class="info-value" style="color:var(--tg-red);text-align:center;width:100%;">
+                                        Failed to load data. Please try again later.
+                                    </span>
+                                </div>
+                            </div>
+                            <a href="https://facf-37-110-210-189.ngrok-free.app" class="button back-button">← Back</a>
+                        </div>
+                    `;
+                });
+        }
+    </script>
+</body>
+</html>

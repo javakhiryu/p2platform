@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Sell Request</title>
+    <style>
+        :root {
+            --tg-bg: #ffffff;
+            --tg-accent: #0088cc;
+            --tg-accent-hover: #007bb3;
+            --tg-border: #e0e0e0;
+            --tg-text: #222;
+            --tg-text-secondary: #707579;
+            --tg-shadow: rgba(0, 0, 0, 0.05);
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --border-radius-sm: 8px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 15px;
+            --font-size-lg: 16px;
+            --font-size-xl: 20px;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        header {
+            background-color: var(--tg-accent);
+            color: white;
+            padding: var(--spacing-md);
+            width: 100%;
+            text-align: center;
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .container {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            width: 92%;
+            max-width: 480px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 2px 10px var(--tg-shadow);
+            border: 1px solid var(--tg-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        form label {
+            display: block;
+            margin-top: var(--spacing-md);
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-md);
+            color: var(--tg-text);
+        }
+
+        form input[type="text"],
+        form input[type="number"],
+        form select {
+            width: 100%;
+            padding: 12px var(--spacing-md);
+            margin-top: var(--spacing-sm);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--border-radius-md);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        form input[type="text"]:focus,
+        form input[type="number"]:focus,
+        form select:focus {
+            border-color: var(--tg-accent);
+            outline: none;
+        }
+
+        form input::placeholder {
+            color: var(--tg-text-secondary);
+            opacity: 0.7;
+        }
+
+        /* Enhanced select dropdown styling */
+        form select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="%23707579" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right var(--spacing-md) top 50%;
+            background-size: 16px;
+            padding-right: calc(var(--spacing-md) * 2);
+        }
+
+        form select::-ms-expand {
+            display: none;
+        }
+
+        .button {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: 14px;
+            margin-top: var(--spacing-lg);
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+        }
+
+        .button:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .back-button {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        .back-button:hover {
+            background-color: #e5e5e5;
+        }
+
+        pre {
+            background: #f8f8f8;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            margin-top: var(--spacing-lg);
+            overflow-x: auto;
+            font-size: var(--font-size-sm);
+            border: 1px solid var(--tg-border);
+            width: 100%;
+            box-sizing: border-box;
+            display: none; /* Hidden by default, shows on submission */
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .currency-hint {
+            font-size: var(--font-size-sm);
+            color: var(--tg-text-secondary);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>Create Sell Request</header>
+
+    <div class="container">
+        <form id="sellForm">
+            <div class="form-group">
+                <label for="sell_total_amount">Total Amount to Sell</label>
+                <input type="number" id="sell_total_amount" name="sell_total_amount" 
+                       placeholder="Enter total amount" required min="1" />
+            </div>
+
+            <div class="form-group">
+                <label for="sell_money_source">Payment Method</label>
+                <select id="sell_money_source" name="sell_money_source" required>
+                    <option value="" disabled selected>Select payment method</option>
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="both">Both Cash and Card</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="currency_from">Currency You Have</label>
+                <select id="currency_from" name="currency_from" required>
+                    <option value="" disabled selected>Select currency</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="UZS">UZS - Uzbek Sum</option>
+                    <option value="RUB">RUB - Russian Ruble</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="JPY">JPY - Japanese Yen</option>
+                    <option value="CHF">CHF - Swiss Franc</option>
+                    <option value="CNY">CNY - Chinese Yuan</option>
+                    <option value="AUD">AUD - Australian Dollar</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                    <option value="SGD">SGD - Singapore Dollar</option>
+                    <option value="AED">AED - UAE Dirham</option>
+                    <option value="TRY">TRY - Turkish Lira</option>
+                    <option value="KZT">KZT - Kazakhstani Tenge</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="currency_to">Currency You Want</label>
+                <select id="currency_to" name="currency_to" required>
+                    <option value="" disabled selected>Select currency</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="UZS">UZS - Uzbek Sum</option>
+                    <option value="RUB">RUB - Russian Ruble</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="JPY">JPY - Japanese Yen</option>
+                    <option value="CHF">CHF - Swiss Franc</option>
+                    <option value="CNY">CNY - Chinese Yuan</option>
+                    <option value="AUD">AUD - Australian Dollar</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                    <option value="SGD">SGD - Singapore Dollar</option>
+                    <option value="AED">AED - UAE Dirham</option>
+                    <option value="TRY">TRY - Turkish Lira</option>
+                    <option value="KZT">KZT - Kazakhstani Tenge</option>
+                </select>
+                <div class="currency-hint">Select different currency from "Currency You Have"</div>
+            </div>
+
+            <div class="form-group">
+                <label for="sell_amount_by_card">Amount to Receive by Card</label>
+                <input type="number" id="sell_amount_by_card" name="sell_amount_by_card" 
+                       placeholder="Enter card amount or 0" min="0" value="0" />
+            </div>
+
+            <div class="form-group">
+                <label for="sell_amount_by_cash">Amount to Receive by Cash</label>
+                <input type="number" id="sell_amount_by_cash" name="sell_amount_by_cash" 
+                       placeholder="Enter cash amount or 0" min="0" value="0" />
+            </div>
+
+            <div class="form-group">
+                <label for="sell_exchange_rate">Exchange Rate</label>
+                <input type="number" id="sell_exchange_rate" name="sell_exchange_rate" 
+                       placeholder="Enter your exchange rate" required min="0.0001" step="0.0001" />
+            </div>
+
+            <div class="form-group">
+                <label for="comment">Additional Notes (Optional)</label>
+                <input type="text" id="comment" name="comment" 
+                       placeholder="Any special instructions or details" />
+            </div>
+
+            <button type="submit" class="button">Submit Request</button>
+        </form>
+
+        <pre id="sellOutput"></pre>
+
+        <a href="https://facf-37-110-210-189.ngrok-free.app" class="button back-button">← Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('sellForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const output = document.getElementById('sellOutput');
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            
+            output.style.display = 'block';
+            output.textContent = 'Sending request...';
+
+            const data = {
+                sell_total_amount: parseFloat(form.sell_total_amount.value),
+                sell_money_source: form.sell_money_source.value,
+                currency_from: form.currency_from.value,
+                currency_to: form.currency_to.value,
+                sell_amount_by_card: parseFloat(form.sell_amount_by_card.value || 0),
+                sell_amount_by_cash: parseFloat(form.sell_amount_by_cash.value || 0),
+                sell_exchange_rate: parseFloat(form.sell_exchange_rate.value),
+                comment: form.comment.value
+            };
+
+            try {
+                const res = await fetch('http://localhost:8081/api/v1/sell-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await res.json();
+                output.textContent = 'Request submitted successfully!\n\n' + 
+                                   JSON.stringify(result, null, 2);
+
+                if (result.sell_req_id) {
+                    setTimeout(() => {
+                        window.location.href = `/sell-request/${result.sell_req_id}`;
+                    }, 1500);
+                }
+            } catch (err) {
+                output.textContent = 'Error submitting request:\n' + err.message;
+                submitBtn.textContent = 'Try Again';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Request';
+            }
+        });
+
+        // Simple validation to prevent same currencies
+        document.getElementById('currency_from').addEventListener('change', function() {
+            const currencyTo = document.getElementById('currency_to');
+            if (this.value === currencyTo.value) {
+                currencyTo.setCustomValidity("Currencies must be different");
+            } else {
+                currencyTo.setCustomValidity("");
+            }
+        });
+
+        document.getElementById('currency_to').addEventListener('change', function() {
+            const currencyFrom = document.getElementById('currency_from');
+            if (this.value === currencyFrom.value) {
+                this.setCustomValidity("Currencies must be different");
+            } else {
+                this.setCustomValidity("");
+            }
+        });
+    </script>
+</body>
+</html>

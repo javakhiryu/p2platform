@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"math"
 	appErr "p2platform/errors"
 )
 
@@ -53,6 +54,11 @@ func (store *SQLStore) ListMySellRequeststTx(ctx context.Context, params ListMyS
 				LockedAmountByCash: lockedAmountByCash,
 			})
 		}
+		totalCount, err := q.CountOfSellRequestsByTelegramId(ctx, params.TelegramId)
+		if err != nil {
+			return appErr.ErrFailedToGetSellRequests
+		}
+		results.TotalPages = int32(math.Ceil(float64(totalCount) / float64(params.Limit)))
 		return nil
 	})
 	return results, err

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"net/http"
 	"os"
 	"p2platform/api"
 	db "p2platform/db/sqlc"
@@ -37,7 +36,7 @@ import (
 //	@produce					json
 //	@consumes					json
 
-//go:embed static/*
+//go:embed static/*.html
 var staticFS embed.FS
 
 func main() {
@@ -54,24 +53,9 @@ func main() {
 	}
 	store := db.NewStore(conn)
 
+	api.StaticFS = staticFS
+
 	tg := telegram.New(config.TelegramBotToken)
-
-	go func() {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/" {
-				data, _ := staticFS.ReadFile("static/index.html")
-				w.Write(data)
-				return
-			}
-			http.FileServer(http.FS(staticFS)).ServeHTTP(w, r)
-		})
-
-		log.Info().Msg("🌐 Serving on http://localhost:8081")
-		err := http.ListenAndServe(":8081", nil)
-		if err != nil {
-			log.Error().Err(err).Msg("HTTPS static server failed")
-		}
-	}()
 
 	go func() {
 		log.Info().Msg("Starting Telegram Kafka consumer...")
