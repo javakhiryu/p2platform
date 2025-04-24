@@ -37,6 +37,21 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// ChangeStateBuyRequest mocks base method.
+func (m *MockStore) ChangeStateBuyRequest(arg0 context.Context, arg1 db.ChangeStateBuyRequestParams) (db.BuyRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeStateBuyRequest", arg0, arg1)
+	ret0, _ := ret[0].(db.BuyRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ChangeStateBuyRequest indicates an expected call of ChangeStateBuyRequest.
+func (mr *MockStoreMockRecorder) ChangeStateBuyRequest(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeStateBuyRequest", reflect.TypeOf((*MockStore)(nil).ChangeStateBuyRequest), arg0, arg1)
+}
+
 // CloseBuyRequestBySellRequest mocks base method.
 func (m *MockStore) CloseBuyRequestBySellRequest(arg0 context.Context, arg1 int32) error {
 	m.ctrl.T.Helper()
@@ -525,21 +540,6 @@ func (m *MockStore) ListSellRequeststTx(arg0 context.Context, arg1 db.ListSellRe
 func (mr *MockStoreMockRecorder) ListSellRequeststTx(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequeststTx", reflect.TypeOf((*MockStore)(nil).ListSellRequeststTx), arg0, arg1)
-}
-
-// OpenCloseBuyRequest mocks base method.
-func (m *MockStore) OpenCloseBuyRequest(arg0 context.Context, arg1 db.OpenCloseBuyRequestParams) (db.BuyRequest, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OpenCloseBuyRequest", arg0, arg1)
-	ret0, _ := ret[0].(db.BuyRequest)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// OpenCloseBuyRequest indicates an expected call of OpenCloseBuyRequest.
-func (mr *MockStoreMockRecorder) OpenCloseBuyRequest(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OpenCloseBuyRequest", reflect.TypeOf((*MockStore)(nil).OpenCloseBuyRequest), arg0, arg1)
 }
 
 // OpenCloseSellRequest mocks base method.

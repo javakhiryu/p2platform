@@ -11,18 +11,18 @@ import (
 )
 
 type ReleaseLockedAmountTxResult struct {
-	BuyRequestID           uuid.UUID `json:"buy_request_id"`
-	IsBuyRequestClosed     bool      `json:"is_buy_request_closed"`
-	BuyRequestClosedAt     time.Time `json:"buy_request_closed_at"`
-	LockedAmountID         int32     `json:"locked_amount_id"`
-	IsLockedAmountReleased bool      `json:"is_locked_amount_released"`
-	LockedAmountReleasedAt time.Time `json:"locked_amount_released_at"`
+	BuyRequestID             uuid.UUID `json:"buy_request_id"`
+	BuyRequestState          string    `json:"is_buy_request_closed"`
+	BuyRequestStateUpdatedAt time.Time `json:"buy_request_state_updated_at"`
+	LockedAmountID           int32     `json:"locked_amount_id"`
+	IsLockedAmountReleased   bool      `json:"is_locked_amount_released"`
+	LockedAmountReleasedAt   time.Time `json:"locked_amount_released_at"`
 }
 
 func (store *SQLStore) ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.UUID) (result ReleaseLockedAmountTxResult, err error) {
 	err = store.execTx(ctx, func(q *Queries) error {
-		buyRequest, err := q.OpenCloseBuyRequest(ctx, OpenCloseBuyRequestParams{
-			IsClosed: util.ToPgBool(true),
+		buyRequest, err := q.ChangeStateBuyRequest(ctx, ChangeStateBuyRequestParams{
+			State:    "expired",
 			BuyReqID: buyReqID,
 		})
 		if err != nil {
@@ -30,10 +30,8 @@ func (store *SQLStore) ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.
 		}
 
 		result.BuyRequestID = buyRequest.BuyReqID
-		result.IsBuyRequestClosed = buyRequest.IsClosed.Bool
-		if buyRequest.ClosedAt.Valid {
-			result.BuyRequestClosedAt = buyRequest.ClosedAt.Time
-		}
+		result.BuyRequestState = buyRequest.State
+		result.BuyRequestStateUpdatedAt = buyRequest.StateUpdatedAt.Time
 
 		err = q.ReleaseLockedAmountByBuyRequest(ctx, buyReqID)
 		if err != nil && !errors.Is(err, ErrNoRowsFound) {

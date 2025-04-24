@@ -214,6 +214,12 @@
             padding: 0 var(--spacing-md);
         }
 
+        .action-navigation-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
         .button {
             display: inline-flex;
             align-items: center;
@@ -318,9 +324,11 @@
         </div>
 
         <div id="pageInfo" class="page-info"></div>
-        <a href="/create-buy-request" class="button create-new-btn">Create New Request</a>
-        <a id="backToSellRequestsBtn" class="button back-button" >← Back to Sell Requests</a>
-    </div>
+        
+        <div class="action-navigation-buttons">
+        <a id="createBuyRequestBtn" class="button create-new-btn">Create New Buy Request</a>
+        <a id="backToSellRequestsBtn" class="button back-button" >← Back to Sell Request</a>
+        </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -334,6 +342,10 @@
             // Get sell_req_id from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const sellReqId = urlParams.get('sell_req_id');
+
+            document.getElementById('createBuyRequestBtn').addEventListener('click', function() {
+                window.location.href = `https://facf-37-110-210-189.ngrok-free.app/create-buy-request?sell_req_id=${sellReqId}`;
+            });
 
             // Add click event listener to the "Go to Sell Requests" button
             backToSellRequestsBtn.addEventListener('click', function() {
@@ -472,10 +484,10 @@
                     
                     // Determine status
                     let statusClass, statusText;
-                    if (request.is_closed) {
+                    if (request.state === "closed") {
                         statusClass = 'status-closed';
                         statusText = 'Closed';
-                    } else if (new Date(request.expires_at) < new Date()) {
+                    } else if (request.state === "expired") {
                         statusClass = 'status-expired';
                         statusText = 'Expired';
                     } else {

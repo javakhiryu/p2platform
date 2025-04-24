@@ -25,8 +25,8 @@ type BuyRequest struct {
 	CloseConfirmByBuyer  pgtype.Bool        `json:"close_confirm_by_buyer"`
 	SellerConfirmedAt    pgtype.Timestamptz `json:"seller_confirmed_at"`
 	BuyerConfirmedAt     pgtype.Timestamptz `json:"buyer_confirmed_at"`
-	IsClosed             pgtype.Bool        `json:"is_closed"`
-	ClosedAt             pgtype.Timestamptz `json:"closed_at"`
+	State                string             `json:"state"`
+	StateUpdatedAt       pgtype.Timestamptz `json:"state_updated_at"`
 	CreatedAt            time.Time          `json:"created_at"`
 	ExpiresAt            time.Time          `json:"expires_at"`
 }

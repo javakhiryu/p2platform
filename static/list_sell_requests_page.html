@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sell Requests List</title>
     <style>
-        :root {
+
+:root {
             --tg-bg: #f5f5f5;
             --tg-primary: #0088cc;
             --tg-primary-hover: #007bb3;
@@ -291,6 +292,16 @@
             margin: var(--spacing-xl) auto 0;
             text-align: center;
         }
+        /* Add this style for crossed-out text */
+        .crossed-out {
+            text-decoration: line-through;
+            color: #999;
+        }
+        .remaining-amount {
+            color: #2e7d32;
+            font-weight: bold;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -433,6 +444,38 @@
                         maximumFractionDigits: 2
                     }).format(amount);
                     
+                    // Helper function to create amount display with remaining amount
+                    const createAmountDisplay = (originalAmount, lockedAmount, currency) => {
+                        if (lockedAmount > 0) {
+                            const remainingAmount = originalAmount - lockedAmount;
+                            return `
+                                <span class="crossed-out">${formatAmount(originalAmount)} ${currency}</span>
+                                <span class="remaining-amount">${formatAmount(remainingAmount)} ${currency}</span>
+                            `;
+                        }
+                        return `${formatAmount(originalAmount)} ${currency}`;
+                    };
+
+                    // Create display for card amount if exists
+                    const cardAmountDisplay = req.sell_amount_by_card > 0 ? `
+                        <div class="request-info">
+                            <span class="info-label">Amount by Card</span>
+                            <span class="info-value">
+                                ${createAmountDisplay(req.sell_amount_by_card, request.locked_amount_by_card, req.currency_from)}
+                            </span>
+                        </div>
+                    ` : '';
+
+                    // Create display for cash amount if exists
+                    const cashAmountDisplay = req.sell_amount_by_cash > 0 ? `
+                        <div class="request-info">
+                            <span class="info-label">Amount by Cash</span>
+                            <span class="info-value">
+                                ${createAmountDisplay(req.sell_amount_by_cash, request.locked_amount_by_cash, req.currency_from)}
+                            </span>
+                        </div>
+                    ` : '';
+
                     card.innerHTML = `
                         <div class="request-header">
                             <div class="request-id">Request #${req.sell_req_id}</div>
@@ -444,7 +487,9 @@
                         <div class="request-body">
                             <div class="request-info">
                                 <span class="info-label">Total Amount</span>
-                                <span class="info-value">${formatAmount(req.sell_total_amount)} ${req.currency_from}</span>
+                                <span class="info-value">
+                                    ${createAmountDisplay(req.sell_total_amount, request.total_locked_amount, req.currency_from)}
+                                </span>
                             </div>
                             
                             <div class="request-info">
@@ -462,19 +507,8 @@
                                 <span class="info-value exchange-rate">1 ${req.currency_from} = ${formatAmount(req.sell_exchange_rate)} ${req.currency_to}</span>
                             </div>
                             
-                            ${req.sell_amount_by_card > 0 ? `
-                            <div class="request-info">
-                                <span class="info-label">Amount by Card</span>
-                                <span class="info-value">${formatAmount(req.sell_amount_by_card)} ${req.currency_to}</span>
-                            </div>
-                            ` : ''}
-                            
-                            ${req.sell_amount_by_cash > 0 ? `
-                            <div class="request-info">
-                                <span class="info-label">Amount by Cash</span>
-                                <span class="info-value">${formatAmount(req.sell_amount_by_cash)} ${req.currency_to}</span>
-                            </div>
-                            ` : ''}
+                            ${cardAmountDisplay}
+                            ${cashAmountDisplay}
                         </div>
                         
                         <div class="request-footer">
@@ -484,9 +518,7 @@
                             </div>
                             
                             <div class="locked-amount">
-                                Locked: <span>${formatAmount(request.total_locked_amount)}</span>
-                                ${request.locked_amount_by_card > 0 ? `(Card: ${formatAmount(request.locked_amount_by_card)})` : ''}
-                                ${request.locked_amount_by_cash > 0 ? `(Cash: ${formatAmount(request.locked_amount_by_cash)})` : ''}
+                                ${request.total_locked_amount > 0 ? `Locked: <span>${formatAmount(request.total_locked_amount)} ${req.currency_from}</span>` : ''}
                             </div>
                         </div>
                     `;

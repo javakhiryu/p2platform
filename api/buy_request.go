@@ -195,8 +195,8 @@ type closeBuyRequestResponse struct {
 	SellerConfirmedAt      *time.Time `json:"seller_confirmed_at"`
 	CloseConfirmedByBuyer  bool       `json:"close_confirmed_by_buyer"`
 	BuyerConfirmedAt       *time.Time `json:"buyer_confirmed_at"`
-	IsClosed               bool       `json:"is_closed"`
-	ClosedAt               *time.Time `json:"closed_at"`
+	BuyRequestState        string     `json:"buy_request_state"`
+	BuyRequestClosedAt     *time.Time `json:"state_updated_at"`
 }
 
 func (server *Server) closeBuyRequestBySeller(ctx *gin.Context) {
@@ -251,8 +251,8 @@ func (server *Server) closeBuyRequestBySeller(ctx *gin.Context) {
 		SellerConfirmedAt:      result.SellerConfirmedAt,
 		CloseConfirmedByBuyer:  result.CloseConfirmedByBuyer,
 		BuyerConfirmedAt:       result.BuyerConfirmedAt,
-		IsClosed:               result.IsClosed,
-		ClosedAt:               result.ClosedAt,
+		BuyRequestState:        result.BuyRequestState,
+		BuyRequestClosedAt:     result.StateUpdatedAt,
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -302,8 +302,76 @@ func (server *Server) closeBuyRequestByBuyer(ctx *gin.Context) {
 		SellerConfirmedAt:      result.SellerConfirmedAt,
 		CloseConfirmedByBuyer:  result.CloseConfirmedByBuyer,
 		BuyerConfirmedAt:       result.BuyerConfirmedAt,
-		IsClosed:               result.IsClosed,
-		ClosedAt:               result.ClosedAt,
+		BuyRequestState:        result.BuyRequestState,
+		BuyRequestClosedAt:     result.StateUpdatedAt,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (server *Server) CloseBuyRequestSellerBuyer(ctx *gin.Context) {
+	var req closeBuyRequestRequest
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err))
+		return
+	}
+	uid, err := uuid.Parse(req.BuyRequestId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
+		return
+	}
+
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	buyRequest, err := server.store.GetBuyRequestById(ctx, uid)
+	if err != nil {
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrBuyRequestsNotFound.Status, ErrorResponse(appErr.ErrBuyRequestsNotFound))
+			return
+		}
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+	sellRequest, err := server.store.GetSellRequestById(ctx, buyRequest.SellReqID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrSellRequestNotFound.Status, ErrorResponse(appErr.ErrSellRequestNotFound))
+			return
+		}
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+	isSeller := false
+	isBuyer := false
+	if telegramId == buyRequest.TelegramID {
+		isBuyer = true
+	}
+	if telegramId == sellRequest.TelegramID {
+		isSeller = true
+	}
+	if !isSeller && !isBuyer {
+		ctx.JSON(appErr.ErrNotBuyRequestOwner.Status, ErrorResponse(appErr.ErrNotBuyRequestOwner))
+		ctx.JSON(appErr.ErrNotSellRequestOwner.Status, ErrorResponse(appErr.ErrNotSellRequestOwner))
+		return
+	}
+	arg := db.CloseBuyRequestTxParams{
+		BuyRequestId: uid,
+		IsSeller:     isSeller,
+		IsBuyer:      isBuyer,
+	}
+	result, err := server.store.CloseBuyRequestTx(ctx, arg)
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+	}
+	response := closeBuyRequestResponse{
+		CloseConfirmedBySeller: result.CloseConfirmedBySeller,
+		SellerConfirmedAt:      result.SellerConfirmedAt,
+		CloseConfirmedByBuyer:  result.CloseConfirmedByBuyer,
+		BuyerConfirmedAt:       result.BuyerConfirmedAt,
+		BuyRequestState:        result.BuyRequestState,
+		BuyRequestClosedAt:     result.StateUpdatedAt,
 	}
 	ctx.JSON(http.StatusOK, response)
 }

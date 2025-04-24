@@ -345,12 +345,15 @@
                         
                         // Status
                         const statusBadge = document.getElementById('statusBadge');
-                        if (buyRequest.is_closed) {
+                        if (buyRequest.state ==="closed") {
                             statusBadge.textContent = 'Closed';
                             statusBadge.classList.add('status-badge', 'status-closed');
-                        } else {
+                        } else if (buyRequest.state === "open") {
                             statusBadge.textContent = 'Active';
                             statusBadge.classList.add('status-badge', 'status-active');
+                        } else {
+                            statusBadge.textContent = 'Expired';
+                            statusBadge.classList.add('status-badge', 'status-closed');
                         }
 
                         // Dates
@@ -370,7 +373,7 @@
                         document.getElementById('expiresAt').textContent = formatDate(buyRequest.expires_at);
                         document.getElementById('sellerConfirmedAt').textContent = formatDate(buyRequest.seller_confirmed_at);
                         document.getElementById('buyerConfirmedAt').textContent = formatDate(buyRequest.buyer_confirmed_at);
-                        document.getElementById('closedAt').textContent = formatDate(buyRequest.closed_at);
+                        document.getElementById('closedAt').textContent = formatDate(buyRequest.state_updated_at);
 
                         // Payment methods
                         const buyByCardElement = document.getElementById('buyByCard');
@@ -404,12 +407,42 @@
                         buyerConfirmation.classList.add(buyRequest.close_confirm_by_buyer ? 'confirmed' : 'pending');
 
                         // Enable confirm button if transaction is active
-                        if (!buyRequest.is_closed) {
+                        if (buyRequest.state === "open") {
                             confirmButton.disabled = false;
-                            confirmButton.addEventListener('click', () => {
-                                // Implement confirmation logic here
-                                alert('Confirmation functionality to be implemented');
+                            confirmButton.addEventListener('click', async function() {
+                                // Get the buy request ID from the URL
+                                const pathParts = window.location.pathname.split('/');
+                                const buyReqId = pathParts[pathParts.length - 1];
+
+                                try {
+                                    // Disable button during processing
+                                    confirmButton.disabled = true;
+                                    confirmButton.textContent = 'Processing...';
+
+                                    // Send POST request to close the buy request
+                                    const response = await fetch(`http://localhost:8081/api/v1/buy-request/${buyReqId}/close-confirm`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        }
+                                    });
+
+                                    if (!response.ok) {
+                                        throw new Error('Failed to confirm buy request');
+                                    }
+
+                                    // Show success message and refresh the page
+                                    alert('Buy request successfully confirmed!');
+                                    window.location.reload();
+
+                                } catch (error) {
+                                    console.error('Error:', error);
+                                    alert('Error confirming buy request: ' + error.message);
+                                    confirmButton.disabled = false;
+                                    confirmButton.textContent = 'Confirm';
+                                }
                             });
+
                         }
                     } else {
                         document.body.innerHTML = "<div class='error-message'>Error: Buy request data not found in response.</div>";

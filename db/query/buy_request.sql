@@ -53,11 +53,11 @@ SET
 WHERE
   buy_req_id = $2;
 
--- name: OpenCloseBuyRequest :one
+-- name: ChangeStateBuyRequest :one
 UPDATE buy_requests
 SET
-  is_closed = $1,
-  closed_at = now()
+  state = $1,
+  state_updated_at = now()
 WHERE
   buy_req_id = $2
 RETURNING *;
@@ -65,10 +65,10 @@ RETURNING *;
 -- name: CloseBuyRequestBySellRequest :exec
 UPDATE buy_requests
 SET
-  is_closed = true,
-  closed_at = now()
+  state = 'closed',
+  state_updated_at = now()
 WHERE
-  sell_req_id = $1 AND is_closed = false;
+  sell_req_id = $1 AND state = 'open';
 
 -- name: DeleteBuyRequest :exec
 DELETE FROM buy_requests WHERE buy_req_id = $1;
@@ -76,5 +76,5 @@ DELETE FROM buy_requests WHERE buy_req_id = $1;
 -- name: ListExpiredBuyRequests :many
 SELECT * FROM buy_requests
 WHERE expires_at < now()
-  AND is_closed = false;
+  AND state = 'open';
 

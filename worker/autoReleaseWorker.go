@@ -50,9 +50,6 @@ func (w *AutoReleaseWorker) processExpiredBuyRequests() {
 		return
 	}
 	for _, req := range expired {
-		if req.IsClosed.Bool {
-			continue
-		}
 		result, err := w.store.ReleaseLockedAmountTx(w.ctx, req.BuyReqID)
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("Failed to release locked amount for buy_request: %v", req.BuyReqID))

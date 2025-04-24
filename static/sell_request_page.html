@@ -131,6 +131,12 @@
             color: var(--tg-red);
         }
 
+        .action-buttons {
+            display: contents;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
         .button {
             display: inline-block;
             width: 100%;
@@ -145,6 +151,35 @@
             cursor: pointer;
             box-sizing: border-box;
             text-decoration: none;
+        }
+
+        .button.disabled,
+        .button:disabled {
+            background-color: var(--tg-secondary);
+            color: var(--tg-text-secondary);
+            cursor: not-allowed;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .button.primary {
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+        }
+
+        .button.primary:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .button.secondary {
+            background-color: white;
+            color: var(--tg-accent);
+            border: 1px solid var(--tg-accent);
+        }
+
+        .button.secondary:hover {
+            background-color: #f0f8ff;
         }
 
         .button:hover {
@@ -236,8 +271,8 @@
         
         <div class="action-buttons">
             <a id="createBuyRequestBtn" class="button primary">Create Buy Request</a>
-            <a id="listBuyRequestsBtn" class="button primary">List Buy Requests</a>
-            <a href="https://facf-37-110-210-189.ngrok-free.app/list-sell-requests" class="button secondary">← Go to Sell Requests</a>
+            <a id="listBuyRequestsBtn" class="button secondary">List Buy Requests</a>
+            <a href="https://facf-37-110-210-189.ngrok-free.app/list-sell-requests" class="button secondary">← Back to Sell Requests List</a>
         </div>
     </div>
 
@@ -249,7 +284,8 @@
             document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: ID is missing from the URL.</div>";
         } else {
             // Set up the Create Buy Request button
-            document.getElementById('createBuyRequestBtn').addEventListener('click', function() {
+            const createButton = document.getElementById('createBuyRequestBtn');
+                createButton.addEventListener('click', function() {
                 window.location.href = `https://facf-37-110-210-189.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
             });
             document.getElementById('listBuyRequestsBtn').addEventListener('click', function() {
@@ -270,7 +306,6 @@
                 .then(data => {
                     if (data && data.sell_request) {
                         const sellRequest = data.sell_request;
-
                         document.getElementById('sellReqId').textContent = sellRequest.sell_req_id || 'N/A';
                         document.getElementById('sellTotalAmount').textContent = sellRequest.sell_total_amount || '0';
                         document.getElementById('sellMoneySource').textContent = sellRequest.sell_money_source || 'N/A';
@@ -305,6 +340,8 @@
                         } else {
                             isActualElement.textContent = 'Inactive';
                             isActualElement.classList.add('status-badge', 'status-inactive');
+                            createButton.disabled = true
+                            createButton.classList.add('disabled');
                         }
 
                         document.getElementById('comment').textContent = sellRequest.comment || 'No comments';
