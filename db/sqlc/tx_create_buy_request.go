@@ -73,7 +73,7 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 			for _, lockedAmount := range lockedAmounts {
 				lockedAmountByCash += lockedAmount.LockedByCash.Int64
 			}
-			if sellRequest.SellAmountByCash.Int64-lockedAmountByCash < arg.BuyAmountByCard.Int64 {
+			if sellRequest.SellAmountByCash.Int64-lockedAmountByCash < arg.BuyAmountByCash.Int64 {
 				return appErr.ErrInsuficientCashFunds
 			}
 		}

@@ -15,4 +15,5 @@ var (
 	ErrInsuficientCashFunds     = NewAppError("INSUFFICIENT_CASH_FUNDS", "Not enough cash funds to create buy request", http.StatusBadRequest)
 	ErrTotalBuyAmountMismatch   = NewAppError("BUY_AMOUNT_MISMATCH", "Sum of cash and card amounts must equal total amount", http.StatusBadRequest)
 	ErrNotBuyRequestOwner = NewAppError("NOT_BUY_REQUEST_OWNER", "You are not the owner of this buy request", http.StatusForbidden)
+	ErrBuyRequestAlreadyClosedOrExpired = NewAppError("BUY_REQUEST_ALREADY_CLOSED", "Buy request has already been closed or expired", http.StatusConflict)
 )

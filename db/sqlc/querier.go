@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	ChangeStateBuyRequest(ctx context.Context, arg ChangeStateBuyRequestParams) (BuyRequest, error)
 	CloseBuyRequestBySellRequest(ctx context.Context, sellReqID int32) error
 	CloseConfirmByBuyer(ctx context.Context, arg CloseConfirmByBuyerParams) error
 	CloseConfirmBySeller(ctx context.Context, arg CloseConfirmBySellerParams) error
@@ -38,7 +39,6 @@ type Querier interface {
 	ListLockedAmounts(ctx context.Context, arg ListLockedAmountsParams) ([]LockedAmount, error)
 	ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error)
 	ListSellRequestsByTelegramId(ctx context.Context, arg ListSellRequestsByTelegramIdParams) ([]SellRequest, error)
-	OpenCloseBuyRequest(ctx context.Context, arg OpenCloseBuyRequestParams) (BuyRequest, error)
 	OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellRequestParams) (SellRequest, error)
 	ReleaseLockedAmountByBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
 	ReleaseLockedAmountsBySellRequest(ctx context.Context, sellReqID int32) error

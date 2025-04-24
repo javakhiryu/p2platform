@@ -85,11 +85,13 @@ func (server *Server) setupRouter() {
 		authRoutes := api.Group("/").Use(CookieAuthMiddleware())
 
 		authRoutes.POST("/sell-request", server.createSellRequest)
+
 		authRoutes.POST("/buy-request", server.createBuyRequest)
 		authRoutes.PATCH("/sell-request/:id", server.updateSellRequest)
 		authRoutes.DELETE("/sell-request/:id", server.deleteSellRequest)
 		authRoutes.POST("/buy-request/:id/close-confirm/seller", server.closeBuyRequestBySeller)
 		authRoutes.POST("/buy-request/:id/close-confirm/buyer", server.closeBuyRequestByBuyer)
+		authRoutes.POST("/buy-request/:id/close-confirm", server.CloseBuyRequestSellerBuyer)
 		authRoutes.DELETE("/buy-request/:id", server.DeleteBuyRequest)
 		authRoutes.GET("/sell-requests/my", server.listMySellRequests)
 		authRoutes.GET("/buy-requests/my", server.listMyBuyRequests)

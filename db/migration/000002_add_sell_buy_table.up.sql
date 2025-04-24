@@ -32,8 +32,8 @@ CREATE TABLE "buy_requests" (
   "close_confirm_by_buyer" bool DEFAULT false,
   "seller_confirmed_at" timestamptz,
   "buyer_confirmed_at" timestamptz,
-  "is_closed" bool DEFAULT false,
-  "closed_at" timestamptz,
+  "state" VARCHAR NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'closed', 'expired')),
+  "state_updated_at" timestamptz,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "expires_at" timestamptz NOT NULL DEFAULT (now() + interval '1 hour')
 );

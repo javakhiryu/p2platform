@@ -83,9 +83,9 @@ func TestListBuyReuqestsByTelegramId(t *testing.T) {
 
 func TestOpenCloseBuyRequest(t *testing.T) {
 	buyRequest1 := CreateRandomBuyRequest(t, CreateRandomSellRequest(t, CreateRandomUser(t)), CreateRandomUser(t))
-	arg := OpenCloseBuyRequestParams{
+	arg := ChangeStateBuyRequestParams{
 		BuyReqID: buyRequest1.BuyReqID,
-		IsClosed: util.ToPgBool(true),
+		State: "closed",
 	}
 	arg1 := CloseConfirmByBuyerParams{
 		CloseConfirmByBuyer: util.ToPgBool(true),
@@ -99,11 +99,11 @@ func TestOpenCloseBuyRequest(t *testing.T) {
 	require.NoError(t, err)
 	err = testStore.CloseConfirmBySeller(context.Background(), arg2)
 	require.NoError(t, err)
-	buyRequest2, err := testStore.OpenCloseBuyRequest(context.Background(), arg)
+	buyRequest2, err := testStore.ChangeStateBuyRequest(context.Background(), arg)
 	require.NoError(t, err)
 	require.Equal(t, buyRequest2.BuyReqID, buyRequest1.BuyReqID)
-	require.Equal(t, util.ToPgBool(false), buyRequest1.IsClosed)
-	require.Equal(t, util.ToPgBool(true), buyRequest2.IsClosed)
+	require.Equal(t, "open", buyRequest1.State)
+	require.Equal(t, "closed", buyRequest2.State)
 }
 
 func TestDeleteBuyRequest(t *testing.T) {

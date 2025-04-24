@@ -14,26 +14,30 @@ import (
 type CloseBuyRequestTxParams struct {
 	BuyRequestId uuid.UUID
 	IsSeller     bool
+	IsBuyer      bool
 }
 
 type CloseBuyRequestTxResult struct {
-	CloseConfirmedBySeller bool
-	SellerConfirmedAt      *time.Time
-	CloseConfirmedByBuyer  bool
-	BuyerConfirmedAt       *time.Time
-	IsClosed               bool
-	ClosedAt               *time.Time
+	CloseConfirmedBySeller bool       `json:"close_confirmed_by_seller"`
+	SellerConfirmedAt      *time.Time `json:"seller_confirmed_at"`
+	CloseConfirmedByBuyer  bool       `json:"close_confirmed_by_buyer"`
+	BuyerConfirmedAt       *time.Time `json:"buyer_confirmed_at"`
+	BuyRequestState        string     `json:"buy_request_state"`
+	StateUpdatedAt         *time.Time `json:"state_updated_at"`
 }
 
 func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyRequestTxParams) (CloseBuyRequestTxResult, error) {
 	var result CloseBuyRequestTxResult
 	err := store.execTx(ctx, func(q *Queries) error {
-		_, err := store.GetBuyRequestById(ctx, arg.BuyRequestId)
+		buyRequest, err := store.GetBuyRequestById(ctx, arg.BuyRequestId)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
 				return appErr.ErrBuyRequestsNotFound
 			}
 			return appErr.ErrFailedToGetBuyRequests
+		}
+		if buyRequest.State != "open" {
+			return appErr.ErrBuyRequestAlreadyClosedOrExpired
 		}
 		if arg.IsSeller {
 			sellerArgs := CloseConfirmBySellerParams{
@@ -44,7 +48,8 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 			if err != nil {
 				return appErr.ErrFailedToCloseBuyRequests
 			}
-		} else {
+		}
+		if arg.IsBuyer {
 			buyerArgs := CloseConfirmByBuyerParams{
 				CloseConfirmByBuyer: util.ToPgBool(true),
 				BuyReqID:            arg.BuyRequestId,
@@ -54,7 +59,7 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 				return appErr.ErrFailedToCloseBuyRequests
 			}
 		}
-		buyRequest, err := store.GetBuyRequestById(ctx, arg.BuyRequestId)
+		buyRequest, err = store.GetBuyRequestById(ctx, arg.BuyRequestId)
 		if err != nil {
 			return appErr.ErrFailedToGetBuyRequests
 		}
@@ -62,15 +67,15 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 		var (
 			sellerConfirmedAt = util.GetValidTime(buyRequest.SellerConfirmedAt)
 			buyerConfirmedAt  = util.GetValidTime(buyRequest.BuyerConfirmedAt)
-			closedAt          = util.GetValidTime(buyRequest.ClosedAt)
+			stateChangedAt    = util.GetValidTime(buyRequest.StateUpdatedAt)
 		)
 
 		if buyRequest.CloseConfirmByBuyer.Bool && buyRequest.CloseConfirmBySeller.Bool {
-			closeBuyRequestArgs := OpenCloseBuyRequestParams{
-				IsClosed: util.ToPgBool(true),
+			closeBuyRequestArgs := ChangeStateBuyRequestParams{
+				State:    "closed",
 				BuyReqID: arg.BuyRequestId,
 			}
-			closedBuyRequest, err := store.OpenCloseBuyRequest(ctx, closeBuyRequestArgs)
+			closedBuyRequest, err := store.ChangeStateBuyRequest(ctx, closeBuyRequestArgs)
 			if err != nil {
 				return fmt.Errorf("Failed to close buy request")
 			}
@@ -79,12 +84,8 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 				SellerConfirmedAt:      &closedBuyRequest.SellerConfirmedAt.Time,
 				CloseConfirmedByBuyer:  closedBuyRequest.CloseConfirmByBuyer.Bool,
 				BuyerConfirmedAt:       &closedBuyRequest.BuyerConfirmedAt.Time,
-				IsClosed:               closedBuyRequest.IsClosed.Bool,
-				ClosedAt:               &closedBuyRequest.ClosedAt.Time,
-			}
-			err = store.ReleaseLockedAmountByBuyRequest(ctx, closeBuyRequestArgs.BuyReqID)
-			if err != nil {
-				return fmt.Errorf("Failed to release locked amount")
+				BuyRequestState:        closedBuyRequest.State,
+				StateUpdatedAt:         &closedBuyRequest.StateUpdatedAt.Time,
 			}
 		} else {
 			result = CloseBuyRequestTxResult{
@@ -92,8 +93,8 @@ func (store *SQLStore) CloseBuyRequestTx(ctx context.Context, arg CloseBuyReques
 				SellerConfirmedAt:      sellerConfirmedAt,
 				CloseConfirmedByBuyer:  buyRequest.CloseConfirmByBuyer.Bool,
 				BuyerConfirmedAt:       buyerConfirmedAt,
-				IsClosed:               buyRequest.IsClosed.Bool,
-				ClosedAt:               closedAt,
+				BuyRequestState:        buyRequest.State,
+				StateUpdatedAt:         stateChangedAt,
 			}
 		}
 
