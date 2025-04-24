@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buy Request Details</title>
+    <style>
+        :root {
+            --tg-bg: #f5f5f5;
+            --tg-accent: #0088cc;
+            --tg-accent-hover: #007bb3;
+            --tg-border: #e0e0e0;
+            --tg-text: #222;
+            --tg-text-secondary: #707579;
+            --tg-green: #31b545;
+            --tg-red: #ff3b30;
+            --tg-shadow: rgba(0, 0, 0, 0.1);
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --border-radius-sm: 8px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 15px;
+            --font-size-lg: 16px;
+            --font-size-xl: 20px;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        header {
+            background-color: var(--tg-accent);
+            color: white;
+            padding: var(--spacing-md);
+            width: 100%;
+            text-align: center;
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            padding: var(--spacing-md);
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 1px 3px var(--tg-shadow);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .section-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--tg-accent);
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--tg-border);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--tg-border);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--tg-text-secondary);
+            font-size: var(--font-size-md);
+        }
+
+        .info-value {
+            color: var(--tg-text);
+            font-weight: var(--font-weight-medium);
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .boolean-value.true {
+            color: var(--tg-green);
+        }
+
+        .boolean-value.false {
+            color: var(--tg-red);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .status-active {
+            background-color: rgba(49, 181, 69, 0.1);
+            color: var(--tg-green);
+        }
+
+        .status-inactive {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: var(--tg-red);
+        }
+
+        .status-closed {
+            background-color: rgba(0, 140, 204, 0.1);
+            color: var(--tg-accent);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px;
+            text-align: center;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .button.primary {
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+        }
+
+        .button.primary:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .button.secondary {
+            background-color: white;
+            color: var(--tg-accent);
+            border: 1px solid var(--tg-accent);
+        }
+
+        .button.secondary:hover {
+            background-color: #f0f8ff;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .user-link {
+            color: var(--tg-accent);
+            text-decoration: none;
+        }
+
+        .user-link:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--tg-text-secondary);
+        }
+
+        .error-message {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--tg-red);
+        }
+
+        .confirmation-status {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--spacing-md);
+        }
+
+        .confirmation-badge {
+            padding: 6px 10px;
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .confirmed {
+            background-color: rgba(49, 181, 69, 0.1);
+            color: var(--tg-green);
+        }
+
+        .pending {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #ffa000;
+        }
+    </style>
+</head>
+<body>
+    <header>Buy Request Details</header>
+
+    <div class="container">
+        <div class="section">
+            <div class="section-title">Transaction Info</div>
+            <div class="info-row">
+                <span class="info-label">Request ID</span>
+                <span class="info-value" id="buyReqId"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Total Amount</span>
+                <span class="info-value" id="buyTotalAmount"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="info-value" id="statusBadge"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Expires At</span>
+                <span class="info-value" id="expiresAt"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Payment Details</div>
+            <div class="info-row">
+                <span class="info-label">By Card</span>
+                <span class="info-value boolean-value" id="buyByCard"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Card Amount</span>
+                <span class="info-value" id="buyAmountByCard"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">By Cash</span>
+                <span class="info-value boolean-value" id="buyByCash"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Cash Amount</span>
+                <span class="info-value" id="buyAmountByCash"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Confirmation Status</div>
+            <div class="confirmation-status">
+                <div class="confirmation-badge" id="sellerConfirmationStatus"></div>
+                <div class="confirmation-badge" id="buyerConfirmationStatus"></div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Seller Confirmed At</span>
+                <span class="info-value" id="sellerConfirmedAt"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Buyer Confirmed At</span>
+                <span class="info-value" id="buyerConfirmedAt"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Closed At</span>
+                <span class="info-value" id="closedAt"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">User Info</div>
+            <div class="info-row">
+                <span class="info-label">Buyer</span>
+                <a class="info-value user-link" id="tgUsername" target="_blank"></a>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Created At</span>
+                <span class="info-value" id="createdAt"></span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="confirmButton" class="button primary" disabled>Confirm Transaction</button>
+            <a id="backToListBtn" class="button secondary">← Back to List</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pathParts = window.location.pathname.split('/');
+            const buyRequestId = pathParts[pathParts.length - 1];
+
+            if (!buyRequestId) {
+                document.body.innerHTML = "<div class='error-message'>Error: ID is missing from the URL.</div>";
+                return;
+            }
+
+            const apiUrl = `http://localhost:8081/api/v1/buy-request/${buyRequestId}`;
+            const confirmButton = document.getElementById('confirmButton');
+            const backButton = document.getElementById('backToListBtn');
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.buy_req_id) {
+                        const buyRequest = data;
+
+                        // Back button
+                        backButton.addEventListener('click', function() {
+                            window.location.href = `/list-buy-requests?sell_req_id=${buyRequest.sell_req_id}`;
+                        });
+
+                        // Basic info
+                        document.getElementById('buyReqId').textContent = buyRequest.buy_req_id || 'N/A';
+                        document.getElementById('buyTotalAmount').textContent = buyRequest.buy_total_amount || '0';
+                        
+                        // Status
+                        const statusBadge = document.getElementById('statusBadge');
+                        if (buyRequest.is_closed) {
+                            statusBadge.textContent = 'Closed';
+                            statusBadge.classList.add('status-badge', 'status-closed');
+                        } else {
+                            statusBadge.textContent = 'Active';
+                            statusBadge.classList.add('status-badge', 'status-active');
+                        }
+
+                        // Dates
+                        const formatDate = (dateString) => {
+                            if (!dateString) return 'N/A';
+                            const date = new Date(dateString);
+                            return date.toLocaleString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                        };
+
+                        document.getElementById('createdAt').textContent = formatDate(buyRequest.created_at);
+                        document.getElementById('expiresAt').textContent = formatDate(buyRequest.expires_at);
+                        document.getElementById('sellerConfirmedAt').textContent = formatDate(buyRequest.seller_confirmed_at);
+                        document.getElementById('buyerConfirmedAt').textContent = formatDate(buyRequest.buyer_confirmed_at);
+                        document.getElementById('closedAt').textContent = formatDate(buyRequest.closed_at);
+
+                        // Payment methods
+                        const buyByCardElement = document.getElementById('buyByCard');
+                        buyByCardElement.textContent = buyRequest.buy_by_card ? 'Yes' : 'No';
+                        buyByCardElement.classList.add(buyRequest.buy_by_card ? 'true' : 'false');
+                        document.getElementById('buyAmountByCard').textContent = buyRequest.buy_amount_by_card || '0';
+
+                        const buyByCashElement = document.getElementById('buyByCash');
+                        buyByCashElement.textContent = buyRequest.buy_by_cash ? 'Yes' : 'No';
+                        buyByCashElement.classList.add(buyRequest.buy_by_cash ? 'true' : 'false');
+                        document.getElementById('buyAmountByCash').textContent = buyRequest.buy_amount_by_cash || '0';
+
+                        // User info
+                        const tgUsernameElement = document.getElementById('tgUsername');
+                        if (buyRequest.tg_username) {
+                            tgUsernameElement.textContent = `@${buyRequest.tg_username}`;
+                            tgUsernameElement.href = `https://t.me/${buyRequest.tg_username}`;
+                        } else {
+                            tgUsernameElement.textContent = 'N/A';
+                            tgUsernameElement.removeAttribute('href');
+                        }
+
+                        // Confirmation status
+                        const sellerConfirmation = document.getElementById('sellerConfirmationStatus');
+                        const buyerConfirmation = document.getElementById('buyerConfirmationStatus');
+                        
+                        sellerConfirmation.textContent = buyRequest.close_confirm_by_seller ? 'Seller Confirmed' : 'Pending Seller';
+                        sellerConfirmation.classList.add(buyRequest.close_confirm_by_seller ? 'confirmed' : 'pending');
+                        
+                        buyerConfirmation.textContent = buyRequest.close_confirm_by_buyer ? 'Buyer Confirmed' : 'Pending Buyer';
+                        buyerConfirmation.classList.add(buyRequest.close_confirm_by_buyer ? 'confirmed' : 'pending');
+
+                        // Enable confirm button if transaction is active
+                        if (!buyRequest.is_closed) {
+                            confirmButton.disabled = false;
+                            confirmButton.addEventListener('click', () => {
+                                // Implement confirmation logic here
+                                alert('Confirmation functionality to be implemented');
+                            });
+                        }
+                    } else {
+                        document.body.innerHTML = "<div class='error-message'>Error: Buy request data not found in response.</div>";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching buy request:', error);
+                    document.body.innerHTML = `
+                        <div class="error-message">
+                            Failed to load buy request. Please try again later.
+                            <br>${error.message}
+                        </div>
+                    `;
+                });
+        });
+    </script>
+</body>
+</html>

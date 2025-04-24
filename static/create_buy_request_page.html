@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Buy Request</title>
+    <style>
+        :root {
+            --tg-bg: #f5f5f5;
+            --tg-primary: #3390ec;
+            --tg-primary-hover: #2a7bc8;
+            --tg-secondary: #ebedf0;
+            --tg-text: #000000;
+            --tg-text-secondary: #707579;
+            --tg-green: #31b545;
+            --tg-red: #ff3b30;
+            --tg-white: #ffffff;
+            --tg-border: #e7e8ec;
+            --tg-card-bg: #ffffff;
+            --tg-active: #ebf5ff;
+            --tg-error: #ff3b30;
+            
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            
+            --border-radius-sm: 6px;
+            --border-radius-md: 10px;
+            
+            --font-size-sm: 14px;
+            --font-size-md: 15px;
+            --font-size-lg: 16px;
+            
+            --font-weight-normal: 400;
+            --font-weight-medium: 500;
+            --font-weight-bold: 600;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: var(--tg-primary);
+            color: var(--tg-white);
+            padding: var(--spacing-lg);
+            text-align: center;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            padding: var(--spacing-md);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--tg-card-bg);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-size: var(--font-size-md);
+            color: var(--tg-text);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--tg-primary);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: var(--spacing-md);
+            background-color: var(--tg-primary);
+            color: var(--tg-white);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: var(--font-size-md);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            text-align: center;
+            margin-top: var(--spacing-lg);
+        }
+
+        .btn:hover {
+            background-color: var(--tg-primary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .payment-method {
+            flex: 1;
+        }
+
+        .payment-radio {
+            display: none;
+        }
+
+        .payment-label {
+            display: block;
+            padding: var(--spacing-md);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--border-radius-sm);
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .payment-radio:checked + .payment-label {
+            border-color: var(--tg-primary);
+            background-color: var(--tg-active);
+        }
+
+        .error-message {
+            color: var(--tg-error);
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-sm);
+            display: none;
+        }
+
+        .success-message {
+            color: var(--tg-green);
+            font-size: var(--font-size-md);
+            text-align: center;
+            padding: var(--spacing-md);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Create Buy Request</div>
+    
+    <div class="container">
+        <div id="successMessage" class="success-message"></div>
+        
+        <div class="card">
+            <form id="buyRequestForm">
+                <input type="hidden" id="sellReqId" name="sell_req_id">
+                
+                <div class="form-group">
+                    <label for="totalAmount" class="form-label">Total amount</label>
+                    <input type="number" id="totalAmount" class="form-input" 
+                           placeholder="Enter amount" min="1" required>
+                    <div id="totalAmountError" class="error-message">Please enter valid amount</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Payment method</label>
+                    <div class="payment-methods">
+                        <div class="payment-method">
+                            <input type="radio" id="methodCard" name="payment_method" value="card" class="payment-radio" checked>
+                            <label for="methodCard" class="payment-label">Card</label>
+                        </div>
+                        <div class="payment-method">
+                            <input type="radio" id="methodCash" name="payment_method" value="cash" class="payment-radio">
+                            <label for="methodCash" class="payment-label">Cash</label>
+                        </div>
+                        <div class="payment-method">
+                            <input type="radio" id="methodBoth" name="payment_method" value="both" class="payment-radio">
+                            <label for="methodBoth" class="payment-label">Both</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="cardAmountGroup" class="form-group" style="display: none;">
+                    <label for="amountByCard" class="form-label">Card amount</label>
+                    <input type="number" id="amountByCard" class="form-input" 
+                           placeholder="Enter amount" min="0" value="0">
+                    <div id="cardAmountError" class="error-message">Invalid amount</div>
+                </div>
+                
+                <div id="cashAmountGroup" class="form-group" style="display: none;">
+                    <label for="amountByCash" class="form-label">Cash amount</label>
+                    <input type="number" id="amountByCash" class="form-input" 
+                           placeholder="Enter amount" min="0" value="0">
+                    <div id="cashAmountError" class="error-message">Invalid amount</div>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="btn">Create Request</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get sell_req_id from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const sellReqId = urlParams.get('sell_req_id');
+            if (sellReqId) {
+                document.getElementById('sellReqId').value = sellReqId;
+            }
+
+            // Payment method toggle
+            const paymentMethods = document.querySelectorAll('.payment-radio');
+            const cardGroup = document.getElementById('cardAmountGroup');
+            const cashGroup = document.getElementById('cashAmountGroup');
+            
+            paymentMethods.forEach(method => {
+                method.addEventListener('change', function() {
+                    if (this.value === 'card') {
+                        cardGroup.style.display = 'block';
+                        cashGroup.style.display = 'none';
+                    } else if (this.value === 'cash') {
+                        cardGroup.style.display = 'none';
+                        cashGroup.style.display = 'block';
+                    } else if (this.value === 'both') {
+                        cardGroup.style.display = 'block';
+                        cashGroup.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Initialize
+            document.getElementById('methodCard').dispatchEvent(new Event('change'));
+
+            // Form submission
+            const form = document.getElementById('buyRequestForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate
+                const total = parseInt(document.getElementById('totalAmount').value);
+                const cardAmount = parseInt(document.getElementById('amountByCard').value) || 0;
+                const cashAmount = parseInt(document.getElementById('amountByCash').value) || 0;
+                const method = document.querySelector('input[name="payment_method"]:checked').value;
+                
+                let isValid = true;
+                
+                if (!total || total < 1) {
+                    document.getElementById('totalAmountError').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('totalAmountError').style.display = 'none';
+                }
+                
+                if (method === 'both' && (cardAmount + cashAmount) !== total) {
+                    document.getElementById('cardAmountError').textContent = 'Sum must equal total';
+                    document.getElementById('cardAmountError').style.display = 'block';
+                    document.getElementById('cashAmountError').textContent = 'Sum must equal total';
+                    document.getElementById('cashAmountError').style.display = 'block';
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                // Submit
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.textContent = 'Processing...';
+                
+                try {
+                    const response = await fetch('http://localhost:8081/api/v1/buy-request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            sell_req_id: parseInt(document.getElementById('sellReqId').value),
+                            buy_total_amount: total,
+                            buy_amount_by_card: method === 'cash' ? 0 : cardAmount,
+                            buy_amount_by_cash: method === 'card' ? 0 : cashAmount
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Request failed');
+                    }
+                    
+                    // Show success
+                    document.getElementById('successMessage').textContent = 'Request created successfully!';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Reset form
+                    form.reset();
+                    document.getElementById('methodCard').checked = true;
+                    document.getElementById('methodCard').dispatchEvent(new Event('change'));
+                    
+                    // Redirect to buy request page if we have the ID
+                    let buyReqId = result.buy_request.buy_req_id;
+                    if (buyReqId) {
+                        if (result && result.buy_request && result.buy_request.buy_req_id) {
+                        const buyReqId = result.buy_request.buy_req_id;
+                        
+                        // 2. Валидация UUID
+                        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(buyReqId)) {
+                            // 3. Кодирование для URL
+                            const encodedId = encodeURIComponent(buyReqId);
+                            
+                            // 4. Редирект с таймаутом
+                            setTimeout(() => {
+                                // 5. Использование абсолютного URL
+                                window.location.href = `${window.location.origin}/buy-request/${encodedId}`;
+                                
+                                // 6. Можно добавить индикатор загрузки
+                                showLoadingIndicator();
+                            }, 1500);
+                        } else {
+                            console.error('Invalid buy_req_id format:', buyReqId);
+                            showError('Invalid transaction ID format');
+                        }
+                    } else {
+                        console.error('Buy request data missing in response:', result);
+                        showError('Transaction data not found');
+                    }
+                    }
+                    
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Create Request';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

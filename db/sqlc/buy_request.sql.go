@@ -64,6 +64,28 @@ func (q *Queries) CloseConfirmBySeller(ctx context.Context, arg CloseConfirmBySe
 	return err
 }
 
+const countOfBuyRequests = `-- name: CountOfBuyRequests :one
+SELECT COUNT(*) FROM buy_requests WHERE sell_req_id = $1
+`
+
+func (q *Queries) CountOfBuyRequests(ctx context.Context, sellReqID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfBuyRequests, sellReqID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countOfBuyRequestsByTelegramId = `-- name: CountOfBuyRequestsByTelegramId :one
+SELECT COUNT(*) FROM buy_requests WHERE telegram_id = $1
+`
+
+func (q *Queries) CountOfBuyRequestsByTelegramId(ctx context.Context, telegramID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfBuyRequestsByTelegramId, telegramID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createBuyRequest = `-- name: CreateBuyRequest :one
 INSERT INTO buy_requests (
   buy_req_id,
