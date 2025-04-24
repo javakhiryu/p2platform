@@ -51,6 +51,22 @@ func (store *SQLStore) ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.
 			result.LockedAmountReleasedAt = lockedAmount.ReleasedAt.Time
 		}
 
+		sellRequest, err := q.GetSellRequestForUpdate(ctx, buyRequest.SellReqID)
+		if err != nil {
+			return appErr.ErrFailedToGetSellRequests
+		}
+
+		if !sellRequest.IsDeleted.Bool && !sellRequest.IsActual.Bool {
+			arg := OpenCloseSellRequestParams{
+				IsActual:  util.ToPgBool(true),
+				SellReqID: sellRequest.SellReqID,
+			}
+			_, err = q.OpenCloseSellRequest(ctx, arg)
+			if err != nil {
+				return appErr.ErrFailedToOpenSellRequest
+			}
+		}
+
 		return nil
 	})
 	return result, err

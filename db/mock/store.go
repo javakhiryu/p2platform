@@ -94,6 +94,36 @@ func (mr *MockStoreMockRecorder) CloseConfirmBySeller(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseConfirmBySeller", reflect.TypeOf((*MockStore)(nil).CloseConfirmBySeller), arg0, arg1)
 }
 
+// CountOfBuyRequests mocks base method.
+func (m *MockStore) CountOfBuyRequests(arg0 context.Context, arg1 int32) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountOfBuyRequests", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountOfBuyRequests indicates an expected call of CountOfBuyRequests.
+func (mr *MockStoreMockRecorder) CountOfBuyRequests(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountOfBuyRequests", reflect.TypeOf((*MockStore)(nil).CountOfBuyRequests), arg0, arg1)
+}
+
+// CountOfBuyRequestsByTelegramId mocks base method.
+func (m *MockStore) CountOfBuyRequestsByTelegramId(arg0 context.Context, arg1 int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountOfBuyRequestsByTelegramId", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountOfBuyRequestsByTelegramId indicates an expected call of CountOfBuyRequestsByTelegramId.
+func (mr *MockStoreMockRecorder) CountOfBuyRequestsByTelegramId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountOfBuyRequestsByTelegramId", reflect.TypeOf((*MockStore)(nil).CountOfBuyRequestsByTelegramId), arg0, arg1)
+}
+
 // CountOfSellRequests mocks base method.
 func (m *MockStore) CountOfSellRequests(arg0 context.Context) (int64, error) {
 	m.ctrl.T.Helper()

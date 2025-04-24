@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	db "p2platform/db/sqlc"
 	appErr "p2platform/errors"
@@ -14,10 +15,10 @@ import (
 )
 
 type createBuyRequest struct {
-	SellReqID       int32  `json:"sell_req_id" binding:"min=1"`
-	BuyTotalAmount  int64  `json:"buy_total_amount" binding:"min=1"`
-	BuyAmountByCard int64  `json:"buy_amount_by_card" binding:"gte=0"`
-	BuyAmountByCash int64  `json:"buy_amount_by_cash" binding:"min=0"`
+	SellReqID       int32 `json:"sell_req_id" binding:"min=1"`
+	BuyTotalAmount  int64 `json:"buy_total_amount" binding:"min=1"`
+	BuyAmountByCard int64 `json:"buy_amount_by_card" binding:"gte=0"`
+	BuyAmountByCash int64 `json:"buy_amount_by_cash" binding:"min=0"`
 }
 
 func (server *Server) createBuyRequest(ctx *gin.Context) {
@@ -98,6 +99,11 @@ type listBuyRequests struct {
 	PageSize  int32 `form:"page_size" binding:"min=5,max=10"`
 }
 
+type listBuyRequestsResponse struct {
+	BuyRequests []db.BuyRequest `json:"buy_requests"`
+	TotalPages  int32           `json:"total_pages"`
+}
+
 func (server *Server) listBuyRequests(ctx *gin.Context) {
 	var req listBuyRequests
 	err := ctx.ShouldBindQuery(&req)
@@ -119,7 +125,19 @@ func (server *Server) listBuyRequests(ctx *gin.Context) {
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
-	ctx.JSON(http.StatusOK, buyRequests)
+	totalBuyRequests, err := server.store.CountOfBuyRequests(ctx, req.SellReqId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+	}
+
+	totalPages := int32(math.Ceil(float64(totalBuyRequests) / float64(req.PageSize)))
+
+	result := listBuyRequestsResponse{
+		BuyRequests: buyRequests,
+		TotalPages:  totalPages,
+	}
+
+	ctx.JSON(http.StatusOK, result)
 }
 
 type listMyBuyRequests struct {
@@ -153,7 +171,19 @@ func (server *Server) listMyBuyRequests(ctx *gin.Context) {
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
-	ctx.JSON(http.StatusOK, buyRequests)
+	totalBuyRequests, err := server.store.CountOfBuyRequestsByTelegramId(ctx, telegramId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+	}
+
+	totalPages := int32(math.Ceil(float64(totalBuyRequests) / float64(req.PageSize)))
+
+	result := listBuyRequestsResponse{
+		BuyRequests: buyRequests,
+		TotalPages:  totalPages,
+	}
+
+	ctx.JSON(http.StatusOK, result)
 }
 
 type closeBuyRequestRequest struct {

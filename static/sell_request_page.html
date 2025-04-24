@@ -233,8 +233,12 @@
                 <span class="info-value" id="comment"></span>
             </div>
         </div>
-
-        <a href="https://facf-37-110-210-189.ngrok-free.app/list-sell-requests" class="button back-button">← Go to Sell Requests</a>
+        
+        <div class="action-buttons">
+            <a id="createBuyRequestBtn" class="button primary">Create Buy Request</a>
+            <a id="listBuyRequestsBtn" class="button primary">List Buy Requests</a>
+            <a href="https://facf-37-110-210-189.ngrok-free.app/list-sell-requests" class="button secondary">← Go to Sell Requests</a>
+        </div>
     </div>
 
     <script>
@@ -244,6 +248,14 @@
         if (!sellRequestId) {
             document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: ID is missing from the URL.</div>";
         } else {
+            // Set up the Create Buy Request button
+            document.getElementById('createBuyRequestBtn').addEventListener('click', function() {
+                window.location.href = `https://facf-37-110-210-189.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
+            });
+            document.getElementById('listBuyRequestsBtn').addEventListener('click', function() {
+                window.location.href = `https://facf-37-110-210-189.ngrok-free.app/list-buy-requests?sell_req_id=${sellRequestId}`;
+            });
+
             const apiUrl = `http://localhost:8081/api/v1/sell-request/${sellRequestId}`;
 
             fetch(apiUrl)
@@ -272,7 +284,6 @@
                             tgUsernameElement.textContent = 'N/A';
                             tgUsernameElement.removeAttribute('href');
                         }
-
 
                         const sellByCardElement = document.getElementById('sellByCard');
                         sellByCardElement.textContent = sellRequest.sell_by_card ? 'Yes' : 'No';

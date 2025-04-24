@@ -15,6 +15,8 @@ type Querier interface {
 	CloseBuyRequestBySellRequest(ctx context.Context, sellReqID int32) error
 	CloseConfirmByBuyer(ctx context.Context, arg CloseConfirmByBuyerParams) error
 	CloseConfirmBySeller(ctx context.Context, arg CloseConfirmBySellerParams) error
+	CountOfBuyRequests(ctx context.Context, sellReqID int32) (int64, error)
+	CountOfBuyRequestsByTelegramId(ctx context.Context, telegramID int64) (int64, error)
 	CountOfSellRequests(ctx context.Context) (int64, error)
 	CountOfSellRequestsByTelegramId(ctx context.Context, telegramID int64) (int64, error)
 	CreateBuyRequest(ctx context.Context, arg CreateBuyRequestParams) (BuyRequest, error)

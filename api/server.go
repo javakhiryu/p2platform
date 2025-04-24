@@ -69,7 +69,10 @@ func (server *Server) setupRouter() {
 	router.GET("/", server.renderIndexPage)
 	router.GET("/sell-request/:id", server.renderSellRequestPage)
 	router.GET("/create-sell-request", server.renderCreateSellRequestPage)
+	router.GET("/create-buy-request", server.renderCreateBuyRequestPage)
 	router.GET("/list-sell-requests", server.renderListSellRequestsPage)
+	router.GET("/buy-request/:id", server.renderBuyRequestPage)
+	router.GET("/list-buy-requests", server.renderListBuyRequestsPage)
 
 	api := router.Group("/api/v1")
 	{

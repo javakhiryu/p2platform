@@ -24,12 +24,18 @@ ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3;
 
+-- name: CountOfBuyRequests :one
+SELECT COUNT(*) FROM buy_requests WHERE sell_req_id = $1;
+
 -- name: ListBuyRequestsByTelegramId :many
 SELECT * FROM buy_requests
 WHERE telegram_id = $1
 ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3;
+
+-- name: CountOfBuyRequestsByTelegramId :one
+SELECT COUNT(*) FROM buy_requests WHERE telegram_id = $1;
 
 -- name: CloseConfirmBySeller :exec
 UPDATE buy_requests
