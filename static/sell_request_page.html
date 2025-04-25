@@ -191,6 +191,58 @@
             background-color: #f1f1f1;
             color: #333;
         }
+            /* Error popup styles */
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-red);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 90%;
+            width: max-content;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-popup.hide {
+            animation: slideOut 0.3s ease-in;
+            opacity: 0;
+        }
+
+        .error-popup-close {
+            margin-left: var(--spacing-md);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+            to {
+                top: -50px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -272,7 +324,7 @@
         <div class="action-buttons">
             <a id="createBuyRequestBtn" class="button primary">Create Buy Request</a>
             <a id="listBuyRequestsBtn" class="button secondary">List Buy Requests</a>
-            <a href="https://facf-37-110-210-189.ngrok-free.app/list-sell-requests" class="button secondary">← Back to Sell Requests List</a>
+            <a href="https://f398-37-110-215-31.ngrok-free.app/list-sell-requests" class="button secondary">← Back to Sell Requests List</a>
         </div>
     </div>
 
@@ -280,26 +332,71 @@
         const pathParts = window.location.pathname.split('/');
         const sellRequestId = pathParts[pathParts.length - 1];
 
+         // Error handling and popup display
+         function showErrorPopup(message, duration = 5000) {
+            const popup = document.createElement('div');
+            popup.className = 'error-popup';
+            popup.style.backgroundColor = '#ff4444'; 
+            popup.innerHTML = `
+                <span>${message}</span>
+                <span class="error-popup-close">×</span>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Close on click
+            popup.querySelector('.error-popup-close').addEventListener('click', () => {
+                popup.classList.add('hide');
+                setTimeout(() => popup.remove(), 300);
+            });
+            
+            // Auto-close after duration
+            if (duration) {
+                setTimeout(() => {
+                    popup.classList.add('hide');
+                    setTimeout(() => popup.remove(), 300);
+                }, duration);
+            }
+        }
+    
+        // Map of error codes to user-friendly messages
+        const errorMessages = {
+            
+        };
+
+    
+        // Функция для форматирования числовых значений
+        const formatAmount = (amount) => {
+            const num = parseFloat(amount) || 0;
+            return new Intl.NumberFormat('en-US', {
+                maximumFractionDigits: 2
+            }).format(num);
+        };
+    
         if (!sellRequestId) {
             document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: ID is missing from the URL.</div>";
         } else {
             // Set up the Create Buy Request button
             const createButton = document.getElementById('createBuyRequestBtn');
-                createButton.addEventListener('click', function() {
-                window.location.href = `https://facf-37-110-210-189.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
+            createButton.addEventListener('click', function() {
+                window.location.href = `https://f398-37-110-215-31.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
             });
             document.getElementById('listBuyRequestsBtn').addEventListener('click', function() {
-                window.location.href = `https://facf-37-110-210-189.ngrok-free.app/list-buy-requests?sell_req_id=${sellRequestId}`;
+                window.location.href = `https://f398-37-110-215-31.ngrok-free.app/list-buy-requests?sell_req_id=${sellRequestId}`;
             });
-
+    
             const apiUrl = `http://localhost:8081/api/v1/sell-request/${sellRequestId}`;
-
+    
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
-                        });
+                        const errorData = result.json();
+                    // Обработка структуры ошибки с code и message
+                    const errorMessage = errorData.error?.message ||  
+                                       'Request failed';
+                    showErrorPopup(errorMessage);
+                    output.textContent = `Error: ${errorMessage}`;
+                    return;
                     }
                     return response.json();
                 })
@@ -307,7 +404,7 @@
                     if (data && data.sell_request) {
                         const sellRequest = data.sell_request;
                         document.getElementById('sellReqId').textContent = sellRequest.sell_req_id || 'N/A';
-                        document.getElementById('sellTotalAmount').textContent = sellRequest.sell_total_amount || '0';
+                        document.getElementById('sellTotalAmount').textContent = formatAmount(sellRequest.sell_total_amount) || '0';
                         document.getElementById('sellMoneySource').textContent = sellRequest.sell_money_source || 'N/A';
                         document.getElementById('currencyFrom').textContent = sellRequest.currency_from || 'N/A';
                         document.getElementById('currencyTo').textContent = sellRequest.currency_to || 'N/A';
@@ -319,20 +416,20 @@
                             tgUsernameElement.textContent = 'N/A';
                             tgUsernameElement.removeAttribute('href');
                         }
-
+    
                         const sellByCardElement = document.getElementById('sellByCard');
                         sellByCardElement.textContent = sellRequest.sell_by_card ? 'Yes' : 'No';
                         sellByCardElement.classList.add(sellRequest.sell_by_card ? 'true' : 'false');
-
-                        document.getElementById('sellAmountByCard').textContent = sellRequest.sell_amount_by_card || '0';
-
+    
+                        document.getElementById('sellAmountByCard').textContent = formatAmount(sellRequest.sell_amount_by_card) || '0';
+    
                         const sellByCashElement = document.getElementById('sellByCash');
                         sellByCashElement.textContent = sellRequest.sell_by_cash ? 'Yes' : 'No';
                         sellByCashElement.classList.add(sellRequest.sell_by_cash ? 'true' : 'false');
-
-                        document.getElementById('sellAmountByCash').textContent = sellRequest.sell_amount_by_cash || '0';
-                        document.getElementById('sellExchangeRate').textContent = sellRequest.sell_exchange_rate || '0';
-
+    
+                        document.getElementById('sellAmountByCash').textContent = formatAmount(sellRequest.sell_amount_by_cash) || '0';
+                        document.getElementById('sellExchangeRate').textContent = formatAmount(sellRequest.sell_exchange_rate) || '0';
+    
                         const isActualElement = document.getElementById('isActual');
                         if (sellRequest.is_actual) {
                             isActualElement.textContent = 'Active';
@@ -343,7 +440,7 @@
                             createButton.disabled = true
                             createButton.classList.add('disabled');
                         }
-
+    
                         document.getElementById('comment').textContent = sellRequest.comment || 'No comments';
                         
                         const createdAt = sellRequest.created_at ? new Date(sellRequest.created_at) : new Date();
@@ -370,7 +467,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <a href="https://facf-37-110-210-189.ngrok-free.app" class="button back-button">← Back</a>
+                            <a href="https://f398-37-110-215-31.ngrok-free.app" class="button back-button">← Back</a>
                         </div>
                     `;
                 });

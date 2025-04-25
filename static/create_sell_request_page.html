@@ -6,6 +6,7 @@
     <title>Create Sell Request</title>
     <style>
         :root {
+            --tg-red: #ff4444;
             --tg-bg: #ffffff;
             --tg-accent: #0088cc;
             --tg-accent-hover: #007bb3;
@@ -171,6 +172,58 @@
             color: var(--tg-text-secondary);
             margin-top: 4px;
         }
+        /* Error popup styles */
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-red);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 90%;
+            width: max-content;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-popup.hide {
+            animation: slideOut 0.3s ease-in;
+            opacity: 0;
+        }
+
+        .error-popup-close {
+            margin-left: var(--spacing-md);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+            to {
+                top: -50px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -179,18 +232,11 @@
     <div class="container">
         <form id="sellForm">
             <div class="form-group">
-                <label for="sell_total_amount">Total Amount to Sell</label>
-                <input type="number" id="sell_total_amount" name="sell_total_amount" 
-                       placeholder="Enter total amount" required min="1" />
-            </div>
-
-            <div class="form-group">
-                <label for="sell_money_source">Payment Method</label>
+                <label for="sell_money_source">Select Your Money Type</label>
                 <select id="sell_money_source" name="sell_money_source" required>
                     <option value="" disabled selected>Select payment method</option>
                     <option value="cash">Cash</option>
                     <option value="card">Card</option>
-                    <option value="both">Both Cash and Card</option>
                 </select>
             </div>
 
@@ -240,13 +286,19 @@
             <div class="form-group">
                 <label for="sell_amount_by_card">Amount to Receive by Card</label>
                 <input type="number" id="sell_amount_by_card" name="sell_amount_by_card" 
-                       placeholder="Enter card amount or 0" min="0" value="0" />
+                       placeholder="Enter card amount or 0" min="0" />
             </div>
 
             <div class="form-group">
                 <label for="sell_amount_by_cash">Amount to Receive by Cash</label>
                 <input type="number" id="sell_amount_by_cash" name="sell_amount_by_cash" 
-                       placeholder="Enter cash amount or 0" min="0" value="0" />
+                       placeholder="Enter cash amount or 0" min="0" />
+            </div>
+
+            <div class="form-group">
+                <label for="sell_total_amount">Total Amount to Sell</label>
+                <input type="number" id="sell_total_amount" name="sell_total_amount" 
+                       placeholder="Enter total amount" required min="1" />
             </div>
 
             <div class="form-group">
@@ -266,41 +318,164 @@
 
         <pre id="sellOutput"></pre>
 
-        <a href="https://facf-37-110-210-189.ngrok-free.app" class="button back-button">← Back to Home</a>
+        <a href="https://f398-37-110-215-31.ngrok-free.app" class="button back-button">← Back to Home</a>
     </div>
-
     <script>
-        document.getElementById('sellForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const output = document.getElementById('sellOutput');
+        // Error handling and popup display
+        function showErrorPopup(message, duration = 5000) {
+            const popup = document.createElement('div');
+            popup.className = 'error-popup';
+            popup.style.backgroundColor = '#ff4444'; 
+            popup.innerHTML = `
+                <span>${message}</span>
+                <span class="error-popup-close">×</span>
+            `;
             
-            // Show loading state
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Processing...';
+            document.body.appendChild(popup);
             
-            output.style.display = 'block';
-            output.textContent = 'Sending request...';
-
-            const data = {
-                sell_total_amount: parseFloat(form.sell_total_amount.value),
-                sell_money_source: form.sell_money_source.value,
-                currency_from: form.currency_from.value,
-                currency_to: form.currency_to.value,
-                sell_amount_by_card: parseFloat(form.sell_amount_by_card.value || 0),
-                sell_amount_by_cash: parseFloat(form.sell_amount_by_cash.value || 0),
-                sell_exchange_rate: parseFloat(form.sell_exchange_rate.value),
-                comment: form.comment.value
+            // Close on click
+            popup.querySelector('.error-popup-close').addEventListener('click', () => {
+                popup.classList.add('hide');
+                setTimeout(() => popup.remove(), 300);
+            });
+            
+            // Auto-close after duration
+            if (duration) {
+                setTimeout(() => {
+                    popup.classList.add('hide');
+                    setTimeout(() => popup.remove(), 300);
+                }, duration);
+            }
+        }
+    
+        // Map of error codes to user-friendly messages
+        const errorMessages = {
+            
+        };
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            // Change input types to text for formatted display
+            const numericInputs = [
+                'sell_total_amount', 
+                'sell_amount_by_card', 
+                'sell_amount_by_cash',
+                'sell_exchange_rate'
+            ];
+            
+            numericInputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.type = 'text';
+            });
+    
+            // Format number with spaces as thousand separators
+            const formatNumber = (value) => {
+                const num = value.replace(/[^\d.]/g, '');
+                if (!num) return '';
+                
+                // Handle decimal numbers for exchange rate
+                if (num.includes('.')) {
+                    const parts = num.split('.');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                    return parts.join('.');
+                }
+                
+                return num.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
             };
-
-            try {
+    
+            // Parse formatted number back to float
+            const parseFormattedNumber = (formattedValue) => {
+                return parseFloat(formattedValue.replace(/\s/g, '')) || 0;
+            };
+    
+            // Handle input formatting
+            const handleAmountInput = (input) => {
+                const cursorPos = input.selectionStart;
+                const oldValue = input.value;
+                const oldLength = oldValue.length;
+                
+                input.value = formatNumber(input.value);
+                
+                // Adjust cursor position
+                const newLength = input.value.length;
+                const lengthDiff = newLength - oldLength;
+                input.setSelectionRange(cursorPos + lengthDiff, cursorPos + lengthDiff);
+                
+                // Auto-update total amount when card/cash amounts change
+                if (input.id === 'sell_amount_by_card' || input.id === 'sell_amount_by_cash') {
+                    updateTotalAmount();
+                }
+            };
+    
+            // Update total amount as sum of card and cash
+            const updateTotalAmount = () => {
+                const cardAmount = parseFormattedNumber(document.getElementById('sell_amount_by_card').value);
+                const cashAmount = parseFormattedNumber(document.getElementById('sell_amount_by_cash').value);
+                const total = cardAmount + cashAmount;
+                
+                document.getElementById('sell_total_amount').value = total > 0 ? formatNumber(total.toString()) : '';
+            };
+    
+            // Initialize input fields
+            const initInputField = (id) => {
+                const input = document.getElementById(id);
+                if (!input) return;
+                
+                input.addEventListener('input', () => handleAmountInput(input));
+                input.addEventListener('blur', () => {
+                    input.value = formatNumber(input.value);
+                });
+                input.addEventListener('focus', () => {
+                    input.value = input.value.replace(/\s/g, '');
+                });
+            };
+    
+            // Initialize all numeric inputs
+            numericInputs.forEach(initInputField);
+    
+            // Form submission
+            document.getElementById('sellForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const output = document.getElementById('sellOutput');
+                
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Processing...';
+                
+                output.style.display = 'block';
+                output.textContent = 'Sending request...';
+    
+                // Prepare data with formatted numbers
+                const data = {
+                    sell_total_amount: parseFormattedNumber(form.sell_total_amount.value),
+                    sell_money_source: form.sell_money_source.value,
+                    currency_from: form.currency_from.value,
+                    currency_to: form.currency_to.value,
+                    sell_amount_by_card: parseFormattedNumber(form.sell_amount_by_card.value || '0'),
+                    sell_amount_by_cash: parseFormattedNumber(form.sell_amount_by_cash.value || '0'),
+                    sell_exchange_rate: parseFormattedNumber(form.sell_exchange_rate.value),
+                    comment: form.comment.value,
+                }
+    
+                try {
                 const res = await fetch('http://localhost:8081/api/v1/sell-request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    // Обработка структуры ошибки с code и message
+                    const errorMessage = errorData.error?.message ||  
+                                       'Request failed';
+                    
+                    showErrorPopup(errorMessage);
+                    output.textContent = `Error: ${errorMessage}`;
+                    return;
+                }
+
                 const result = await res.json();
                 output.textContent = 'Request submitted successfully!\n\n' + 
                                    JSON.stringify(result, null, 2);
@@ -311,31 +486,14 @@
                     }, 1500);
                 }
             } catch (err) {
+                const message = 'Network error, please check your connection';
+                showErrorPopup(message);
                 output.textContent = 'Error submitting request:\n' + err.message;
-                submitBtn.textContent = 'Try Again';
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Request';
             }
-        });
-
-        // Simple validation to prevent same currencies
-        document.getElementById('currency_from').addEventListener('change', function() {
-            const currencyTo = document.getElementById('currency_to');
-            if (this.value === currencyTo.value) {
-                currencyTo.setCustomValidity("Currencies must be different");
-            } else {
-                currencyTo.setCustomValidity("");
-            }
-        });
-
-        document.getElementById('currency_to').addEventListener('change', function() {
-            const currencyFrom = document.getElementById('currency_from');
-            if (this.value === currencyFrom.value) {
-                this.setCustomValidity("Currencies must be different");
-            } else {
-                this.setCustomValidity("");
-            }
+            });
         });
     </script>
 </body>

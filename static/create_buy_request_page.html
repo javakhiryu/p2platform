@@ -162,6 +162,58 @@
             padding: var(--spacing-md);
             display: none;
         }
+        /* Error popup styles */
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-red);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 90%;
+            width: max-content;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-popup.hide {
+            animation: slideOut 0.3s ease-in;
+            opacity: 0;
+        }
+
+        .error-popup-close {
+            margin-left: var(--spacing-md);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+            to {
+                top: -50px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -173,14 +225,7 @@
         <div class="card">
             <form id="buyRequestForm">
                 <input type="hidden" id="sellReqId" name="sell_req_id">
-                
-                <div class="form-group">
-                    <label for="totalAmount" class="form-label">Total amount</label>
-                    <input type="number" id="totalAmount" class="form-input" 
-                           placeholder="Enter amount" min="1" required>
-                    <div id="totalAmountError" class="error-message">Please enter valid amount</div>
-                </div>
-                
+                 
                 <div class="form-group">
                     <label class="form-label">Payment method</label>
                     <div class="payment-methods">
@@ -212,21 +257,136 @@
                            placeholder="Enter amount" min="0" value="0">
                     <div id="cashAmountError" class="error-message">Invalid amount</div>
                 </div>
+
+                <div class="form-group">
+                    <label for="totalAmount" class="form-label">Total amount</label>
+                    <input type="number" id="totalAmount" class="form-input" 
+                           placeholder="Enter amount" min="1" required>
+                    <div id="totalAmountError" class="error-message">Please enter valid amount</div>
+                </div>
                 
                 <button type="submit" id="submitBtn" class="btn">Create Request</button>
             </form>
         </div>
     </div>
-
     <script>
+         // Error handling and popup display
+         function showErrorPopup(message, duration = 5000) {
+            const popup = document.createElement('div');
+            popup.className = 'error-popup';
+            popup.innerHTML = `
+                <span>${message}</span>
+                <span class="error-popup-close">×</span>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Close on click
+            popup.querySelector('.error-popup-close').addEventListener('click', () => {
+                popup.classList.add('hide');
+                setTimeout(() => popup.remove(), 300);
+            });
+            
+            // Auto-close after duration
+            if (duration) {
+                setTimeout(() => {
+                    popup.classList.add('hide');
+                    setTimeout(() => popup.remove(), 300);
+                }, duration);
+            }
+        }
+
+        // Map of error codes to user-friendly messages
+        const errorMessages = {
+            //TODO
+        };
         document.addEventListener('DOMContentLoaded', function() {
+            // Change input types to text for formatted display
+            document.getElementById('totalAmount').type = 'text';
+            document.getElementById('amountByCard').type = 'text';
+            document.getElementById('amountByCash').type = 'text';
+    
+            // Format number with spaces as thousand separators
+            const formatNumber = (value) => {
+                const num = value.replace(/\D/g, '');
+                if (!num) return '';
+                return num.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            };
+    
+            // Parse formatted number back to integer
+            const parseFormattedNumber = (formattedValue) => {
+                return parseInt(formattedValue.replace(/\s/g, ''), 10) || 0;
+            };
+    
+            // Handle input formatting
+            const handleAmountInput = (input) => {
+                const cursorPos = input.selectionStart;
+                const oldValue = input.value;
+                const oldLength = oldValue.length;
+                
+                input.value = formatNumber(input.value.replace(/\D/g, ''));
+                
+                // Adjust cursor position
+                const newLength = input.value.length;
+                const lengthDiff = newLength - oldLength;
+                input.setSelectionRange(cursorPos + lengthDiff, cursorPos + lengthDiff);
+                
+                // Auto-update total when card/cash amounts change
+                if (input.id === 'amountByCard' || input.id === 'amountByCash') {
+                    updateTotalFromParts();
+                }
+            };
+    
+            // Update total amount based on card/cash inputs
+            const updateTotalFromParts = () => {
+                const method = document.querySelector('input[name="payment_method"]:checked').value;
+                const totalInput = document.getElementById('totalAmount');
+                
+                if (method === 'card') {
+                    const cardAmount = parseFormattedNumber(document.getElementById('amountByCard').value);
+                    totalInput.value = cardAmount > 0 ? formatNumber(cardAmount.toString()) : '';
+                } 
+                else if (method === 'cash') {
+                    const cashAmount = parseFormattedNumber(document.getElementById('amountByCash').value);
+                    totalInput.value = cashAmount > 0 ? formatNumber(cashAmount.toString()) : '';
+                }
+                else if (method === 'both') {
+                    const cardAmount = parseFormattedNumber(document.getElementById('amountByCard').value);
+                    const cashAmount = parseFormattedNumber(document.getElementById('amountByCash').value);
+                    const total = cardAmount + cashAmount;
+                    totalInput.value = total > 0 ? formatNumber(total.toString()) : '';
+                }
+            };
+    
+            // Initialize input fields
+            const initInputField = (id) => {
+                const input = document.getElementById(id);
+                input.addEventListener('input', () => handleAmountInput(input));
+                input.addEventListener('blur', () => {
+                    // Clear field if empty or zero (only for card and cash amounts)
+                    const numericValue = parseFormattedNumber(input.value);
+                    if (numericValue === 0 && (id === 'amountByCard' || id === 'amountByCash')) {
+                        input.value = '';
+                    } else {
+                        input.value = formatNumber(input.value);
+                    }
+                });
+                input.addEventListener('focus', () => {
+                    input.value = input.value.replace(/\s/g, '');
+                });
+            };
+    
+            initInputField('totalAmount');
+            initInputField('amountByCard');
+            initInputField('amountByCash');
+    
             // Get sell_req_id from URL
             const urlParams = new URLSearchParams(window.location.search);
             const sellReqId = urlParams.get('sell_req_id');
             if (sellReqId) {
                 document.getElementById('sellReqId').value = sellReqId;
             }
-
+    
             // Payment method toggle
             const paymentMethods = document.querySelectorAll('.payment-radio');
             const cardGroup = document.getElementById('cardAmountGroup');
@@ -234,6 +394,11 @@
             
             paymentMethods.forEach(method => {
                 method.addEventListener('change', function() {
+                    // Clear all amounts when switching methods
+                    document.getElementById('totalAmount').value = '';
+                    document.getElementById('amountByCard').value = '';
+                    document.getElementById('amountByCash').value = '';
+                    
                     if (this.value === 'card') {
                         cardGroup.style.display = 'block';
                         cashGroup.style.display = 'none';
@@ -247,18 +412,17 @@
                 });
             });
             
-            // Initialize
+            // Initialize with card method selected
             document.getElementById('methodCard').dispatchEvent(new Event('change'));
-
+    
             // Form submission
             const form = document.getElementById('buyRequestForm');
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                // Validate
-                const total = parseInt(document.getElementById('totalAmount').value);
-                const cardAmount = parseInt(document.getElementById('amountByCard').value) || 0;
-                const cashAmount = parseInt(document.getElementById('amountByCash').value) || 0;
+                const total = parseFormattedNumber(document.getElementById('totalAmount').value);
+                const cardAmount = parseFormattedNumber(document.getElementById('amountByCard').value);
+                const cashAmount = parseFormattedNumber(document.getElementById('amountByCash').value);
                 const method = document.querySelector('input[name="payment_method"]:checked').value;
                 
                 let isValid = true;
@@ -270,23 +434,36 @@
                     document.getElementById('totalAmountError').style.display = 'none';
                 }
                 
-                if (method === 'both' && (cardAmount + cashAmount) !== total) {
-                    document.getElementById('cardAmountError').textContent = 'Sum must equal total';
-                    document.getElementById('cardAmountError').style.display = 'block';
-                    document.getElementById('cashAmountError').textContent = 'Sum must equal total';
-                    document.getElementById('cashAmountError').style.display = 'block';
-                    isValid = false;
+                if (method === 'both') {
+                    if ((cardAmount + cashAmount) !== total) {
+                        document.getElementById('cardAmountError').textContent = 'Sum must equal total';
+                        document.getElementById('cardAmountError').style.display = 'block';
+                        document.getElementById('cashAmountError').textContent = 'Sum must equal total';
+                        document.getElementById('cashAmountError').style.display = 'block';
+                        isValid = false;
+                    }
+                } else if (method === 'card') {
+                    if (cardAmount !== total) {
+                        document.getElementById('cardAmountError').textContent = 'Must equal total amount';
+                        document.getElementById('cardAmountError').style.display = 'block';
+                        isValid = false;
+                    }
+                } else if (method === 'cash') {
+                    if (cashAmount !== total) {
+                        document.getElementById('cashAmountError').textContent = 'Must equal total amount';
+                        document.getElementById('cashAmountError').style.display = 'block';
+                        isValid = false;
+                    }
                 }
                 
                 if (!isValid) return;
                 
-                // Submit
                 const btn = document.getElementById('submitBtn');
                 btn.disabled = true;
                 btn.textContent = 'Processing...';
                 
                 try {
-                    const response = await fetch('http://localhost:8081/api/v1/buy-request', {
+                    const res = await fetch('http://localhost:8081/api/v1/buy-request', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -297,24 +474,21 @@
                             buy_amount_by_card: method === 'cash' ? 0 : cardAmount,
                             buy_amount_by_cash: method === 'card' ? 0 : cashAmount
                         })
-                    });
+                    });   
+                    if (!res.ok) {
+                    const errorData = await res.json();
+                    // Обработка структуры ошибки message
+                    const errorMessage = errorData.error?.message ||  
+                                       'Request failed';
                     
-                    const result = await response.json();
-                    
-                    if (!response.ok) {
-                        throw new Error(result.message || 'Request failed');
+                    showErrorPopup(errorMessage);
+                    output.textContent = `Error: ${errorMessage}`;
+                    return;
                     }
-                    
-                    // Show success
+                    // Show success and redirect
                     document.getElementById('successMessage').textContent = 'Request created successfully!';
                     document.getElementById('successMessage').style.display = 'block';
-                    
-                    // Reset form
-                    form.reset();
-                    document.getElementById('methodCard').checked = true;
-                    document.getElementById('methodCard').dispatchEvent(new Event('change'));
-                    
-                    // Redirect to buy request page if we have the ID
+                    const result = await res.json();
                     let buyReqId = result.buy_request.buy_req_id;
                     if (buyReqId) {
                         if (result && result.buy_request && result.buy_request.buy_req_id) {
@@ -325,8 +499,8 @@
                             // 3. Кодирование для URL
                             const encodedId = encodeURIComponent(buyReqId);
                             
-                            // 4. Редирект с таймаутом
-                            setTimeout(() => {
+                             // 4. Редирект с таймаутом
+                             setTimeout(() => {
                                 // 5. Использование абсолютного URL
                                 window.location.href = `${window.location.origin}/buy-request/${encodedId}`;
                                 
@@ -334,17 +508,20 @@
                                 showLoadingIndicator();
                             }, 1500);
                         } else {
-                            console.error('Invalid buy_req_id format:', buyReqId);
+                            const message = 'Invalid buy_req_id format:';
+                            showErrorPopup(message)
                             showError('Invalid transaction ID format');
                         }
                     } else {
-                        console.error('Buy request data missing in response:', result);
-                        showError('Transaction data not found');
+                        const message = 'Buy request data missing in response:';
+                        showErrorPopup(message);
+                        output.textContent = 'Error creating request:\n' + err.message;
                     }
                     }
-                    
-                } catch (error) {
-                    alert('Error: ' + error.message);
+                } catch (err) {
+                const message = 'Network error, please check your connection';
+                showErrorPopup(message);
+                output.textContent = 'Error submitting request:\n' + err.message;
                 } finally {
                     btn.disabled = false;
                     btn.textContent = 'Create Request';
