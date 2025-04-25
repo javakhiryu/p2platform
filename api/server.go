@@ -55,7 +55,7 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "https://facf-37-110-210-189.ngrok-free.app"},
+		AllowOrigins:     []string{"http://localhost:8080", "https://f398-37-110-215-31.ngrok-free.app"},
 		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		AllowCredentials: true,

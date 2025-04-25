@@ -223,6 +223,58 @@
             background-color: rgba(255, 193, 7, 0.1);
             color: #ffa000;
         }
+        /* Error popup styles */
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-red);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 90%;
+            width: max-content;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-popup.hide {
+            animation: slideOut 0.3s ease-in;
+            opacity: 0;
+        }
+
+        .error-popup-close {
+            margin-left: var(--spacing-md);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+            to {
+                top: -50px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -312,6 +364,13 @@
             const pathParts = window.location.pathname.split('/');
             const buyRequestId = pathParts[pathParts.length - 1];
 
+            const formatAmount = (amount) => {
+            const num = parseFloat(amount) || 0;
+            return new Intl.NumberFormat('en-US', {
+                maximumFractionDigits: 2
+            }).format(num);
+        };
+
             if (!buyRequestId) {
                 document.body.innerHTML = "<div class='error-message'>Error: ID is missing from the URL.</div>";
                 return;
@@ -341,7 +400,7 @@
 
                         // Basic info
                         document.getElementById('buyReqId').textContent = buyRequest.buy_req_id || 'N/A';
-                        document.getElementById('buyTotalAmount').textContent = buyRequest.buy_total_amount || '0';
+                        document.getElementById('buyTotalAmount').textContent = formatAmount(buyRequest.buy_total_amount) || '0';
                         
                         // Status
                         const statusBadge = document.getElementById('statusBadge');
@@ -379,12 +438,12 @@
                         const buyByCardElement = document.getElementById('buyByCard');
                         buyByCardElement.textContent = buyRequest.buy_by_card ? 'Yes' : 'No';
                         buyByCardElement.classList.add(buyRequest.buy_by_card ? 'true' : 'false');
-                        document.getElementById('buyAmountByCard').textContent = buyRequest.buy_amount_by_card || '0';
+                        document.getElementById('buyAmountByCard').textContent = formatAmount(buyRequest.buy_amount_by_card) || '0';
 
                         const buyByCashElement = document.getElementById('buyByCash');
                         buyByCashElement.textContent = buyRequest.buy_by_cash ? 'Yes' : 'No';
                         buyByCashElement.classList.add(buyRequest.buy_by_cash ? 'true' : 'false');
-                        document.getElementById('buyAmountByCash').textContent = buyRequest.buy_amount_by_cash || '0';
+                        document.getElementById('buyAmountByCash').textContent = formatAmount(buyRequest.buy_amount_by_cash) || '0';
 
                         // User info
                         const tgUsernameElement = document.getElementById('tgUsername');

@@ -302,6 +302,58 @@
             font-weight: bold;
             margin-left: 5px;
         }
+        /* Error popup styles */
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-red);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 90%;
+            width: max-content;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-popup.hide {
+            animation: slideOut 0.3s ease-in;
+            opacity: 0;
+        }
+
+        .error-popup-close {
+            margin-left: var(--spacing-md);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+            to {
+                top: -50px;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -324,6 +376,39 @@
     </div>
 
     <script>
+
+         // Error handling and popup display
+         function showErrorPopup(message, duration = 5000) {
+            const popup = document.createElement('div');
+            popup.className = 'error-popup';
+            popup.style.backgroundColor = '#ff4444'; 
+            popup.innerHTML = `
+                <span>${message}</span>
+                <span class="error-popup-close">×</span>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Close on click
+            popup.querySelector('.error-popup-close').addEventListener('click', () => {
+                popup.classList.add('hide');
+                setTimeout(() => popup.remove(), 300);
+            });
+            
+            // Auto-close after duration
+            if (duration) {
+                setTimeout(() => {
+                    popup.classList.add('hide');
+                    setTimeout(() => popup.remove(), 300);
+                }, duration);
+            }
+        }
+    
+        // Map of error codes to user-friendly messages
+        const errorMessages = {
+            
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const sellRequestsList = document.getElementById('sellRequestsList');
             const prevButton = document.getElementById('prevButton');
@@ -400,7 +485,16 @@
                     const apiUrl = `http://localhost:8081/api/v1/sell-requests?page_id=${page}&page_size=${itemsPerPage}`;
                     
                     const response = await fetch(apiUrl);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                    // Обработка структуры ошибки с code и message
+                    const errorMessage = errorData.error?.message ||  
+                                       'Request failed';
+                    
+                    showErrorPopup(errorMessage);
+                    output.textContent = `Error: ${errorMessage}`;
+                    return;
+                    }
                     
                     const data = await response.json();
                     
