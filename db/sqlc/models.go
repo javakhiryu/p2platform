@@ -63,6 +63,23 @@ type SellRequest struct {
 	Comment          string      `json:"comment"`
 }
 
+type Space struct {
+	SpaceID        uuid.UUID   `json:"space_id"`
+	SpaceName      string      `json:"space_name"`
+	HashedPassword string      `json:"hashed_password"`
+	CreatorID      pgtype.Int8 `json:"creator_id"`
+	Description    string      `json:"description"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
+}
+
+type SpaceMember struct {
+	SpaceID  uuid.UUID `json:"space_id"`
+	UserID   int64     `json:"user_id"`
+	Username string    `json:"username"`
+	JoinedAt time.Time `json:"joined_at"`
+}
+
 type User struct {
 	TelegramID int64       `json:"telegram_id"`
 	TgUsername string      `json:"tg_username"`

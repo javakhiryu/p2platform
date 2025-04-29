@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	AddSpaceMember(ctx context.Context, arg AddSpaceMemberParams) (SpaceMember, error)
 	ChangeStateBuyRequest(ctx context.Context, arg ChangeStateBuyRequestParams) (BuyRequest, error)
 	CloseBuyRequestBySellRequest(ctx context.Context, sellReqID int32) error
 	CloseConfirmByBuyer(ctx context.Context, arg CloseConfirmByBuyerParams) error
@@ -23,15 +24,21 @@ type Querier interface {
 	CreateBuyRequest(ctx context.Context, arg CreateBuyRequestParams) (BuyRequest, error)
 	CreateLockedAmount(ctx context.Context, arg CreateLockedAmountParams) (LockedAmount, error)
 	CreateSellRequest(ctx context.Context, arg CreateSellRequestParams) (SellRequest, error)
+	CreateSpace(ctx context.Context, arg CreateSpaceParams) (Space, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
 	DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtype.Bool, error)
+	DeleteSpace(ctx context.Context, spaceID uuid.UUID) error
+	DeleteSpaceMember(ctx context.Context, arg DeleteSpaceMemberParams) error
 	DeleteUser(ctx context.Context, telegramID int64) error
 	GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error)
 	GetLockedAmount(ctx context.Context, buyReqID uuid.UUID) (LockedAmount, error)
 	GetLockedAmountBySellRequest(ctx context.Context, sellReqID int32) ([]LockedAmount, error)
 	GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error)
 	GetSellRequestForUpdate(ctx context.Context, sellReqID int32) (SellRequest, error)
+	GetSpaceByCreatorId(ctx context.Context, creatorID pgtype.Int8) ([]Space, error)
+	GetSpaceBySpaceId(ctx context.Context, spaceID uuid.UUID) (Space, error)
+	GetSpaceMember(ctx context.Context, arg GetSpaceMemberParams) (SpaceMember, error)
 	GetUser(ctx context.Context, telegramID int64) (User, error)
 	ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams) ([]BuyRequest, error)
 	ListBuyRequestsByTelegramId(ctx context.Context, arg ListBuyRequestsByTelegramIdParams) ([]BuyRequest, error)
@@ -39,10 +46,15 @@ type Querier interface {
 	ListLockedAmounts(ctx context.Context, arg ListLockedAmountsParams) ([]LockedAmount, error)
 	ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error)
 	ListSellRequestsByTelegramId(ctx context.Context, arg ListSellRequestsByTelegramIdParams) ([]SellRequest, error)
+	ListSpaceMembersByUsernameAsc(ctx context.Context, arg ListSpaceMembersByUsernameAscParams) ([]SpaceMember, error)
+	ListSpaceMembersByUsernameDesc(ctx context.Context, arg ListSpaceMembersByUsernameDescParams) ([]SpaceMember, error)
+	ListSpacesAfterCursorByNameAsc(ctx context.Context, arg ListSpacesAfterCursorByNameAscParams) ([]Space, error)
+	ListSpacesAfterCursorByNameDesc(ctx context.Context, arg ListSpacesAfterCursorByNameDescParams) ([]Space, error)
 	OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellRequestParams) (SellRequest, error)
 	ReleaseLockedAmountByBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
 	ReleaseLockedAmountsBySellRequest(ctx context.Context, sellReqID int32) error
 	UpdateSellRequest(ctx context.Context, arg UpdateSellRequestParams) (SellRequest, error)
+	UpdateSpaceInfo(ctx context.Context, arg UpdateSpaceInfoParams) (Space, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
