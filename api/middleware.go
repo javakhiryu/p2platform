@@ -2,10 +2,12 @@ package api
 
 import (
 	"fmt"
+	db "p2platform/db/sqlc"
 	appErr "p2platform/errors"
 	"p2platform/token"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -32,15 +34,33 @@ func CookieAuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 }
 
 func GetTelegramIDFromContext(ctx *gin.Context) (int64, bool) {
-	tgIdValue, exists := ctx.Get("telegram_id")
+	telegramIdValue, exists := ctx.Get("telegram_id")
 	if !exists {
 		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
 		return 0, false
 	}
-	telegramId, ok := tgIdValue.(int64)
+	telegramId, ok := telegramIdValue.(int64)
 	if !ok {
 		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
 		return 0, false
 	}
 	return telegramId, true
+}
+
+func GetUserSpaces(ctx *gin.Context, store db.SQLStore) ([]uuid.UUID, error) {
+	telegramIdValue, exists := ctx.Get("telegram_id")
+	if !exists {
+		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
+		return nil, appErr.ErrUnauthorized
+	}
+	currentSpaceIds, err := store.GetSpaceIdByUserId(ctx, telegramIdValue.(int64))
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+	}
+	if len(currentSpaceIds) == 0 {
+
+		ctx.JSON(appErr.ErrUserNotBelongToSpace.Status, appErr.ErrUserNotBelongToSpace)
+		return nil, appErr.ErrUserNotBelongToSpace
+	}
+	return currentSpaceIds, nil
 }

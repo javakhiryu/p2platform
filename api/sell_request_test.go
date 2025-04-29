@@ -10,8 +10,8 @@ import (
 	"net/http/httptest"
 	mockdb "p2platform/db/mock"
 	db "p2platform/db/sqlc"
-	util "p2platform/util"
 	dbErr "p2platform/errors"
+	util "p2platform/util"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -258,7 +258,7 @@ func TestGetSellRequestAPI(t *testing.T) {
 			sellRequestID: sellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).
+					GetSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID), gomock.Eq(sellRequest.TelegramID)).
 					Times(1).
 					Return(db.GetSellRequestTxResult{}, nil)
 			},
@@ -270,7 +270,7 @@ func TestGetSellRequestAPI(t *testing.T) {
 			name:          "Bad Request",
 			sellRequestID: -1,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Any()).Times(0)
+				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
@@ -281,7 +281,7 @@ func TestGetSellRequestAPI(t *testing.T) {
 			sellRequestID: 1000,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetSellRequestTx(gomock.Any(), gomock.Eq(int32(1000))).
+					GetSellRequestTx(gomock.Any(), gomock.Eq(int32(1000)), gomock.Eq(sellRequest.TelegramID)).
 					Times(1).
 					Return(db.GetSellRequestTxResult{}, db.ErrNoRowsFound)
 			},
@@ -293,7 +293,7 @@ func TestGetSellRequestAPI(t *testing.T) {
 			name:          "Internal Server Error",
 			sellRequestID: sellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID)).Times(1).Return(db.GetSellRequestTxResult{}, sql.ErrConnDone)
+				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Eq(sellRequest.SellReqID), gomock.Eq(sellRequest.TelegramID)).Times(1).Return(db.GetSellRequestTxResult{}, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -303,7 +303,7 @@ func TestGetSellRequestAPI(t *testing.T) {
 			name:          "Deleted Sell Request",
 			sellRequestID: deletedSellRequest.SellReqID,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID)).Times(1).Return(db.GetSellRequestTxResult{
+				store.EXPECT().GetSellRequestTx(gomock.Any(), gomock.Eq(deletedSellRequest.SellReqID), gomock.Eq(sellRequest.TelegramID)).Times(1).Return(db.GetSellRequestTxResult{
 					SellRequest: deletedSellRequest,
 				}, nil)
 			},
@@ -364,7 +364,7 @@ func TestListSellRequestsAPI(t *testing.T) {
 					Limit:  int32(n),
 					Offset: 0,
 				}
-				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, nil)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg), gomock.Eq(user.TelegramID)).Times(1).Return(db.ListSellRequeststTxResults{}, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -378,7 +378,7 @@ func TestListSellRequestsAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 
-				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Any()).Times(0)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 			},
@@ -394,7 +394,7 @@ func TestListSellRequestsAPI(t *testing.T) {
 					Limit:  int32(n),
 					Offset: 90,
 				}
-				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, db.ErrNoRowsFound)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg), gomock.Eq(user.TelegramID)).Times(1).Return(db.ListSellRequeststTxResults{}, db.ErrNoRowsFound)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, recorder.Code)
@@ -411,7 +411,7 @@ func TestListSellRequestsAPI(t *testing.T) {
 					Limit:  int32(n),
 					Offset: 0,
 				}
-				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg)).Times(1).Return(db.ListSellRequeststTxResults{}, sql.ErrConnDone)
+				store.EXPECT().ListSellRequeststTx(gomock.Any(), gomock.Eq(arg), gomock.Eq(user.TelegramID)).Times(1).Return(db.ListSellRequeststTxResults{}, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)

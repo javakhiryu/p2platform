@@ -13,8 +13,8 @@ type Store interface {
 	DeleteSellRequestTx(ctx context.Context, sellRequestId int32) (bool, error)
 	CloseBuyRequestTx(ctx context.Context, arg CloseBuyRequestTxParams) (CloseBuyRequestTxResult, error)
 	DeleteBuyRequestTx(ctx context.Context, buyReqID uuid.UUID) (bool, error)
-	GetSellRequestTx(ctx context.Context, sellReqID int32) (GetSellRequestTxResult, error)
-	ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams) (ListSellRequeststTxResults, error)
+	GetSellRequestTx(ctx context.Context, sellReqID int32, requesterTelegramID int64) (GetSellRequestTxResult, error)
+	ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams, requesterTelegramID int64) (ListSellRequeststTxResults, error)
 	ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.UUID) (result ReleaseLockedAmountTxResult, err error)
 	ListMySellRequeststTx(ctx context.Context, params ListMySellRequestsTxParams) (ListSellRequeststTxResults, error)
 }

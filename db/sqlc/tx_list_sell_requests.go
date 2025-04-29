@@ -5,11 +5,14 @@ import (
 	"errors"
 	"math"
 	appErr "p2platform/errors"
+
+	"github.com/google/uuid"
 )
 
 type ListSellRequeststTxParams struct {
-	Limit  int32
-	Offset int32
+	Limit   int32
+	Offset  int32
+	SpaceId uuid.UUID
 }
 
 type ListSellRequeststTxResults struct {
@@ -17,22 +20,37 @@ type ListSellRequeststTxResults struct {
 	TotalPages   int32                    `json:"total_pages"`
 }
 
-func (store *SQLStore) ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams) (ListSellRequeststTxResults, error) {
+func (store *SQLStore) ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams, requesterTelegramID int64) (ListSellRequeststTxResults, error) {
 	var results ListSellRequeststTxResults
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		arg := ListSellRequestsParams{
-			Limit:  params.Limit,
-			Offset: params.Offset,
+		argIsUser := IsUserInSpaceParams{
+			UserID:  requesterTelegramID,
+			SpaceID: params.SpaceId,
 		}
-		sellRequests, err := q.ListSellRequests(ctx, arg)
+
+		isMember, err := q.IsUserInSpace(ctx, argIsUser)
+		if err != nil {
+			return appErr.ErrForbidden
+		}
+		if !isMember {
+			return appErr.ErrForbidden
+		}
+
+		arg := ListSellRequestsBySpaceParams{
+			SpaceID: params.SpaceId,
+			Limit:   params.Limit,
+			Offset:  params.Offset,
+		}
+		sellRequests, err := q.ListSellRequestsBySpace(ctx, arg)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
 				return appErr.ErrSellRequestNotFound
 			}
 			return appErr.ErrFailedToGetSellRequests
 		}
+
 		for _, sellRequest := range sellRequests {
 			lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, sellRequest.SellReqID)
 			if err != nil {
