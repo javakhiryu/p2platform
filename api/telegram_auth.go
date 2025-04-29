@@ -8,8 +8,10 @@ import (
 	"p2platform/errors"
 	appErr "p2platform/errors"
 	"p2platform/util"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 type user struct {
@@ -60,14 +62,28 @@ func (server *Server) telegramAuth(ctx *gin.Context) {
 		return
 	}
 
+	accessToken, err := server.tokenMaker.CreateToken(user.ID, user.Username)
+	if err !=nil{
+		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+		log.Error().Str("Error:", err.Error())
+		return
+	}
+
+	duration, err := time.ParseDuration(server.config.AccessTokenDuration)
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+		log.Error().Str("Error:", err.Error())
+		return
+	}
+
 	ctx.SetCookie(
-		"telegram_id",
-		fmt.Sprint(user.ID),
-		3600*24*30,
+		"access_token",
+		accessToken,
+		int(duration.Seconds()),
 		"/",
 		"",
-		true,
-		true,
+		false,
+		false,
 	)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})

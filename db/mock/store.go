@@ -37,6 +37,21 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// AddSpaceMember mocks base method.
+func (m *MockStore) AddSpaceMember(arg0 context.Context, arg1 db.AddSpaceMemberParams) (db.SpaceMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddSpaceMember", arg0, arg1)
+	ret0, _ := ret[0].(db.SpaceMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddSpaceMember indicates an expected call of AddSpaceMember.
+func (mr *MockStoreMockRecorder) AddSpaceMember(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSpaceMember", reflect.TypeOf((*MockStore)(nil).AddSpaceMember), arg0, arg1)
+}
+
 // ChangeStateBuyRequest mocks base method.
 func (m *MockStore) ChangeStateBuyRequest(arg0 context.Context, arg1 db.ChangeStateBuyRequestParams) (db.BuyRequest, error) {
 	m.ctrl.T.Helper()
@@ -229,6 +244,21 @@ func (mr *MockStoreMockRecorder) CreateSellRequest(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSellRequest", reflect.TypeOf((*MockStore)(nil).CreateSellRequest), arg0, arg1)
 }
 
+// CreateSpace mocks base method.
+func (m *MockStore) CreateSpace(arg0 context.Context, arg1 db.CreateSpaceParams) (db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSpace", arg0, arg1)
+	ret0, _ := ret[0].(db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSpace indicates an expected call of CreateSpace.
+func (mr *MockStoreMockRecorder) CreateSpace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSpace", reflect.TypeOf((*MockStore)(nil).CreateSpace), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -301,6 +331,34 @@ func (m *MockStore) DeleteSellRequestTx(arg0 context.Context, arg1 int32) (bool,
 func (mr *MockStoreMockRecorder) DeleteSellRequestTx(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSellRequestTx", reflect.TypeOf((*MockStore)(nil).DeleteSellRequestTx), arg0, arg1)
+}
+
+// DeleteSpace mocks base method.
+func (m *MockStore) DeleteSpace(arg0 context.Context, arg1 uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSpace", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSpace indicates an expected call of DeleteSpace.
+func (mr *MockStoreMockRecorder) DeleteSpace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSpace", reflect.TypeOf((*MockStore)(nil).DeleteSpace), arg0, arg1)
+}
+
+// DeleteSpaceMember mocks base method.
+func (m *MockStore) DeleteSpaceMember(arg0 context.Context, arg1 db.DeleteSpaceMemberParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSpaceMember", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSpaceMember indicates an expected call of DeleteSpaceMember.
+func (mr *MockStoreMockRecorder) DeleteSpaceMember(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSpaceMember", reflect.TypeOf((*MockStore)(nil).DeleteSpaceMember), arg0, arg1)
 }
 
 // DeleteUser mocks base method.
@@ -405,6 +463,51 @@ func (m *MockStore) GetSellRequestTx(arg0 context.Context, arg1 int32) (db.GetSe
 func (mr *MockStoreMockRecorder) GetSellRequestTx(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSellRequestTx", reflect.TypeOf((*MockStore)(nil).GetSellRequestTx), arg0, arg1)
+}
+
+// GetSpaceByCreatorId mocks base method.
+func (m *MockStore) GetSpaceByCreatorId(arg0 context.Context, arg1 pgtype.Int8) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpaceByCreatorId", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpaceByCreatorId indicates an expected call of GetSpaceByCreatorId.
+func (mr *MockStoreMockRecorder) GetSpaceByCreatorId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceByCreatorId", reflect.TypeOf((*MockStore)(nil).GetSpaceByCreatorId), arg0, arg1)
+}
+
+// GetSpaceBySpaceId mocks base method.
+func (m *MockStore) GetSpaceBySpaceId(arg0 context.Context, arg1 uuid.UUID) (db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpaceBySpaceId", arg0, arg1)
+	ret0, _ := ret[0].(db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpaceBySpaceId indicates an expected call of GetSpaceBySpaceId.
+func (mr *MockStoreMockRecorder) GetSpaceBySpaceId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceBySpaceId", reflect.TypeOf((*MockStore)(nil).GetSpaceBySpaceId), arg0, arg1)
+}
+
+// GetSpaceMember mocks base method.
+func (m *MockStore) GetSpaceMember(arg0 context.Context, arg1 db.GetSpaceMemberParams) (db.SpaceMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpaceMember", arg0, arg1)
+	ret0, _ := ret[0].(db.SpaceMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpaceMember indicates an expected call of GetSpaceMember.
+func (mr *MockStoreMockRecorder) GetSpaceMember(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceMember", reflect.TypeOf((*MockStore)(nil).GetSpaceMember), arg0, arg1)
 }
 
 // GetUser mocks base method.
@@ -542,6 +645,66 @@ func (mr *MockStoreMockRecorder) ListSellRequeststTx(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequeststTx", reflect.TypeOf((*MockStore)(nil).ListSellRequeststTx), arg0, arg1)
 }
 
+// ListSpaceMembersByUsernameAsc mocks base method.
+func (m *MockStore) ListSpaceMembersByUsernameAsc(arg0 context.Context, arg1 db.ListSpaceMembersByUsernameAscParams) ([]db.SpaceMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSpaceMembersByUsernameAsc", arg0, arg1)
+	ret0, _ := ret[0].([]db.SpaceMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSpaceMembersByUsernameAsc indicates an expected call of ListSpaceMembersByUsernameAsc.
+func (mr *MockStoreMockRecorder) ListSpaceMembersByUsernameAsc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSpaceMembersByUsernameAsc", reflect.TypeOf((*MockStore)(nil).ListSpaceMembersByUsernameAsc), arg0, arg1)
+}
+
+// ListSpaceMembersByUsernameDesc mocks base method.
+func (m *MockStore) ListSpaceMembersByUsernameDesc(arg0 context.Context, arg1 db.ListSpaceMembersByUsernameDescParams) ([]db.SpaceMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSpaceMembersByUsernameDesc", arg0, arg1)
+	ret0, _ := ret[0].([]db.SpaceMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSpaceMembersByUsernameDesc indicates an expected call of ListSpaceMembersByUsernameDesc.
+func (mr *MockStoreMockRecorder) ListSpaceMembersByUsernameDesc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSpaceMembersByUsernameDesc", reflect.TypeOf((*MockStore)(nil).ListSpaceMembersByUsernameDesc), arg0, arg1)
+}
+
+// ListSpacesAfterCursorByNameAsc mocks base method.
+func (m *MockStore) ListSpacesAfterCursorByNameAsc(arg0 context.Context, arg1 db.ListSpacesAfterCursorByNameAscParams) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSpacesAfterCursorByNameAsc", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSpacesAfterCursorByNameAsc indicates an expected call of ListSpacesAfterCursorByNameAsc.
+func (mr *MockStoreMockRecorder) ListSpacesAfterCursorByNameAsc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSpacesAfterCursorByNameAsc", reflect.TypeOf((*MockStore)(nil).ListSpacesAfterCursorByNameAsc), arg0, arg1)
+}
+
+// ListSpacesAfterCursorByNameDesc mocks base method.
+func (m *MockStore) ListSpacesAfterCursorByNameDesc(arg0 context.Context, arg1 db.ListSpacesAfterCursorByNameDescParams) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSpacesAfterCursorByNameDesc", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSpacesAfterCursorByNameDesc indicates an expected call of ListSpacesAfterCursorByNameDesc.
+func (mr *MockStoreMockRecorder) ListSpacesAfterCursorByNameDesc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSpacesAfterCursorByNameDesc", reflect.TypeOf((*MockStore)(nil).ListSpacesAfterCursorByNameDesc), arg0, arg1)
+}
+
 // OpenCloseSellRequest mocks base method.
 func (m *MockStore) OpenCloseSellRequest(arg0 context.Context, arg1 db.OpenCloseSellRequestParams) (db.SellRequest, error) {
 	m.ctrl.T.Helper()
@@ -613,6 +776,21 @@ func (m *MockStore) UpdateSellRequest(arg0 context.Context, arg1 db.UpdateSellRe
 func (mr *MockStoreMockRecorder) UpdateSellRequest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSellRequest", reflect.TypeOf((*MockStore)(nil).UpdateSellRequest), arg0, arg1)
+}
+
+// UpdateSpaceInfo mocks base method.
+func (m *MockStore) UpdateSpaceInfo(arg0 context.Context, arg1 db.UpdateSpaceInfoParams) (db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSpaceInfo", arg0, arg1)
+	ret0, _ := ret[0].(db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateSpaceInfo indicates an expected call of UpdateSpaceInfo.
+func (mr *MockStoreMockRecorder) UpdateSpaceInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSpaceInfo", reflect.TypeOf((*MockStore)(nil).UpdateSpaceInfo), arg0, arg1)
 }
 
 // UpdateUser mocks base method.

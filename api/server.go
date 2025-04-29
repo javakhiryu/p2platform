@@ -7,8 +7,11 @@ import (
 	"net/http"
 	db "p2platform/db/sqlc"
 	"p2platform/errors"
+	"p2platform/token"
 	"p2platform/util"
 	"strings"
+
+	appErr "p2platform/errors"
 
 	"github.com/IBM/sarama"
 	"github.com/gin-contrib/cors"
@@ -20,13 +23,18 @@ import (
 )
 
 type Server struct {
-	config   util.Config
-	store    db.Store
-	router   *gin.Engine
-	producer sarama.SyncProducer
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
+	producer   sarama.SyncProducer
 }
 
 func NewServer(store db.Store, config util.Config) (*Server, error) {
+	tokenMaker, err := token.NewJWTMaker(config.TelegramBotToken)
+	if err != nil {
+		return nil, appErr.ErrInternalServer
+	}
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Return.Successes = true
 
@@ -35,9 +43,10 @@ func NewServer(store db.Store, config util.Config) (*Server, error) {
 		return nil, fmt.Errorf("cannot create Kafka producer: %w", err)
 	}
 	server := &Server{
-		config:   config,
-		store:    store,
-		producer: producer,
+		config:     config,
+		store:      store,
+		tokenMaker: tokenMaker,
+		producer:   producer,
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -82,7 +91,7 @@ func (server *Server) setupRouter() {
 		api.GET("/buy-requests", server.listBuyRequests)
 		api.POST("/users/telegram", server.telegramAuth)
 
-		authRoutes := api.Group("/").Use(CookieAuthMiddleware())
+		authRoutes := api.Group("/").Use(CookieAuthMiddleware(server.tokenMaker))
 
 		authRoutes.POST("/sell-request", server.createSellRequest)
 
