@@ -451,18 +451,18 @@ func (mr *MockStoreMockRecorder) GetSellRequestForUpdate(arg0, arg1 interface{})
 }
 
 // GetSellRequestTx mocks base method.
-func (m *MockStore) GetSellRequestTx(arg0 context.Context, arg1 int32) (db.GetSellRequestTxResult, error) {
+func (m *MockStore) GetSellRequestTx(arg0 context.Context, arg1 int32, arg2 int64) (db.GetSellRequestTxResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSellRequestTx", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetSellRequestTx", arg0, arg1, arg2)
 	ret0, _ := ret[0].(db.GetSellRequestTxResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSellRequestTx indicates an expected call of GetSellRequestTx.
-func (mr *MockStoreMockRecorder) GetSellRequestTx(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetSellRequestTx(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSellRequestTx", reflect.TypeOf((*MockStore)(nil).GetSellRequestTx), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSellRequestTx", reflect.TypeOf((*MockStore)(nil).GetSellRequestTx), arg0, arg1, arg2)
 }
 
 // GetSpaceByCreatorId mocks base method.
@@ -495,6 +495,21 @@ func (mr *MockStoreMockRecorder) GetSpaceBySpaceId(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceBySpaceId", reflect.TypeOf((*MockStore)(nil).GetSpaceBySpaceId), arg0, arg1)
 }
 
+// GetSpaceIdByUserId mocks base method.
+func (m *MockStore) GetSpaceIdByUserId(arg0 context.Context, arg1 int64) ([]uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpaceIdByUserId", arg0, arg1)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpaceIdByUserId indicates an expected call of GetSpaceIdByUserId.
+func (mr *MockStoreMockRecorder) GetSpaceIdByUserId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceIdByUserId", reflect.TypeOf((*MockStore)(nil).GetSpaceIdByUserId), arg0, arg1)
+}
+
 // GetSpaceMember mocks base method.
 func (m *MockStore) GetSpaceMember(arg0 context.Context, arg1 db.GetSpaceMemberParams) (db.SpaceMember, error) {
 	m.ctrl.T.Helper()
@@ -523,6 +538,36 @@ func (m *MockStore) GetUser(arg0 context.Context, arg1 int64) (db.User, error) {
 func (mr *MockStoreMockRecorder) GetUser(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockStore)(nil).GetUser), arg0, arg1)
+}
+
+// IsUserInSameSpaceAsSeller mocks base method.
+func (m *MockStore) IsUserInSameSpaceAsSeller(arg0 context.Context, arg1 db.IsUserInSameSpaceAsSellerParams) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsUserInSameSpaceAsSeller", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsUserInSameSpaceAsSeller indicates an expected call of IsUserInSameSpaceAsSeller.
+func (mr *MockStoreMockRecorder) IsUserInSameSpaceAsSeller(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsUserInSameSpaceAsSeller", reflect.TypeOf((*MockStore)(nil).IsUserInSameSpaceAsSeller), arg0, arg1)
+}
+
+// IsUserInSpace mocks base method.
+func (m *MockStore) IsUserInSpace(arg0 context.Context, arg1 db.IsUserInSpaceParams) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsUserInSpace", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsUserInSpace indicates an expected call of IsUserInSpace.
+func (mr *MockStoreMockRecorder) IsUserInSpace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsUserInSpace", reflect.TypeOf((*MockStore)(nil).IsUserInSpace), arg0, arg1)
 }
 
 // ListBuyRequests mocks base method.
@@ -570,6 +615,21 @@ func (mr *MockStoreMockRecorder) ListExpiredBuyRequests(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExpiredBuyRequests", reflect.TypeOf((*MockStore)(nil).ListExpiredBuyRequests), arg0)
 }
 
+// ListFirstSpacesByNameAsc mocks base method.
+func (m *MockStore) ListFirstSpacesByNameAsc(arg0 context.Context, arg1 int32) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFirstSpacesByNameAsc", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFirstSpacesByNameAsc indicates an expected call of ListFirstSpacesByNameAsc.
+func (mr *MockStoreMockRecorder) ListFirstSpacesByNameAsc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFirstSpacesByNameAsc", reflect.TypeOf((*MockStore)(nil).ListFirstSpacesByNameAsc), arg0, arg1)
+}
+
 // ListLockedAmounts mocks base method.
 func (m *MockStore) ListLockedAmounts(arg0 context.Context, arg1 db.ListLockedAmountsParams) ([]db.LockedAmount, error) {
 	m.ctrl.T.Helper()
@@ -615,6 +675,36 @@ func (mr *MockStoreMockRecorder) ListSellRequests(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequests", reflect.TypeOf((*MockStore)(nil).ListSellRequests), arg0, arg1)
 }
 
+// ListSellRequestsBySpace mocks base method.
+func (m *MockStore) ListSellRequestsBySpace(arg0 context.Context, arg1 db.ListSellRequestsBySpaceParams) ([]db.SellRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSellRequestsBySpace", arg0, arg1)
+	ret0, _ := ret[0].([]db.SellRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSellRequestsBySpace indicates an expected call of ListSellRequestsBySpace.
+func (mr *MockStoreMockRecorder) ListSellRequestsBySpace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequestsBySpace", reflect.TypeOf((*MockStore)(nil).ListSellRequestsBySpace), arg0, arg1)
+}
+
+// ListSellRequestsBySpaceAndTelegramID mocks base method.
+func (m *MockStore) ListSellRequestsBySpaceAndTelegramID(arg0 context.Context, arg1 db.ListSellRequestsBySpaceAndTelegramIDParams) ([]db.SellRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSellRequestsBySpaceAndTelegramID", arg0, arg1)
+	ret0, _ := ret[0].([]db.SellRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSellRequestsBySpaceAndTelegramID indicates an expected call of ListSellRequestsBySpaceAndTelegramID.
+func (mr *MockStoreMockRecorder) ListSellRequestsBySpaceAndTelegramID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequestsBySpaceAndTelegramID", reflect.TypeOf((*MockStore)(nil).ListSellRequestsBySpaceAndTelegramID), arg0, arg1)
+}
+
 // ListSellRequestsByTelegramId mocks base method.
 func (m *MockStore) ListSellRequestsByTelegramId(arg0 context.Context, arg1 db.ListSellRequestsByTelegramIdParams) ([]db.SellRequest, error) {
 	m.ctrl.T.Helper()
@@ -631,18 +721,18 @@ func (mr *MockStoreMockRecorder) ListSellRequestsByTelegramId(arg0, arg1 interfa
 }
 
 // ListSellRequeststTx mocks base method.
-func (m *MockStore) ListSellRequeststTx(arg0 context.Context, arg1 db.ListSellRequeststTxParams) (db.ListSellRequeststTxResults, error) {
+func (m *MockStore) ListSellRequeststTx(arg0 context.Context, arg1 db.ListSellRequeststTxParams, arg2 int64) (db.ListSellRequeststTxResults, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSellRequeststTx", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListSellRequeststTx", arg0, arg1, arg2)
 	ret0, _ := ret[0].(db.ListSellRequeststTxResults)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListSellRequeststTx indicates an expected call of ListSellRequeststTx.
-func (mr *MockStoreMockRecorder) ListSellRequeststTx(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) ListSellRequeststTx(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequeststTx", reflect.TypeOf((*MockStore)(nil).ListSellRequeststTx), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSellRequeststTx", reflect.TypeOf((*MockStore)(nil).ListSellRequeststTx), arg0, arg1, arg2)
 }
 
 // ListSpaceMembersByUsernameAsc mocks base method.

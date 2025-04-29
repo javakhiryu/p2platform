@@ -14,7 +14,7 @@ type GetSellRequestTxResult struct {
 	LockedAmountByCash int64       `json:"locked_amount_by_cash"`
 }
 
-func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32) (GetSellRequestTxResult, error) {
+func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32, requesterTelegramID int64) (GetSellRequestTxResult, error) {
 	var result GetSellRequestTxResult
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
@@ -25,6 +25,20 @@ func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32) (G
 			}
 			return appErr.ErrFailedToGetSellRequests
 		}
+
+		arg := IsUserInSameSpaceAsSellerParams{
+			UserID: requesterTelegramID,
+			UserID_2: sellRequest.TelegramID,
+		}
+
+		isSameSpace, err := q.IsUserInSameSpaceAsSeller(ctx, arg)
+		if err != nil {
+			return appErr.ErrForbidden
+		}
+		if !isSameSpace {
+			return appErr.ErrForbidden
+		}
+
 		result.SellRequest = sellRequest
 		lockedAmounts, err := q.GetLockedAmountBySellRequest(ctx, sellReqID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {

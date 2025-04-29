@@ -12,9 +12,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type createSellRequestURI struct {
+	SpaceId string `uri:"space_id" binding:"required,uuid"`
+}
 type createSellRequest struct {
 	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=1"`
 	SellMoneySource  string `json:"sell_money_source" binding:"required,source"`
@@ -61,16 +65,33 @@ type ErrResponse struct {
 //	@Failure      500      {object}  ErrResponse
 //	@Router       /sell-request [post]
 func (server *Server) createSellRequest(ctx *gin.Context) {
+	var uri createSellRequestURI
 	var req createSellRequest
 	sellByCard := false
 	sellByCash := false
-
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.JSON(appErr.ErrInvalidUri.Status, ErrorResponse(appErr.ErrInvalidUri))
+	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
 		return
 	}
 	telegramId, ok := GetTelegramIDFromContext(ctx)
 	if !ok {
+		return
+	}
+	uid, err := uuid.Parse(uri.SpaceId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
+		return
+	}
+	argIsUser := db.IsUserInSpaceParams{
+		UserID:  telegramId,
+		SpaceID: uid,
+	}
+	isMember, err := server.store.IsUserInSpace(ctx, argIsUser)
+	if err != nil || !isMember {
+		ctx.JSON(appErr.ErrForbidden.Status, ErrorResponse(appErr.ErrForbidden))
 		return
 	}
 	user, err := server.store.GetUser(ctx, telegramId)
@@ -132,8 +153,8 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 
 	_ = kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
 		TelegramId: 86674601,
-		Message: fmt.Sprintf("Sell request #%d успешно создан!", sellRequest.SellReqID),
-		EventType: "sell_request_created",
+		Message:    fmt.Sprintf("Sell request #%d успешно создан!", sellRequest.SellReqID),
+		EventType:  "sell_request_created",
 	})
 
 }
@@ -149,7 +170,12 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse(err))
 		return
 	}
-	result, err := server.store.GetSellRequestTx(ctx, req.ID)
+	telegramId, exists := GetTelegramIDFromContext(ctx)
+	if !exists {
+		return
+	}
+
+	result, err := server.store.GetSellRequestTx(ctx, req.ID, telegramId)
 	if err != nil {
 		HandleAppError(ctx, err)
 	}
@@ -161,23 +187,36 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result)
 }
 
-type listSellRequest struct {
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
-	PageId   int32 `form:"page_id" binding:"required,min=1"`
+type listSellRequestBySpace struct {
+	PageSize int32  `form:"page_size" binding:"required,min=5,max=10"`
+	PageId   int32  `form:"page_id" binding:"required,min=1"`
+	SpaceId  string `form:"space_id" binding:"required,uuid"`
 }
 
 func (server *Server) listSellRequests(ctx *gin.Context) {
-	var req listSellRequest
+	var req listSellRequestBySpace
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
 		ctx.JSON(appErr.ErrInvalidQuery.Status, ErrorResponse(appErr.ErrInvalidQuery))
 		return
 	}
-	arg := db.ListSellRequeststTxParams{
-		Limit:  req.PageSize,
-		Offset: (req.PageId - 1) * req.PageSize,
+	telegramId, exists := GetTelegramIDFromContext(ctx)
+	if !exists {
+		return
 	}
-	sellRequests, err := server.store.ListSellRequeststTx(ctx, arg)
+
+	uid, err := uuid.Parse(req.SpaceId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
+		return
+	}
+
+	arg := db.ListSellRequeststTxParams{
+		Limit:   req.PageSize,
+		Offset:  (req.PageId - 1) * req.PageSize,
+		SpaceId: uid,
+	}
+	sellRequests, err := server.store.ListSellRequeststTx(ctx, arg, telegramId)
 	if err != nil {
 		HandleAppError(ctx, err)
 		return
@@ -186,16 +225,16 @@ func (server *Server) listSellRequests(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, sellRequests)
 }
 
-type listMySellRequest struct {
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
-	PageId   int32 `form:"page_id" binding:"required,min=1"`
-}
-
 func (server *Server) listMySellRequests(ctx *gin.Context) {
-	var req listSellRequest
+	var req listSellRequestBySpace
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
 		ctx.JSON(appErr.ErrInvalidQuery.Status, ErrorResponse(appErr.ErrInvalidQuery))
+		return
+	}
+	uid, err := uuid.Parse(req.SpaceId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
 		return
 	}
 	telegramId, ok := GetTelegramIDFromContext(ctx)
@@ -206,6 +245,7 @@ func (server *Server) listMySellRequests(ctx *gin.Context) {
 		Limit:      req.PageSize,
 		Offset:     (req.PageId - 1) * req.PageSize,
 		TelegramId: telegramId,
+		SpaceId:    uid,
 	}
 	sellRequests, err := server.store.ListMySellRequeststTx(ctx, arg)
 	if err != nil {

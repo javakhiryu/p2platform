@@ -16,19 +16,27 @@ SELECT * FROM spaces WHERE space_id = $1;
 -- name: GetSpaceByCreatorId :many
 SELECT * FROM spaces WHERE creator_id = $1;
 
+-- name: ListFirstSpacesByNameAsc :many
+SELECT *
+FROM spaces
+ORDER BY space_name ASC, space_id ASC
+LIMIT $1;
+
 -- name: ListSpacesAfterCursorByNameAsc :many
 SELECT *
 FROM spaces
-WHERE (space_name, space_id) > ($1, $2) -- $1 = lastSpaceName (VARCHAR), $2 = lastSpaceId (UUID)
-ORDER BY space_name ASC, space_id ASC
-LIMIT $3;
+WHERE (space_name COLLATE "C", space_id) > 
+      (sqlc.arg(space_name) COLLATE "C", sqlc.arg(space_id))
+ORDER BY space_name COLLATE "C" ASC, space_id ASC
+LIMIT $1;
 
 -- name: ListSpacesAfterCursorByNameDesc :many
 SELECT *
 FROM spaces
-WHERE (space_name, space_id) < ($1, $2) 
-ORDER BY space_name DESC, space_id DESC
-LIMIT $3;
+WHERE (space_name COLLATE "C", space_id) < 
+      (sqlc.arg(space_name) COLLATE "C", sqlc.arg(space_id))
+ORDER BY space_name COLLATE "C" ASC, space_id ASC
+LIMIT $1;
 
 -- name: UpdateSpaceInfo :one
 UPDATE spaces

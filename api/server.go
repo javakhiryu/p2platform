@@ -85,16 +85,15 @@ func (server *Server) setupRouter() {
 
 	api := router.Group("/api/v1")
 	{
-		api.GET("/sell-request/:id", server.getSellRequest)
-		api.GET("/sell-requests", server.listSellRequests)
-		api.GET("/buy-request/:id", server.getBuyRequest)
-		api.GET("/buy-requests", server.listBuyRequests)
 		api.POST("/users/telegram", server.telegramAuth)
 
 		authRoutes := api.Group("/").Use(CookieAuthMiddleware(server.tokenMaker))
 
+		authRoutes.GET("/sell-request/:id", server.getSellRequest)
+		authRoutes.GET("/sell-requests", server.listSellRequests)
+		authRoutes.GET("/buy-request/:id", server.getBuyRequest)
+		authRoutes.GET("/buy-requests", server.listBuyRequests)
 		authRoutes.POST("/sell-request", server.createSellRequest)
-
 		authRoutes.POST("/buy-request", server.createBuyRequest)
 		authRoutes.PATCH("/sell-request/:id", server.updateSellRequest)
 		authRoutes.DELETE("/sell-request/:id", server.deleteSellRequest)
@@ -104,6 +103,11 @@ func (server *Server) setupRouter() {
 		authRoutes.DELETE("/buy-request/:id", server.DeleteBuyRequest)
 		authRoutes.GET("/sell-requests/my", server.listMySellRequests)
 		authRoutes.GET("/buy-requests/my", server.listMyBuyRequests)
+		authRoutes.POST("/space", server.createSpace)
+		authRoutes.GET("/spaces", server.listSpaces)
+		//authRoutes.GET("/space/:id", server.getSpace)
+		//authRoutes.POST("/space/join", server.joinToSpace)
+
 	}
 
 	server.router = router

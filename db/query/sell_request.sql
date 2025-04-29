@@ -27,6 +27,8 @@ ORDER BY created_at ASC
 LIMIT $1 
 OFFSET $2;
 
+
+
 -- name: CountOfSellRequests :one
 SELECT COUNT(*) FROM sell_requests WHERE is_deleted = false;
 
@@ -36,6 +38,27 @@ WHERE telegram_id = $1 AND is_deleted = false
 ORDER BY created_at ASC
 LIMIT $2 
 OFFSET $3;
+
+-- name: ListSellRequestsBySpaceAndTelegramID :many
+SELECT sr.*
+FROM sell_requests sr
+JOIN space_members sm ON sr.telegram_id = sm.user_id
+WHERE sr.telegram_id = $1
+  AND sm.space_id = $2
+  AND sr.is_deleted = false
+ORDER BY sr.updated_at DESC
+LIMIT $3
+OFFSET $4;
+
+-- name: ListSellRequestsBySpace :many
+SELECT sr.*
+FROM sell_requests sr
+JOIN space_members sm ON sr.telegram_id = sm.user_id
+WHERE sm.space_id = $1 AND sr.is_deleted = false
+ORDER BY sr.updated_at DESC
+LIMIT $2
+OFFSET $3;
+
 
 -- name: CountOfSellRequestsByTelegramId :one
 SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND is_deleted = false;

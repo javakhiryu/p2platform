@@ -5,12 +5,15 @@ import (
 	"errors"
 	"math"
 	appErr "p2platform/errors"
+
+	"github.com/google/uuid"
 )
 
 type ListMySellRequestsTxParams struct {
 	Limit      int32
 	Offset     int32
 	TelegramId int64
+	SpaceId    uuid.UUID
 }
 
 func (store *SQLStore) ListMySellRequeststTx(ctx context.Context, params ListMySellRequestsTxParams) (ListSellRequeststTxResults, error) {
@@ -18,12 +21,13 @@ func (store *SQLStore) ListMySellRequeststTx(ctx context.Context, params ListMyS
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		arg := ListSellRequestsByTelegramIdParams{
+		arg := ListSellRequestsBySpaceAndTelegramIDParams{
 			Limit:      params.Limit,
 			Offset:     params.Offset,
 			TelegramID: params.TelegramId,
+			SpaceID:    params.SpaceId,
 		}
-		sellRequests, err := q.ListSellRequestsByTelegramId(ctx, arg)
+		sellRequests, err := q.ListSellRequestsBySpaceAndTelegramID(ctx, arg)
 		if err != nil {
 			if errors.Is(err, ErrNoRowsFound) {
 				return appErr.ErrSellRequestNotFound

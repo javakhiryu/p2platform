@@ -36,6 +36,11 @@ func (server *Server) createBuyRequest(ctx *gin.Context) {
 		return
 	}
 
+	_, err = server.store.GetSellRequestTx(ctx, req.SellReqID, telegramId)
+	if err != nil {
+		HandleAppError(ctx, err)
+	}
+
 	if !(req.BuyAmountByCard+req.BuyAmountByCash == req.BuyTotalAmount) {
 		ctx.JSON(appErr.ErrTotalBuyAmountMismatch.Status, ErrorResponse(appErr.ErrTotalBuyAmountMismatch))
 		return
@@ -81,6 +86,11 @@ func (server *Server) getBuyRequest(ctx *gin.Context) {
 		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
 		return
 	}
+	telegramId, exists := GetTelegramIDFromContext(ctx)
+	if !exists {
+		return
+	}
+
 	buyRequest, err := server.store.GetBuyRequestById(ctx, uid)
 	if err != nil {
 		if errors.Is(err, db.ErrNoRowsFound) {
@@ -88,6 +98,19 @@ func (server *Server) getBuyRequest(ctx *gin.Context) {
 			return
 		}
 		ctx.JSON(appErr.ErrFailedToGetBuyRequests.Status, ErrorResponse(appErr.ErrFailedToGetBuyRequests))
+		return
+	}
+	arg := db.IsUserInSameSpaceAsSellerParams{
+		UserID:   telegramId,
+		UserID_2: buyRequest.TelegramID,
+	}
+	isSameSpace, err := server.store.IsUserInSameSpaceAsSeller(ctx, arg)
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+	if !isSameSpace {
+		ctx.JSON(appErr.ErrForbidden.Status, ErrorResponse(appErr.ErrForbidden))
 		return
 	}
 	ctx.JSON(http.StatusOK, buyRequest)
@@ -110,6 +133,14 @@ func (server *Server) listBuyRequests(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(appErr.ErrInvalidQuery.Status, ErrorResponse(appErr.ErrInvalidQuery))
 		return
+	}
+	telegramId, exists := GetTelegramIDFromContext(ctx)
+	if !exists {
+		return
+	}
+	_, err = server.store.GetSellRequestTx(ctx, req.SellReqId, telegramId)
+	if err != nil {
+		HandleAppError(ctx, err)
 	}
 	arg := db.ListBuyRequestsParams{
 		SellReqID: req.SellReqId,
