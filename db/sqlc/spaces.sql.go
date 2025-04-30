@@ -114,6 +114,48 @@ func (q *Queries) GetSpaceBySpaceId(ctx context.Context, spaceID uuid.UUID) (Spa
 	return i, err
 }
 
+const listFirstMySpacesByNameAsc = `-- name: ListFirstMySpacesByNameAsc :many
+SELECT spaces.space_id, spaces.space_name, spaces.hashed_password, spaces.creator_id, spaces.description, spaces.created_at, spaces.updated_at
+FROM spaces
+JOIN space_members ON spaces.space_id = space_members.space_id
+WHERE space_members.user_id = $1
+ORDER BY spaces.space_name ASC, spaces.space_id ASC
+LIMIT $2
+`
+
+type ListFirstMySpacesByNameAscParams struct {
+	UserID int64 `json:"user_id"`
+	Limit  int32 `json:"limit"`
+}
+
+func (q *Queries) ListFirstMySpacesByNameAsc(ctx context.Context, arg ListFirstMySpacesByNameAscParams) ([]Space, error) {
+	rows, err := q.db.Query(ctx, listFirstMySpacesByNameAsc, arg.UserID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Space{}
+	for rows.Next() {
+		var i Space
+		if err := rows.Scan(
+			&i.SpaceID,
+			&i.SpaceName,
+			&i.HashedPassword,
+			&i.CreatorID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFirstSpacesByNameAsc = `-- name: ListFirstSpacesByNameAsc :many
 SELECT space_id, space_name, hashed_password, creator_id, description, created_at, updated_at
 FROM spaces
@@ -123,6 +165,108 @@ LIMIT $1
 
 func (q *Queries) ListFirstSpacesByNameAsc(ctx context.Context, limit int32) ([]Space, error) {
 	rows, err := q.db.Query(ctx, listFirstSpacesByNameAsc, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Space{}
+	for rows.Next() {
+		var i Space
+		if err := rows.Scan(
+			&i.SpaceID,
+			&i.SpaceName,
+			&i.HashedPassword,
+			&i.CreatorID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMySpacesAfterCursorByNameAsc = `-- name: ListMySpacesAfterCursorByNameAsc :many
+SELECT spaces.space_id, spaces.space_name, spaces.hashed_password, spaces.creator_id, spaces.description, spaces.created_at, spaces.updated_at
+FROM spaces
+JOIN space_members ON spaces.space_id = space_members.space_id
+WHERE space_members.user_id = $1
+AND (spaces.space_name COLLATE "C", spaces.space_id) > 
+      ($2 COLLATE "C", $3)
+ORDER BY spaces.space_name COLLATE "C" ASC, spaces.space_id ASC
+LIMIT $4
+`
+
+type ListMySpacesAfterCursorByNameAscParams struct {
+	UserID      int64  `json:"user_id"`
+	SpaceName   string `json:"space_name"`
+	SpaceName_2 string `json:"space_name_2"`
+	Limit       int32  `json:"limit"`
+}
+
+func (q *Queries) ListMySpacesAfterCursorByNameAsc(ctx context.Context, arg ListMySpacesAfterCursorByNameAscParams) ([]Space, error) {
+	rows, err := q.db.Query(ctx, listMySpacesAfterCursorByNameAsc,
+		arg.UserID,
+		arg.SpaceName,
+		arg.SpaceName_2,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Space{}
+	for rows.Next() {
+		var i Space
+		if err := rows.Scan(
+			&i.SpaceID,
+			&i.SpaceName,
+			&i.HashedPassword,
+			&i.CreatorID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMySpacesAfterCursorByNameDesc = `-- name: ListMySpacesAfterCursorByNameDesc :many
+SELECT spaces.space_id, spaces.space_name, spaces.hashed_password, spaces.creator_id, spaces.description, spaces.created_at, spaces.updated_at
+FROM spaces
+JOIN space_members ON spaces.space_id = space_members.space_id
+WHERE space_members.user_id = $1
+AND (spaces.space_name COLLATE "C", spaces.space_id) < 
+      ($2 COLLATE "C", $3)
+ORDER BY spaces.space_name COLLATE "C" ASC, spaces.space_id ASC
+LIMIT $4
+`
+
+type ListMySpacesAfterCursorByNameDescParams struct {
+	UserID      int64  `json:"user_id"`
+	SpaceName   string `json:"space_name"`
+	SpaceName_2 string `json:"space_name_2"`
+	Limit       int32  `json:"limit"`
+}
+
+func (q *Queries) ListMySpacesAfterCursorByNameDesc(ctx context.Context, arg ListMySpacesAfterCursorByNameDescParams) ([]Space, error) {
+	rows, err := q.db.Query(ctx, listMySpacesAfterCursorByNameDesc,
+		arg.UserID,
+		arg.SpaceName,
+		arg.SpaceName_2,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}

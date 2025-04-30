@@ -660,6 +660,21 @@ func (mr *MockStoreMockRecorder) ListExpiredBuyRequests(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExpiredBuyRequests", reflect.TypeOf((*MockStore)(nil).ListExpiredBuyRequests), arg0)
 }
 
+// ListFirstMySpacesByNameAsc mocks base method.
+func (m *MockStore) ListFirstMySpacesByNameAsc(arg0 context.Context, arg1 db.ListFirstMySpacesByNameAscParams) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFirstMySpacesByNameAsc", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFirstMySpacesByNameAsc indicates an expected call of ListFirstMySpacesByNameAsc.
+func (mr *MockStoreMockRecorder) ListFirstMySpacesByNameAsc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFirstMySpacesByNameAsc", reflect.TypeOf((*MockStore)(nil).ListFirstMySpacesByNameAsc), arg0, arg1)
+}
+
 // ListFirstSpacesByNameAsc mocks base method.
 func (m *MockStore) ListFirstSpacesByNameAsc(arg0 context.Context, arg1 int32) ([]db.Space, error) {
 	m.ctrl.T.Helper()
@@ -703,6 +718,36 @@ func (m *MockStore) ListMySellRequeststTx(arg0 context.Context, arg1 db.ListMySe
 func (mr *MockStoreMockRecorder) ListMySellRequeststTx(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMySellRequeststTx", reflect.TypeOf((*MockStore)(nil).ListMySellRequeststTx), arg0, arg1)
+}
+
+// ListMySpacesAfterCursorByNameAsc mocks base method.
+func (m *MockStore) ListMySpacesAfterCursorByNameAsc(arg0 context.Context, arg1 db.ListMySpacesAfterCursorByNameAscParams) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMySpacesAfterCursorByNameAsc", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListMySpacesAfterCursorByNameAsc indicates an expected call of ListMySpacesAfterCursorByNameAsc.
+func (mr *MockStoreMockRecorder) ListMySpacesAfterCursorByNameAsc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMySpacesAfterCursorByNameAsc", reflect.TypeOf((*MockStore)(nil).ListMySpacesAfterCursorByNameAsc), arg0, arg1)
+}
+
+// ListMySpacesAfterCursorByNameDesc mocks base method.
+func (m *MockStore) ListMySpacesAfterCursorByNameDesc(arg0 context.Context, arg1 db.ListMySpacesAfterCursorByNameDescParams) ([]db.Space, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMySpacesAfterCursorByNameDesc", arg0, arg1)
+	ret0, _ := ret[0].([]db.Space)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListMySpacesAfterCursorByNameDesc indicates an expected call of ListMySpacesAfterCursorByNameDesc.
+func (mr *MockStoreMockRecorder) ListMySpacesAfterCursorByNameDesc(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMySpacesAfterCursorByNameDesc", reflect.TypeOf((*MockStore)(nil).ListMySpacesAfterCursorByNameDesc), arg0, arg1)
 }
 
 // ListSellRequests mocks base method.

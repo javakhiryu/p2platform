@@ -22,6 +22,14 @@ FROM spaces
 ORDER BY space_name ASC, space_id ASC
 LIMIT $1;
 
+-- name: ListFirstMySpacesByNameAsc :many
+SELECT spaces.*
+FROM spaces
+JOIN space_members ON spaces.space_id = space_members.space_id
+WHERE space_members.user_id = $1
+ORDER BY spaces.space_name ASC, spaces.space_id ASC
+LIMIT $2;
+
 -- name: ListSpacesAfterCursorByNameAsc :many
 SELECT *
 FROM spaces
@@ -30,6 +38,16 @@ WHERE (space_name COLLATE "C", space_id) >
 ORDER BY space_name COLLATE "C" ASC, space_id ASC
 LIMIT $1;
 
+-- name: ListMySpacesAfterCursorByNameAsc :many
+SELECT spaces.*
+FROM spaces
+JOIN space_members ON spaces.space_id = space_members.space_id
+WHERE space_members.user_id = $1
+AND (spaces.space_name COLLATE "C", spaces.space_id) > 
+      ($2 COLLATE "C", $3)
+ORDER BY spaces.space_name COLLATE "C" ASC, spaces.space_id ASC
+LIMIT $4;
+
 -- name: ListSpacesAfterCursorByNameDesc :many
 SELECT *
 FROM spaces
@@ -37,6 +55,16 @@ WHERE (space_name COLLATE "C", space_id) <
       (sqlc.arg(space_name) COLLATE "C", sqlc.arg(space_id))
 ORDER BY space_name COLLATE "C" ASC, space_id ASC
 LIMIT $1;
+
+-- name: ListMySpacesAfterCursorByNameDesc :many
+SELECT spaces.*
+FROM spaces
+JOIN space_members ON spaces.space_id = space_members.space_id
+WHERE space_members.user_id = $1
+AND (spaces.space_name COLLATE "C", spaces.space_id) < 
+      ($2 COLLATE "C", $3)
+ORDER BY spaces.space_name COLLATE "C" ASC, spaces.space_id ASC
+LIMIT $4;
 
 -- name: UpdateSpaceInfo :one
 UPDATE spaces
