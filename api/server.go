@@ -106,7 +106,7 @@ func (server *Server) setupRouter() {
 		authRoutes.POST("/space", server.createSpace)
 		authRoutes.GET("/spaces", server.listSpaces)
 		authRoutes.GET("/space/:id", server.getSpace)
-		//authRoutes.POST("/space/join", server.joinToSpace)
+		authRoutes.POST("/space/:id/join", server.joinToSpace)
 
 	}
 
