@@ -70,7 +70,7 @@ func (server *Server) setupRouter() {
 		AllowCredentials: true,
 	}))
 
-	router.SetHTMLTemplate(template.Must(template.ParseFS(StaticFS, "static/*.html")))
+
 	router.SetHTMLTemplate(template.Must(template.ParseFS(StaticFS, "static/*.html")))
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
@@ -85,10 +85,11 @@ func (server *Server) setupRouter() {
 
 	api := router.Group("/api/v1")
 	{
-		api.POST("/users/telegram", server.telegramAuth)
+		api.POST("/auth/telegram", server.telegramAuth)
+		
 
 		authRoutes := api.Group("/").Use(CookieAuthMiddleware(server.tokenMaker))
-
+		authRoutes.GET("/auth/me", server.getCurrentUser)
 		authRoutes.GET("/sell-request/:id", server.getSellRequest)
 		authRoutes.GET("/sell-requests", server.listSellRequests)
 		authRoutes.GET("/buy-request/:id", server.getBuyRequest)

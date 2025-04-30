@@ -1,11 +1,11 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"p2platform/auth"
 	db "p2platform/db/sqlc"
-	"p2platform/errors"
 	appErr "p2platform/errors"
 	"p2platform/util"
 	"time"
@@ -27,7 +27,7 @@ type user struct {
 func (server *Server) telegramAuth(ctx *gin.Context) {
 	user := user{}
 	if err := ctx.BindJSON(&user); err != nil {
-		ctx.JSON(errors.ErrInvalidPayload.Status, ErrorResponse(errors.ErrInvalidPayload))
+		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
 		return
 	}
 
@@ -54,16 +54,16 @@ func (server *Server) telegramAuth(ctx *gin.Context) {
 			LastName:   util.ToPgText(user.LastName),
 		})
 		if err != nil {
-			ctx.JSON(errors.ErrFailedToSaveUser.Status, errors.ErrFailedToSaveUser)
+			ctx.JSON(appErr.ErrFailedToSaveUser.Status, appErr.ErrFailedToSaveUser)
 			return
 		}
 	} else if err != nil {
-		ctx.JSON(errors.ErrFailedToCheckUser.Status, errors.ErrFailedToCheckUser)
+		ctx.JSON(appErr.ErrFailedToCheckUser.Status, appErr.ErrFailedToCheckUser)
 		return
 	}
 
 	accessToken, err := server.tokenMaker.CreateToken(user.ID, user.Username)
-	if err !=nil{
+	if err != nil {
 		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
 		log.Error().Str("Error:", err.Error())
 		return
@@ -87,4 +87,29 @@ func (server *Server) telegramAuth(ctx *gin.Context) {
 	)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+type getCurrentUserResponse struct {
+	IsUserAuthorized bool `json:"is_user_authorized"`
+}
+
+func (server *Server) getCurrentUser(ctx *gin.Context) {
+	var response getCurrentUserResponse
+	response.IsUserAuthorized = true
+	telegramID, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		response.IsUserAuthorized = false
+		return
+	}
+	_, err := server.store.GetUser(ctx, telegramID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoRowsFound) {
+			response.IsUserAuthorized = false
+			ctx.JSON(http.StatusUnauthorized, response)
+			return
+		}
+		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+		return
+	}
+	ctx.JSON(http.StatusOK, response)
 }
