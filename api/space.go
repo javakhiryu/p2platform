@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	db "p2platform/db/sqlc"
 	appErr "p2platform/errors"
@@ -175,4 +176,71 @@ func (server *Server) getSpace(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, response)
+}
+
+type JoinToSpaceURI struct {
+	SpaceId string `uri:"id" binding:"required,uuid"`
+}
+
+type JoinToSpaceRequest struct {
+	Password string `json:"password" binding:"required"`
+}
+
+func (server *Server) joinToSpace(ctx *gin.Context) {
+	var uri JoinToSpaceURI
+	var req JoinToSpaceRequest
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.JSON(appErr.ErrInvalidUri.Status, ErrorResponse(appErr.ErrInvalidUri))
+		return
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
+		return
+	}
+	telegramId, ok := GetTelegramIDFromContext(ctx)
+	if !ok{
+		return
+	}
+	uid, err := uuid.Parse(uri.SpaceId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+	space, err := server.store.GetSpaceBySpaceId(ctx, uid)
+	if err != nil {
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrSpacesNotFound.Status, appErr.ErrSpacesNotFound)
+			return
+		}
+	}
+	user, err := server.store.GetUser(ctx, telegramId)
+	if err !=nil{
+		if errors.Is(err, db.ErrNoRowsFound){
+			ctx.JSON(appErr.ErrUserNotFound.Status, ErrorResponse(appErr.ErrUserNotFound))
+			return
+		}
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+	if err = util.CheckPassword(req.Password, space.HashedPassword); err !=nil{
+		ctx.JSON(appErr.ErrIncorrectPassword.Status, ErrorResponse(appErr.ErrIncorrectPassword))
+		return
+	}
+	arg :=db.AddSpaceMemberParams{
+		SpaceID: uid,
+		UserID: user.TelegramID,
+		Username: user.TgUsername,
+
+	}
+	result, err := server.store.AddSpaceMember(ctx, arg)
+	if err !=nil{
+		if db.ErrCode(err) == db.UniqueViolation{
+			ctx.JSON(appErr.ErrUserAlreadyInSpace.Status, ErrorResponse(appErr.ErrUserAlreadyInSpace))
+			return
+		}
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, result)
 }

@@ -11,7 +11,7 @@ CREATE TABLE "spaces" (
 
 CREATE TABLE "space_members" (
     "space_id" uuid NOT NULL REFERENCES "spaces"("space_id"),
-    "user_id" BIGINT REFERENCES "users"("telegram_id"),
+    "user_id" BIGINT UNIQUE REFERENCES "users"("telegram_id"),
     "username" VARCHAR NOT NULL,
     "joined_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY ("space_id", "user_id")
