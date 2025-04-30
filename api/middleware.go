@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	db "p2platform/db/sqlc"
 	appErr "p2platform/errors"
 	"p2platform/token"
@@ -13,18 +12,18 @@ import (
 
 func CookieAuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		//accessToken, err := ctx.Cookie("access_token")
-		//if err != nil {
-		//	ctx.AbortWithStatusJSON(appErr.ErrCookieNotFound.Status, ErrorResponse(appErr.ErrCookieNotFound))
-		//	return
-		//}
-		payload, err := tokenMaker.VerifyToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWxlZ3JhbV9pZCI6ODY2NzQ2MDEsInVzZXJuYW1lIjoiamF2YWtoaXJ5dSJ9.rOqzoEqkQ7kzmaiv6acKUtuNyJuduJmMw9z1hLUy8aw")
+		accessToken, err := ctx.Cookie("access_token")
+		if err != nil {
+			ctx.AbortWithStatusJSON(appErr.ErrCookieNotFound.Status, ErrorResponse(appErr.ErrCookieNotFound))
+			return
+		}
+		payload, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {
 			ctx.AbortWithStatusJSON(appErr.ErrInvalidCookie.Status, ErrorResponse(appErr.ErrInvalidCookie))
 			log.Error().Str("Error: ", err.Error())
 			return
 		}
-		log.Info().Msg(fmt.Sprintf("Telegram id: %d\nTelegram username: %s", payload.TelegramId, payload.Username))
+		//log.Info().Msg(fmt.Sprintf("Telegram id: %d\nTelegram username: %s", payload.TelegramId, payload.Username))
 		// Установить payload.TelegramID в контекст
 		ctx.Set("telegram_id", payload.TelegramId)
 		ctx.Next()
@@ -36,12 +35,12 @@ func CookieAuthMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 func GetTelegramIDFromContext(ctx *gin.Context) (int64, bool) {
 	telegramIdValue, exists := ctx.Get("telegram_id")
 	if !exists {
-		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
+		ctx.AbortWithStatusJSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
 		return 0, false
 	}
 	telegramId, ok := telegramIdValue.(int64)
 	if !ok {
-		ctx.JSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
+		ctx.AbortWithStatusJSON(appErr.ErrUnauthorized.Status, ErrorResponse(appErr.ErrUnauthorized))
 		return 0, false
 	}
 	return telegramId, true
