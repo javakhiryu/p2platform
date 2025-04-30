@@ -17,6 +17,8 @@ type Store interface {
 	ListSellRequeststTx(ctx context.Context, params ListSellRequeststTxParams, requesterTelegramID int64) (ListSellRequeststTxResults, error)
 	ReleaseLockedAmountTx(ctx context.Context, buyReqID uuid.UUID) (result ReleaseLockedAmountTxResult, err error)
 	ListMySellRequeststTx(ctx context.Context, params ListMySellRequestsTxParams) (ListSellRequeststTxResults, error)
+	CreateSpaceTx(ctx context.Context, arg CreateSpaceTxParams) (CreateSpaceTxResult, error)
+	GetSpaceTx(ctx context.Context, spaceId uuid.UUID, requesterTelegramID int64) (GetSpaceTxResult, error)
 }
 
 // Store

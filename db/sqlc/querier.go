@@ -40,6 +40,7 @@ type Querier interface {
 	GetSpaceBySpaceId(ctx context.Context, spaceID uuid.UUID) (Space, error)
 	GetSpaceIdByUserId(ctx context.Context, userID int64) ([]uuid.UUID, error)
 	GetSpaceMember(ctx context.Context, arg GetSpaceMemberParams) (SpaceMember, error)
+	GetSpaceMembersCount(ctx context.Context, spaceID uuid.UUID) (int64, error)
 	GetUser(ctx context.Context, telegramID int64) (User, error)
 	IsUserInSameSpaceAsSeller(ctx context.Context, arg IsUserInSameSpaceAsSellerParams) (bool, error)
 	IsUserInSpace(ctx context.Context, arg IsUserInSpaceParams) (bool, error)

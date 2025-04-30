@@ -259,6 +259,21 @@ func (mr *MockStoreMockRecorder) CreateSpace(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSpace", reflect.TypeOf((*MockStore)(nil).CreateSpace), arg0, arg1)
 }
 
+// CreateSpaceTx mocks base method.
+func (m *MockStore) CreateSpaceTx(arg0 context.Context, arg1 db.CreateSpaceTxParams) (db.CreateSpaceTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSpaceTx", arg0, arg1)
+	ret0, _ := ret[0].(db.CreateSpaceTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSpaceTx indicates an expected call of CreateSpaceTx.
+func (mr *MockStoreMockRecorder) CreateSpaceTx(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSpaceTx", reflect.TypeOf((*MockStore)(nil).CreateSpaceTx), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -523,6 +538,36 @@ func (m *MockStore) GetSpaceMember(arg0 context.Context, arg1 db.GetSpaceMemberP
 func (mr *MockStoreMockRecorder) GetSpaceMember(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceMember", reflect.TypeOf((*MockStore)(nil).GetSpaceMember), arg0, arg1)
+}
+
+// GetSpaceMembersCount mocks base method.
+func (m *MockStore) GetSpaceMembersCount(arg0 context.Context, arg1 uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpaceMembersCount", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpaceMembersCount indicates an expected call of GetSpaceMembersCount.
+func (mr *MockStoreMockRecorder) GetSpaceMembersCount(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceMembersCount", reflect.TypeOf((*MockStore)(nil).GetSpaceMembersCount), arg0, arg1)
+}
+
+// GetSpaceTx mocks base method.
+func (m *MockStore) GetSpaceTx(arg0 context.Context, arg1 uuid.UUID, arg2 int64) (db.GetSpaceTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpaceTx", arg0, arg1, arg2)
+	ret0, _ := ret[0].(db.GetSpaceTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpaceTx indicates an expected call of GetSpaceTx.
+func (mr *MockStoreMockRecorder) GetSpaceTx(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceTx", reflect.TypeOf((*MockStore)(nil).GetSpaceTx), arg0, arg1, arg2)
 }
 
 // GetUser mocks base method.
