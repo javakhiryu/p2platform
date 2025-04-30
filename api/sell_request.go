@@ -178,6 +178,7 @@ func (server *Server) getSellRequest(ctx *gin.Context) {
 	result, err := server.store.GetSellRequestTx(ctx, req.ID, telegramId)
 	if err != nil {
 		HandleAppError(ctx, err)
+		return
 	}
 
 	if result.SellRequest.IsDeleted.Bool {

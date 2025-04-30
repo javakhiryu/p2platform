@@ -99,6 +99,17 @@ func (q *Queries) GetSpaceMember(ctx context.Context, arg GetSpaceMemberParams) 
 	return i, err
 }
 
+const getSpaceMembersCount = `-- name: GetSpaceMembersCount :one
+SELECT COUNT(*) FROM space_members WHERE space_id = $1
+`
+
+func (q *Queries) GetSpaceMembersCount(ctx context.Context, spaceID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, getSpaceMembersCount, spaceID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const isUserInSameSpaceAsSeller = `-- name: IsUserInSameSpaceAsSeller :one
 SELECT EXISTS (
     SELECT 1

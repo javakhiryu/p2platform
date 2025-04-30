@@ -1,6 +1,6 @@
 CREATE TABLE "spaces" (
     "space_id" uuid UNIQUE PRIMARY KEY,
-    "space_name" VARCHAR NOT NULL,
+    "space_name" VARCHAR NOT NULL UNIQUE,
     "hashed_password" VARCHAR NOT NULL,
     "creator_id" BIGINT REFERENCES users(telegram_id),
     "description" VARCHAR NOT NULL,

@@ -27,7 +27,7 @@ func (store *SQLStore) GetSellRequestTx(ctx context.Context, sellReqID int32, re
 		}
 
 		arg := IsUserInSameSpaceAsSellerParams{
-			UserID: requesterTelegramID,
+			UserID:   requesterTelegramID,
 			UserID_2: sellRequest.TelegramID,
 		}
 

@@ -8,6 +8,9 @@ INSERT INTO space_members (
 )
 RETURNING *;
 
+-- name: GetSpaceMembersCount :one
+SELECT COUNT(*) FROM space_members WHERE space_id = $1;
+
 -- name: IsUserInSameSpaceAsSeller :one
 SELECT EXISTS (
     SELECT 1
