@@ -75,7 +75,7 @@ type NextCursor struct {
 type listSpacesResponse struct {
 	Spaces     []spaceResponse `json:"spaces"`
 	HasMore    bool            `json:"has_more"`
-	NextCursor NextCursor      `json:"next_cursor,omitempty"`
+	NextCursor *NextCursor      `json:"next_cursor,omitempty"`
 }
 
 func (server *Server) listSpaces(ctx *gin.Context) {
@@ -142,7 +142,88 @@ func (server *Server) listSpaces(ctx *gin.Context) {
 
 	if hasMore {
 		lastSpace := spaces[len(spaces)-1]
-		response.NextCursor = NextCursor{
+		response.NextCursor = &NextCursor{
+			LastSpaceName: lastSpace.SpaceName,
+			LastSpaceID:   lastSpace.SpaceID,
+		}
+	}
+
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (server *Server) listMySpaces(ctx *gin.Context) {
+	var req listSpacesRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(appErr.ErrInvalidQuery.Status, ErrorResponse(appErr.ErrInvalidQuery))
+		return
+	}
+
+	telegramID, ok := GetTelegramIDFromContext(ctx)
+	if !ok {
+		return // Ответ уже отправлен внутри GetTelegramIDFromContext
+	}
+
+	// Установка лимита
+	limit := 10
+	if req.Limit > 0 && req.Limit <= 100 {
+		limit = req.Limit
+	}
+
+	var spaces []db.Space
+	var err error
+
+	if req.LastSpaceName != "" && req.LastSpaceID != "" {
+		// Запрос с курсором
+		_, err := uuid.Parse(req.LastSpaceID)
+		if err != nil {
+			ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
+			return
+		}
+
+		arg := db.ListMySpacesAfterCursorByNameAscParams{
+			UserID:      telegramID,
+			Limit:       int32(limit + 1),
+			SpaceName:   req.LastSpaceName,
+			SpaceName_2: req.LastSpaceID,
+		}
+		spaces, err = server.store.ListMySpacesAfterCursorByNameAsc(ctx, arg)
+	} else {
+		// Первая загрузка без курсора
+		spaces, err = server.store.ListFirstMySpacesByNameAsc(ctx, db.ListFirstMySpacesByNameAscParams{
+			UserID: telegramID,
+			Limit:  int32(limit + 1),
+		})
+	}
+
+	if err != nil {
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		return
+	}
+
+	hasMore := len(spaces) > limit
+	if hasMore {
+		spaces = spaces[:limit]
+	}
+
+	response := listSpacesResponse{
+		Spaces:  make([]spaceResponse, len(spaces)),
+		HasMore: hasMore,
+	}
+
+	for i, space := range spaces {
+		response.Spaces[i] = spaceResponse{
+			ID:          space.SpaceID,
+			Name:        space.SpaceName,
+			CreatorID:   space.CreatorID.Int64,
+			Description: space.Description,
+			CreatedAt:   space.CreatedAt,
+			UpdatedAt:   space.UpdatedAt,
+		}
+	}
+
+	if hasMore {
+		lastSpace := spaces[len(spaces)-1]
+		response.NextCursor = &NextCursor{
 			LastSpaceName: lastSpace.SpaceName,
 			LastSpaceID:   lastSpace.SpaceID,
 		}
@@ -198,7 +279,7 @@ func (server *Server) joinToSpace(ctx *gin.Context) {
 		return
 	}
 	telegramId, ok := GetTelegramIDFromContext(ctx)
-	if !ok{
+	if !ok {
 		return
 	}
 	uid, err := uuid.Parse(uri.SpaceId)
@@ -214,27 +295,26 @@ func (server *Server) joinToSpace(ctx *gin.Context) {
 		}
 	}
 	user, err := server.store.GetUser(ctx, telegramId)
-	if err !=nil{
-		if errors.Is(err, db.ErrNoRowsFound){
+	if err != nil {
+		if errors.Is(err, db.ErrNoRowsFound) {
 			ctx.JSON(appErr.ErrUserNotFound.Status, ErrorResponse(appErr.ErrUserNotFound))
 			return
 		}
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
-	if err = util.CheckPassword(req.Password, space.HashedPassword); err !=nil{
+	if err = util.CheckPassword(req.Password, space.HashedPassword); err != nil {
 		ctx.JSON(appErr.ErrIncorrectPassword.Status, ErrorResponse(appErr.ErrIncorrectPassword))
 		return
 	}
-	arg :=db.AddSpaceMemberParams{
-		SpaceID: uid,
-		UserID: user.TelegramID,
+	arg := db.AddSpaceMemberParams{
+		SpaceID:  uid,
+		UserID:   user.TelegramID,
 		Username: user.TgUsername,
-
 	}
 	result, err := server.store.AddSpaceMember(ctx, arg)
-	if err !=nil{
-		if db.ErrCode(err) == db.UniqueViolation{
+	if err != nil {
+		if db.ErrCode(err) == db.UniqueViolation {
 			ctx.JSON(appErr.ErrUserAlreadyInSpace.Status, ErrorResponse(appErr.ErrUserAlreadyInSpace))
 			return
 		}
