@@ -1,40 +1,71 @@
-# Название workflow 
 name: Deploy to production
 
-# Триггеры для запуска workflow
 on:
   push:
-    branches: [ main ]  # Запускать workflow при пуше в ветку main
+    branches: [main]
 
-# Определение jobs (заданий)
 jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
 
-  # Job для сборки Docker-образа
-  build:
-    name: deploy  # Название job
-    runs-on: ubuntu-latest  # Использовать последнюю версию Ubuntu для выполнения job
-
-    # Шаги, которые будут выполнены в рамках job
     steps:
+      # Step 1: Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    # Шаг 1: Клонирование репозитория
-    - name: Checkout
-      uses: actions/checkout@v4  # Использование действия для клонирования репозитория
+      # Step 2: Install swag for documentation
+      - name: Install swag
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@latest
+          go get -u github.com/swaggo/gin-swagger
+          go get -u github.com/swaggo/files
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-    - name: Install swag
-      run: |
-        go install github.com/swaggo/swag/cmd/swag@latest
-        go get -u github.com/swaggo/gin-swagger
-        go get -u github.com/swaggo/files
-        export PATH=$(go env GOPATH)/bin:$PATH
+      # Step 3: Login to Alibaba ACR
+      - name: Login to Personal ACR
+        uses: aliyun/acr-login@v1
+        with:
+          login-server: https://crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-    - name: Login to Personal ACR
-      uses: aliyun/acr-login@v1
-      with:
-        login-server: https://crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
-        username: ${{ secrets.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
-    - name: Build and push image
-      run: |
-        docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }} .
-        docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+      # Step 4: Build and push Docker image
+      - name: Build and push image
+        run: |
+          docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }} .
+          docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+
+      # Step 5: Deploy to ECS
+      - name: Install SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Run deployment on ECS
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.ECS_IP }} << 'EOF'
+          # Update Docker if needed
+          if ! command -v docker &> /dev/null; then
+              apt-get update && apt-get install -y docker.io
+              systemctl start docker
+              systemctl enable docker
+          fi
+          
+          # Login to ACR
+          docker login --username=${{ secrets.REGISTRY_USERNAME }} \
+                      --password=${{ secrets.REGISTRY_PASSWORD }} \
+                      crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
+          
+          # Stop and remove old container
+          docker stop p2platform || true
+          docker rm p2platform || true
+          
+          # Pull and run new image
+          docker pull crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+          docker run -d \
+            --name p2platform \
+            -p 80:80 \
+            --restart always \
+            crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+          EOF
