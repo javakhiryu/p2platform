@@ -107,6 +107,8 @@ jobs:
                 environment:
                   - DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}?sslmode=disable
                   - KAFKA_BROKERS=kafka:9092
+                  - KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+                  - KAFKA_CFG_LOG_SEGMENT_DELETE_DELAY_MS: "1000"
                 depends_on:
                   - postgres
                   - kafka
