@@ -75,7 +75,7 @@ jobs:
 
             volumes:
               db-data:
-
+              kafka-data:
             services:
               postgres:
                 image: postgres:17-alpine
@@ -120,10 +120,6 @@ jobs:
                   - "9092:9092"
                 volumes:
                   - kafka-data:/bitnami/kafka
-
-            volumes:
-              db-data:
-              kafka-data:
             EOF
             
             # Deploy services
