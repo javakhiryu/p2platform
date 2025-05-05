@@ -36,36 +36,34 @@ jobs:
           docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }} .
           docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
 
-      # Step 5: Deploy to ECS
-      - name: Install SSH key
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Run deployment on ECS
-        run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.ECS_IP }} << 'EOF'
-          # Update Docker if needed
-          if ! command -v docker &> /dev/null; then
-              apt-get update && apt-get install -y docker.io
-              systemctl start docker
-              systemctl enable docker
-          fi
-          
-          # Login to ACR
-          docker login --username=${{ secrets.REGISTRY_USERNAME }} \
-                      --password=${{ secrets.REGISTRY_PASSWORD }} \
-                      crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
-          
-          # Stop and remove old container
-          docker stop p2platform || true
-          docker rm p2platform || true
-          
-          # Pull and run new image
-          docker pull crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
-          docker run -d \
-            --name p2platform \
-            -p 80:80 \
-            --restart always \
-            crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
-          EOF
+          - name: Deploy to ECS
+          uses: appleboy/ssh-action@v1.0.0
+          with:
+            host: ${{ secrets.ECS_IP }}
+            username: root
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            script: |
+              # Update Docker if needed
+              if ! command -v docker &> /dev/null; then
+                  apt-get update && apt-get install -y docker.io
+                  systemctl start docker
+                  systemctl enable docker
+              fi
+              
+              # Login to ACR
+              echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login \
+                --username=${{ secrets.REGISTRY_USERNAME }} \
+                --password-stdin \
+                crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
+              
+              # Stop and remove old container
+              docker stop p2platform || true
+              docker rm p2platform || true
+              
+              # Pull and run new image
+              docker pull crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+              docker run -d \
+                --name p2platform \
+                -p 80:80 \
+                --restart always \
+                crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
