@@ -126,8 +126,6 @@ jobs:
                   - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
                   - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
                   - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-                  - KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
-                  - KAFKA_CFG_LOG_SEGMENT_DELETE_DELAY_MS: "1000"
                 ports:
                   - "9092:9092"
                 volumes:
