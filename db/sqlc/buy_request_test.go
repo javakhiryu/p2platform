@@ -68,12 +68,13 @@ func TestListBuyReuqestsByTelegramId(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		CreateRandomBuyRequest(t, sellRequest, user)
 	}
-	arg := ListBuyRequestsByTelegramIdParams{
-		TelegramID: user.TelegramID,
+	arg := ListBuyRequestsByUserInSpaceParams{
+		SpaceID: util.RandomUUID(),
+		UserID: user.TelegramID,
 		Limit: 5,
 		Offset: 0,
 	}
-	buyRequests, err := testStore.ListBuyRequestsByTelegramId(context.Background(), arg)
+	buyRequests, err := testStore.ListBuyRequestsByUserInSpace(context.Background(), arg)
 	require.NoError(t, err)
 	for _, buyRequest := range buyRequests {
 		require.Equal(t, user.TelegramID, buyRequest.TelegramID)

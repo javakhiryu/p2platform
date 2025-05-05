@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Space</title>
+    <style>
+        :root {
+            --tg-bg: #ffffff;
+            --tg-accent: #0088cc;
+            --tg-accent-hover: #007bb3;
+            --tg-border: #e0e0e0;
+            --tg-text: #222;
+            --tg-text-secondary: #707579;
+            --tg-shadow: rgba(0, 0, 0, 0.05);
+            --tg-green: #31b545;
+            --tg-red: #ff3b30;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --border-radius-sm: 8px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+            --font-size-xl: 20px;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--tg-bg);
+            color: var(--tg-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        header {
+            background-color: var(--tg-accent);
+            color: white;
+            padding: var(--spacing-md);
+            width: 100%;
+            text-align: center;
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-lg);
+            width: 92%;
+            max-width: 480px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 2px 10px var(--tg-shadow);
+            border: 1px solid var(--tg-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-md);
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--border-radius-md);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .button {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+            font-size: var(--font-size-md);
+            font-weight: var(--font-weight-semibold);
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .button:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .button:disabled {
+            background-color: var(--tg-text-secondary);
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: var(--tg-red);
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-sm);
+            display: none;
+        }
+
+        .back-button {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-md);
+            background-color: #f1f1f1;
+            color: var(--tg-text);
+            border: none;
+            border-radius: var(--border-radius-lg);
+            text-decoration: none;
+            font-size: var(--font-size-md);
+        }
+
+        /* Error popup styles */
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-red);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 90%;
+            width: max-content;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-popup.hide {
+            animation: slideOut 0.3s ease-in;
+            opacity: 0;
+        }
+
+        .error-popup-close {
+            margin-left: var(--spacing-md);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+            to {
+                top: -50px;
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>Create New Space</header>
+
+    <div class="container">
+        <form id="createSpaceForm">
+            <div class="form-group">
+                <label for="spaceName">Space Name*</label>
+                <input type="text" id="spaceName" name="name" required placeholder="Enter space name">
+                <div id="nameError" class="error-message">Space name is required</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password* (min 6 characters)</label>
+                <input type="password" id="password" name="password" required minlength="6" placeholder="Enter password">
+                <div id="passwordError" class="error-message">Password must be at least 6 characters</div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" placeholder="Optional space description"></textarea>
+            </div>
+
+            <button type="submit" class="button" id="submitBtn">Create Space</button>
+        </form>
+
+        <a href="https://a2d9-95-214-210-246.ngrok-free.app/list-spaces" class="back-button">← Back to Spaces</a>
+    </div>
+
+    <script>
+        // Error handling and popup display
+        function showErrorPopup(message, duration = 5000) {
+            const popup = document.createElement('div');
+            popup.className = 'error-popup';
+            popup.innerHTML = `
+                <span>${message}</span>
+                <span class="error-popup-close">×</span>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Close on click
+            popup.querySelector('.error-popup-close').addEventListener('click', () => {
+                popup.classList.add('hide');
+                setTimeout(() => popup.remove(), 300);
+            });
+            
+            // Auto-close after duration
+            if (duration) {
+                setTimeout(() => {
+                    popup.classList.add('hide');
+                    setTimeout(() => popup.remove(), 300);
+                }, duration);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('createSpaceForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate form
+                const spaceName = form.name.value.trim();
+                const password = form.password.value;
+                const description = form.description.value.trim();
+
+                // Reset error messages
+                document.getElementById('nameError').style.display = 'none';
+                document.getElementById('passwordError').style.display = 'none';
+
+                let isValid = true;
+
+                if (!spaceName) {
+                    document.getElementById('nameError').style.display = 'block';
+                    isValid = false;
+                }
+
+                if (password.length < 6) {
+                    document.getElementById('passwordError').style.display = 'block';
+                    isValid = false;
+                }
+
+                if (!isValid) return;
+
+                // Disable button during submission
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating...';
+
+                try {
+                    const response = await fetch('http://localhost:8081/api/v1/space', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: spaceName,
+                            password: password,
+                            description: description
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to create space');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Redirect to list-spaces on success
+                    window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/list-spaces';
+
+                } catch (error) {
+                    showErrorPopup(error.message);
+                    console.error('Error creating space:', error);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Space';
+                }
+            });
+
+            // Real-time validation
+            document.getElementById('spaceName').addEventListener('input', function() {
+                if (this.value.trim()) {
+                    document.getElementById('nameError').style.display = 'none';
+                }
+            });
+
+            document.getElementById('password').addEventListener('input', function() {
+                if (this.value.length >= 6) {
+                    document.getElementById('passwordError').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sell Requests List</title>
     <style>
-
-:root {
+        :root {
             --tg-bg: #f5f5f5;
             --tg-primary: #0088cc;
             --tg-primary-hover: #007bb3;
@@ -292,17 +291,18 @@
             margin: var(--spacing-xl) auto 0;
             text-align: center;
         }
-        /* Add this style for crossed-out text */
+
         .crossed-out {
             text-decoration: line-through;
             color: #999;
         }
+
         .remaining-amount {
             color: #2e7d32;
             font-weight: bold;
             margin-left: 5px;
         }
-        /* Error popup styles */
+
         .error-popup {
             position: fixed;
             top: 20px;
@@ -372,16 +372,15 @@
 
         <div id="pageInfo" class="page-info"></div>
 
-        <a href="/create-sell-request" class="button create-new-btn">Create New Request</a>
+        <a href="/create-sell-request?space_id=${space_id}" class="button create-new-btn">Create New Request</a>
     </div>
 
     <script>
-
-         // Error handling and popup display
-         function showErrorPopup(message, duration = 5000) {
+        // Error handling and popup display
+        function showErrorPopup(message, duration = 5000) {
             const popup = document.createElement('div');
             popup.className = 'error-popup';
-            popup.style.backgroundColor = '#ff4444'; 
+            popup.style.backgroundColor = '#ff4444';
             popup.innerHTML = `
                 <span>${message}</span>
                 <span class="error-popup-close">×</span>
@@ -392,7 +391,7 @@
             // Close on click
             popup.querySelector('.error-popup-close').addEventListener('click', () => {
                 popup.classList.add('hide');
-                setTimeout(() => popup.remove(), 300);
+                setTimeout(() => popp.remove(), 300);
             });
             
             // Auto-close after duration
@@ -403,11 +402,6 @@
                 }, duration);
             }
         }
-    
-        // Map of error codes to user-friendly messages
-        const errorMessages = {
-            
-        };
 
         document.addEventListener('DOMContentLoaded', function() {
             const sellRequestsList = document.getElementById('sellRequestsList');
@@ -421,6 +415,15 @@
             let totalPages = 1;
             const itemsPerPage = 10;
             let isFetching = false;
+
+            // Get space_id from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const spaceId = urlParams.get('space_id');
+
+            const createBtn = document.querySelector('.create-new-btn');
+        if (spaceId) {
+            createBtn.href = `/create-sell-request?space_id=${spaceId}`;
+        }
 
             // Function to update pagination controls
             function updatePaginationControls() {
@@ -479,21 +482,32 @@
             async function fetchSellRequests(page = 1) {
                 if (isFetching) return;
                 isFetching = true;
+                
                 try {
                     sellRequestsList.innerHTML = '<div class="loading">Loading sell requests...</div>';
                     
-                    const apiUrl = `http://localhost:8081/api/v1/sell-requests?page_id=${page}&page_size=${itemsPerPage}`;
+                    // Include space_id in the API URL if it exists
+                    let apiUrl = `http://localhost:8081/api/v1/sell-requests?page_id=${page}&page_size=${itemsPerPage}`;
+                    if (spaceId) {
+                        apiUrl += `&space_id=${spaceId}`;
+                    }
                     
                     const response = await fetch(apiUrl);
+                    
                     if (!response.ok) {
                         const errorData = await response.json();
-                    // Обработка структуры ошибки с code и message
-                    const errorMessage = errorData.error?.message ||  
-                                       'Request failed';
-                    
-                    showErrorPopup(errorMessage);
-                    output.textContent = `Error: ${errorMessage}`;
-                    return;
+                        let errorMessage = 'Failed to load sell requests';
+                        
+                        // Handle different error response formats
+                        if (errorData.error && errorData.error.message) {
+                            errorMessage = errorData.error.message;
+                        } else if (errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                        
+                        showErrorPopup(errorMessage);
+                        sellRequestsList.innerHTML = `<div class="error-message">${errorMessage}</div>`;
+                        return;
                     }
                     
                     const data = await response.json();
@@ -511,13 +525,12 @@
                     updatePaginationControls();
                 } catch (error) {
                     console.error('Error fetching sell requests:', error);
+                    showErrorPopup('Network error. Please check your connection.');
                     sellRequestsList.innerHTML = `
                         <div class="error-message">
                             Failed to load sell requests. Please try again later.
-                            <br>${error.message}
                         </div>
                     `;
-                    updatePaginationControls();
                 } finally {
                     isFetching = false;
                 }

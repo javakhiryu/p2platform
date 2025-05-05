@@ -12,23 +12,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countOfSellRequests = `-- name: CountOfSellRequests :one
-SELECT COUNT(*) FROM sell_requests WHERE is_deleted = false
+const countOfSellRequestsBySpace = `-- name: CountOfSellRequestsBySpace :one
+SELECT COUNT(*) FROM sell_requests WHERE space_id = $1 AND is_deleted = false AND is_actual = true
 `
 
-func (q *Queries) CountOfSellRequests(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countOfSellRequests)
+func (q *Queries) CountOfSellRequestsBySpace(ctx context.Context, spaceID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfSellRequestsBySpace, spaceID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const countOfSellRequestsByTelegramId = `-- name: CountOfSellRequestsByTelegramId :one
-SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND is_deleted = false
+const countOfSellRequestsByTelegramIdAndSpace = `-- name: CountOfSellRequestsByTelegramIdAndSpace :one
+SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND space_id = $2 AND is_actual = true AND is_deleted = false
 `
 
-func (q *Queries) CountOfSellRequestsByTelegramId(ctx context.Context, telegramID int64) (int64, error) {
-	row := q.db.QueryRow(ctx, countOfSellRequestsByTelegramId, telegramID)
+type CountOfSellRequestsByTelegramIdAndSpaceParams struct {
+	TelegramID int64     `json:"telegram_id"`
+	SpaceID    uuid.UUID `json:"space_id"`
+}
+
+func (q *Queries) CountOfSellRequestsByTelegramIdAndSpace(ctx context.Context, arg CountOfSellRequestsByTelegramIdAndSpaceParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfSellRequestsByTelegramIdAndSpace, arg.TelegramID, arg.SpaceID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -47,11 +52,12 @@ INSERT INTO sell_requests (
   sell_by_cash,
   sell_amount_by_cash,
   sell_exchange_rate,
+  space_id,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
 )
-RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id
 `
 
 type CreateSellRequestParams struct {
@@ -66,6 +72,7 @@ type CreateSellRequestParams struct {
 	SellByCash       pgtype.Bool `json:"sell_by_cash"`
 	SellAmountByCash pgtype.Int8 `json:"sell_amount_by_cash"`
 	SellExchangeRate pgtype.Int8 `json:"sell_exchange_rate"`
+	SpaceID          uuid.UUID   `json:"space_id"`
 	Comment          string      `json:"comment"`
 }
 
@@ -82,6 +89,7 @@ func (q *Queries) CreateSellRequest(ctx context.Context, arg CreateSellRequestPa
 		arg.SellByCash,
 		arg.SellAmountByCash,
 		arg.SellExchangeRate,
+		arg.SpaceID,
 		arg.Comment,
 	)
 	var i SellRequest
@@ -103,6 +111,7 @@ func (q *Queries) CreateSellRequest(ctx context.Context, arg CreateSellRequestPa
 		&i.UpdatedAt,
 		&i.IsDeleted,
 		&i.Comment,
+		&i.SpaceID,
 	)
 	return i, err
 }
@@ -125,7 +134,7 @@ func (q *Queries) DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtyp
 }
 
 const getSellRequestById = `-- name: GetSellRequestById :one
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests WHERE sell_req_id = $1
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id FROM sell_requests WHERE sell_req_id = $1
 `
 
 func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (SellRequest, error) {
@@ -149,12 +158,13 @@ func (q *Queries) GetSellRequestById(ctx context.Context, sellReqID int32) (Sell
 		&i.UpdatedAt,
 		&i.IsDeleted,
 		&i.Comment,
+		&i.SpaceID,
 	)
 	return i, err
 }
 
 const getSellRequestForUpdate = `-- name: GetSellRequestForUpdate :one
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id FROM sell_requests
 WHERE sell_req_id = $1
 FOR UPDATE
 `
@@ -180,67 +190,16 @@ func (q *Queries) GetSellRequestForUpdate(ctx context.Context, sellReqID int32) 
 		&i.UpdatedAt,
 		&i.IsDeleted,
 		&i.Comment,
+		&i.SpaceID,
 	)
 	return i, err
 }
 
-const listSellRequests = `-- name: ListSellRequests :many
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
-WHERE is_deleted = false
-ORDER BY created_at ASC
-LIMIT $1 
-OFFSET $2
-`
-
-type ListSellRequestsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-func (q *Queries) ListSellRequests(ctx context.Context, arg ListSellRequestsParams) ([]SellRequest, error) {
-	rows, err := q.db.Query(ctx, listSellRequests, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []SellRequest{}
-	for rows.Next() {
-		var i SellRequest
-		if err := rows.Scan(
-			&i.SellReqID,
-			&i.SellTotalAmount,
-			&i.SellMoneySource,
-			&i.CurrencyFrom,
-			&i.CurrencyTo,
-			&i.TelegramID,
-			&i.TgUsername,
-			&i.SellByCard,
-			&i.SellAmountByCard,
-			&i.SellByCash,
-			&i.SellAmountByCash,
-			&i.SellExchangeRate,
-			&i.IsActual,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.IsDeleted,
-			&i.Comment,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listSellRequestsBySpace = `-- name: ListSellRequestsBySpace :many
-SELECT sr.sell_req_id, sr.sell_total_amount, sr.sell_money_source, sr.currency_from, sr.currency_to, sr.telegram_id, sr.tg_username, sr.sell_by_card, sr.sell_amount_by_card, sr.sell_by_cash, sr.sell_amount_by_cash, sr.sell_exchange_rate, sr.is_actual, sr.created_at, sr.updated_at, sr.is_deleted, sr.comment
-FROM sell_requests sr
-JOIN space_members sm ON sr.telegram_id = sm.user_id
-WHERE sm.space_id = $1 AND sr.is_deleted = false
-ORDER BY sr.updated_at DESC
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id
+FROM sell_requests
+WHERE space_id = $1
+ORDER BY sell_req_id ASC
 LIMIT $2
 OFFSET $3
 `
@@ -278,6 +237,7 @@ func (q *Queries) ListSellRequestsBySpace(ctx context.Context, arg ListSellReque
 			&i.UpdatedAt,
 			&i.IsDeleted,
 			&i.Comment,
+			&i.SpaceID,
 		); err != nil {
 			return nil, err
 		}
@@ -290,28 +250,26 @@ func (q *Queries) ListSellRequestsBySpace(ctx context.Context, arg ListSellReque
 }
 
 const listSellRequestsBySpaceAndTelegramID = `-- name: ListSellRequestsBySpaceAndTelegramID :many
-SELECT sr.sell_req_id, sr.sell_total_amount, sr.sell_money_source, sr.currency_from, sr.currency_to, sr.telegram_id, sr.tg_username, sr.sell_by_card, sr.sell_amount_by_card, sr.sell_by_cash, sr.sell_amount_by_cash, sr.sell_exchange_rate, sr.is_actual, sr.created_at, sr.updated_at, sr.is_deleted, sr.comment
-FROM sell_requests sr
-JOIN space_members sm ON sr.telegram_id = sm.user_id
-WHERE sr.telegram_id = $1
-  AND sm.space_id = $2
-  AND sr.is_deleted = false
-ORDER BY sr.updated_at DESC
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id
+FROM sell_requests
+WHERE space_id = $1
+AND telegram_id = $2
+AND is_deleted = false
 LIMIT $3
 OFFSET $4
 `
 
 type ListSellRequestsBySpaceAndTelegramIDParams struct {
-	TelegramID int64     `json:"telegram_id"`
 	SpaceID    uuid.UUID `json:"space_id"`
+	TelegramID int64     `json:"telegram_id"`
 	Limit      int32     `json:"limit"`
 	Offset     int32     `json:"offset"`
 }
 
 func (q *Queries) ListSellRequestsBySpaceAndTelegramID(ctx context.Context, arg ListSellRequestsBySpaceAndTelegramIDParams) ([]SellRequest, error) {
 	rows, err := q.db.Query(ctx, listSellRequestsBySpaceAndTelegramID,
-		arg.TelegramID,
 		arg.SpaceID,
+		arg.TelegramID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -340,6 +298,7 @@ func (q *Queries) ListSellRequestsBySpaceAndTelegramID(ctx context.Context, arg 
 			&i.UpdatedAt,
 			&i.IsDeleted,
 			&i.Comment,
+			&i.SpaceID,
 		); err != nil {
 			return nil, err
 		}
@@ -352,7 +311,7 @@ func (q *Queries) ListSellRequestsBySpaceAndTelegramID(ctx context.Context, arg 
 }
 
 const listSellRequestsByTelegramId = `-- name: ListSellRequestsByTelegramId :many
-SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment FROM sell_requests
+SELECT sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id FROM sell_requests
 WHERE telegram_id = $1 AND is_deleted = false
 ORDER BY created_at ASC
 LIMIT $2 
@@ -392,6 +351,7 @@ func (q *Queries) ListSellRequestsByTelegramId(ctx context.Context, arg ListSell
 			&i.UpdatedAt,
 			&i.IsDeleted,
 			&i.Comment,
+			&i.SpaceID,
 		); err != nil {
 			return nil, err
 		}
@@ -410,7 +370,7 @@ SET
   updated_at = now()
 WHERE
   sell_req_id = $2
-RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id
 `
 
 type OpenCloseSellRequestParams struct {
@@ -439,6 +399,7 @@ func (q *Queries) OpenCloseSellRequest(ctx context.Context, arg OpenCloseSellReq
 		&i.UpdatedAt,
 		&i.IsDeleted,
 		&i.Comment,
+		&i.SpaceID,
 	)
 	return i, err
 }
@@ -470,7 +431,7 @@ SET
         ELSE updated_at
     END
 WHERE sell_req_id = $11
-RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment
+RETURNING sell_req_id, sell_total_amount, sell_money_source, currency_from, currency_to, telegram_id, tg_username, sell_by_card, sell_amount_by_card, sell_by_cash, sell_amount_by_cash, sell_exchange_rate, is_actual, created_at, updated_at, is_deleted, comment, space_id
 `
 
 type UpdateSellRequestParams struct {
@@ -520,6 +481,7 @@ func (q *Queries) UpdateSellRequest(ctx context.Context, arg UpdateSellRequestPa
 		&i.UpdatedAt,
 		&i.IsDeleted,
 		&i.Comment,
+		&i.SpaceID,
 	)
 	return i, err
 }

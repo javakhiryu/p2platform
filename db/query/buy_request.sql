@@ -25,17 +25,22 @@ LIMIT $2
 OFFSET $3;
 
 -- name: CountOfBuyRequests :one
-SELECT COUNT(*) FROM buy_requests WHERE sell_req_id = $1;
+SELECT COUNT(*) FROM buy_requests WHERE sell_req_id = $1 AND state = 'open';
 
--- name: ListBuyRequestsByTelegramId :many
-SELECT * FROM buy_requests
-WHERE telegram_id = $1
-ORDER BY created_at ASC
-LIMIT $2 
-OFFSET $3;
+-- name: ListBuyRequestsByUserInSpace :many
+SELECT br.*
+FROM buy_requests br
+JOIN space_members sm ON br.telegram_id = sm.user_id AND br.space_id = sm.space_id
+WHERE sm.user_id = $1 AND sm.space_id = $2
+AND br.state = 'open'
+ORDER BY br.created_at ASC
+LIMIT $3 OFFSET $4;
 
--- name: CountOfBuyRequestsByTelegramId :one
-SELECT COUNT(*) FROM buy_requests WHERE telegram_id = $1;
+-- name: CountBuyRequestsByUserInSpace :one
+SELECT COUNT(*)
+FROM buy_requests br
+JOIN space_members sm ON br.telegram_id = sm.user_id AND br.space_id = sm.space_id
+WHERE sm.user_id = $1 AND sm.space_id = $2 AND br.state = 'open';
 
 -- name: CloseConfirmBySeller :exec
 UPDATE buy_requests

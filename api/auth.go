@@ -81,7 +81,7 @@ func (server *Server) telegramAuth(ctx *gin.Context) {
 		accessToken,
 		int(duration.Seconds()),
 		"/",
-		"",
+		"f398-37-110-215-31.ngrok-free.app",
 		false,
 		false,
 	)

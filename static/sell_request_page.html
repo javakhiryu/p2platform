@@ -324,16 +324,17 @@
         <div class="action-buttons">
             <a id="createBuyRequestBtn" class="button primary">Create Buy Request</a>
             <a id="listBuyRequestsBtn" class="button secondary">List Buy Requests</a>
-            <a href="https://f398-37-110-215-31.ngrok-free.app/list-sell-requests" class="button secondary">← Back to Sell Requests List</a>
+            <a id="backToSellRequestsBtn" class="button secondary">← Back to Sell Requests List</a>
         </div>
     </div>
-
     <script>
         const pathParts = window.location.pathname.split('/');
         const sellRequestId = pathParts[pathParts.length - 1];
+        const urlParams = new URLSearchParams(window.location.search);
+        const spaceId = urlParams.get('space_id');
 
-         // Error handling and popup display
-         function showErrorPopup(message, duration = 5000) {
+        // Error handling and popup display
+        function showErrorPopup(message, duration = 5000) {
             const popup = document.createElement('div');
             popup.className = 'error-popup';
             popup.style.backgroundColor = '#ff4444'; 
@@ -358,56 +359,59 @@
                 }, duration);
             }
         }
-    
-        // Map of error codes to user-friendly messages
-        const errorMessages = {
-            
-        };
 
-    
-        // Функция для форматирования числовых значений
+        // Format numeric values
         const formatAmount = (amount) => {
             const num = parseFloat(amount) || 0;
             return new Intl.NumberFormat('en-US', {
                 maximumFractionDigits: 2
             }).format(num);
         };
-    
+
         if (!sellRequestId) {
             document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: ID is missing from the URL.</div>";
         } else {
             // Set up the Create Buy Request button
             const createButton = document.getElementById('createBuyRequestBtn');
             createButton.addEventListener('click', function() {
-                window.location.href = `https://f398-37-110-215-31.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
+                window.location.href = `https://a2d9-95-214-210-246.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
             });
+            
+            // Set up the List Buy Requests button
             document.getElementById('listBuyRequestsBtn').addEventListener('click', function() {
-                window.location.href = `https://f398-37-110-215-31.ngrok-free.app/list-buy-requests?sell_req_id=${sellRequestId}`;
+                window.location.href = `https://a2d9-95-214-210-246.ngrok-free.app/list-buy-requests?sell_req_id=${sellRequestId}`;
             });
-    
+            
+            // Set up the Back to Sell Requests button
+            const backButton = document.getElementById('backToSellRequestsBtn');
+            backButton.href = spaceId 
+                ? `https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests?space_id=${spaceId}`
+                : 'https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests';
+
             const apiUrl = `http://localhost:8081/api/v1/sell-request/${sellRequestId}`;
     
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) {
-                        const errorData = result.json();
-                    // Обработка структуры ошибки с code и message
-                    const errorMessage = errorData.error?.message ||  
-                                       'Request failed';
-                    showErrorPopup(errorMessage);
-                    output.textContent = `Error: ${errorMessage}`;
-                    return;
+                        return response.json().then(errorData => {
+                            const errorMessage = errorData.error?.message || 'Request failed';
+                            showErrorPopup(errorMessage);
+                            throw new Error(errorMessage);
+                        });
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data && data.sell_request) {
                         const sellRequest = data.sell_request;
+                        
+                        // Update all the fields as before
                         document.getElementById('sellReqId').textContent = sellRequest.sell_req_id || 'N/A';
                         document.getElementById('sellTotalAmount').textContent = formatAmount(sellRequest.sell_total_amount) || '0';
                         document.getElementById('sellMoneySource').textContent = sellRequest.sell_money_source || 'N/A';
                         document.getElementById('currencyFrom').textContent = sellRequest.currency_from || 'N/A';
                         document.getElementById('currencyTo').textContent = sellRequest.currency_to || 'N/A';
+                        
                         const tgUsernameElement = document.getElementById('tgUsername');
                         if (sellRequest.tg_username) {
                             tgUsernameElement.textContent = `@${sellRequest.tg_username}`;
@@ -419,13 +423,13 @@
     
                         const sellByCardElement = document.getElementById('sellByCard');
                         sellByCardElement.textContent = sellRequest.sell_by_card ? 'Yes' : 'No';
-                        sellByCardElement.classList.add(sellRequest.sell_by_card ? 'true' : 'false');
+                        sellByCardElement.className = `info-value boolean-value ${sellRequest.sell_by_card ? 'true' : 'false'}`;
     
                         document.getElementById('sellAmountByCard').textContent = formatAmount(sellRequest.sell_amount_by_card) || '0';
     
                         const sellByCashElement = document.getElementById('sellByCash');
                         sellByCashElement.textContent = sellRequest.sell_by_cash ? 'Yes' : 'No';
-                        sellByCashElement.classList.add(sellRequest.sell_by_cash ? 'true' : 'false');
+                        sellByCashElement.className = `info-value boolean-value ${sellRequest.sell_by_cash ? 'true' : 'false'}`;
     
                         document.getElementById('sellAmountByCash').textContent = formatAmount(sellRequest.sell_amount_by_cash) || '0';
                         document.getElementById('sellExchangeRate').textContent = formatAmount(sellRequest.sell_exchange_rate) || '0';
@@ -433,12 +437,17 @@
                         const isActualElement = document.getElementById('isActual');
                         if (sellRequest.is_actual) {
                             isActualElement.textContent = 'Active';
-                            isActualElement.classList.add('status-badge', 'status-active');
+                            isActualElement.className = 'info-value status-badge status-active';
                         } else {
                             isActualElement.textContent = 'Inactive';
-                            isActualElement.classList.add('status-badge', 'status-inactive');
-                            createButton.disabled = true
+                            isActualElement.className = 'info-value status-badge status-inactive';
+                            createButton.disabled = true;
                             createButton.classList.add('disabled');
+                        }
+
+                        // Update back button with space_id from response if available
+                        if (sellRequest.space_id) {
+                            backButton.href = `https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests?space_id=${sellRequest.space_id}`;
                         }
     
                         document.getElementById('comment').textContent = sellRequest.comment || 'No comments';
@@ -452,22 +461,23 @@
                             minute: '2-digit'
                         });
                     } else {
-                        document.body.innerHTML = "<div style='color:var(--tg-red);text-align:center;padding:20px;'>Error: Sell request data not found in response.</div>";
+                        throw new Error('Sell request data not found in response');
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching sell request:', error);
+                    showErrorPopup(error.message);
                     document.body.innerHTML = `
                         <div class="container">
                             <div class="section">
                                 <div class="section-title">Error</div>
                                 <div class="info-row">
                                     <span class="info-value" style="color:var(--tg-red);text-align:center;width:100%;">
-                                        Failed to load data. Please try again later.
+                                        ${error.message}
                                     </span>
                                 </div>
                             </div>
-                            <a href="https://f398-37-110-215-31.ngrok-free.app" class="button back-button">← Back</a>
+                            <a href="https://a2d9-95-214-210-246.ngrok-free.app" class="button back-button">← Back to Home</a>
                         </div>
                     `;
                 });

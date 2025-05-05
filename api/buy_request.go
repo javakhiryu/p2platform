@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
+
 type createBuyRequest struct {
 	SellReqID       int32 `json:"sell_req_id" binding:"min=1"`
 	BuyTotalAmount  int64 `json:"buy_total_amount" binding:"min=1"`
@@ -28,6 +29,11 @@ func (server *Server) createBuyRequest(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
+		return
+	}
+
+	if err != nil {
+		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
 		return
 	}
 
@@ -174,6 +180,7 @@ func (server *Server) listBuyRequests(ctx *gin.Context) {
 type listMyBuyRequests struct {
 	PageId   int32 `form:"page_id" binding:"min=1"`
 	PageSize int32 `form:"page_size" binding:"min=5,max=10"`
+	SpaceId  string `form:"space_id" binding:"required,uuid"`
 }
 
 func (server *Server) listMyBuyRequests(ctx *gin.Context) {
@@ -188,12 +195,19 @@ func (server *Server) listMyBuyRequests(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.ListBuyRequestsByTelegramIdParams{
-		TelegramID: telegramId,
+	uid, err := uuid.Parse(req.SpaceId)
+	if err != nil {
+		ctx.JSON(appErr.ErrInvalidUUID.Status, ErrorResponse(appErr.ErrInvalidUUID))
+		return
+	}
+
+	arg := db.ListBuyRequestsByUserInSpaceParams{
+		SpaceID:    uid,
+		UserID: telegramId,
 		Limit:      req.PageSize,
 		Offset:     (req.PageId - 1) * req.PageSize,
 	}
-	buyRequests, err := server.store.ListBuyRequestsByTelegramId(ctx, arg)
+	buyRequests, err := server.store.ListBuyRequestsByUserInSpace(ctx, arg)
 	if err != nil {
 		if errors.Is(err, db.ErrNoRowsFound) {
 			ctx.JSON(appErr.ErrBuyRequestsNotFound.Status, ErrorResponse(appErr.ErrBuyRequestsNotFound))
@@ -202,7 +216,10 @@ func (server *Server) listMyBuyRequests(ctx *gin.Context) {
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
-	totalBuyRequests, err := server.store.CountOfBuyRequestsByTelegramId(ctx, telegramId)
+	totalBuyRequests, err := server.store.CountBuyRequestsByUserInSpace(ctx, db.CountBuyRequestsByUserInSpaceParams{
+		SpaceID:    uid,
+		UserID: telegramId,
+	})
 	if err != nil {
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 	}
