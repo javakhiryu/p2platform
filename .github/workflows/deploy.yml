@@ -1,0 +1,46 @@
+# Название workflow
+name: Deploy to production
+
+# Триггеры для запуска workflow
+on:
+  push:
+    branches: [ main ]  # Запускать workflow при пуше в ветку main
+
+# Определение jobs (заданий)
+jobs:
+
+  # Job для сборки Docker-образа
+  build:
+    name: deploy  # Название job
+    runs-on: ubuntu-latest  # Использовать последнюю версию Ubuntu для выполнения job
+
+    # Шаги, которые будут выполнены в рамках job
+    steps:
+
+    # Шаг 1: Клонирование репозитория
+    - name: Checkout
+      uses: actions/checkout@v4  # Использование действия для клонирования репозитория
+
+    - name: Install swag
+      run: |
+        go install github.com/swaggo/swag/cmd/swag@latest
+        go get -u github.com/swaggo/gin-swagger
+        go get -u github.com/swaggo/files
+        export PATH=$(go env GOPATH)/bin:$PATH
+
+    - name: Configure ACR Credentials
+      id: login-acr
+      uses: aliyun/acr-login@v1
+      with:
+        region-id: ap-southeast-1
+        access-key-id: '${{ secrets.ALIBABA_ACCESS_KEY_ID }}' 
+        access-key-secret: '${{ secrets.ALIBABA_ACCESS_KEY_SECRET }}'
+    - name: Build and push image
+      env:
+        REGISTRY: ${{steps.login-acr.outputs.registry}}
+        REPOSITORY: p2platform
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
+         docker push -a $REGISTRY/$REPOSITORY
+      
