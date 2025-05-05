@@ -104,23 +104,31 @@ func (q *Queries) CloseConfirmBySeller(ctx context.Context, arg CloseConfirmBySe
 	return err
 }
 
-const countOfBuyRequests = `-- name: CountOfBuyRequests :one
-SELECT COUNT(*) FROM buy_requests WHERE sell_req_id = $1
+const countBuyRequestsByUserInSpace = `-- name: CountBuyRequestsByUserInSpace :one
+SELECT COUNT(*)
+FROM buy_requests br
+JOIN space_members sm ON br.telegram_id = sm.user_id AND br.space_id = sm.space_id
+WHERE sm.user_id = $1 AND sm.space_id = $2 AND br.state = 'open'
 `
 
-func (q *Queries) CountOfBuyRequests(ctx context.Context, sellReqID int32) (int64, error) {
-	row := q.db.QueryRow(ctx, countOfBuyRequests, sellReqID)
+type CountBuyRequestsByUserInSpaceParams struct {
+	UserID  int64     `json:"user_id"`
+	SpaceID uuid.UUID `json:"space_id"`
+}
+
+func (q *Queries) CountBuyRequestsByUserInSpace(ctx context.Context, arg CountBuyRequestsByUserInSpaceParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countBuyRequestsByUserInSpace, arg.UserID, arg.SpaceID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const countOfBuyRequestsByTelegramId = `-- name: CountOfBuyRequestsByTelegramId :one
-SELECT COUNT(*) FROM buy_requests WHERE telegram_id = $1
+const countOfBuyRequests = `-- name: CountOfBuyRequests :one
+SELECT COUNT(*) FROM buy_requests WHERE sell_req_id = $1 AND state = 'open'
 `
 
-func (q *Queries) CountOfBuyRequestsByTelegramId(ctx context.Context, telegramID int64) (int64, error) {
-	row := q.db.QueryRow(ctx, countOfBuyRequestsByTelegramId, telegramID)
+func (q *Queries) CountOfBuyRequests(ctx context.Context, sellReqID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, countOfBuyRequests, sellReqID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -280,22 +288,30 @@ func (q *Queries) ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams
 	return items, nil
 }
 
-const listBuyRequestsByTelegramId = `-- name: ListBuyRequestsByTelegramId :many
-SELECT buy_req_id, sell_req_id, buy_total_amount, telegram_id, tg_username, buy_by_card, buy_amount_by_card, buy_by_cash, buy_amount_by_cash, close_confirm_by_seller, close_confirm_by_buyer, seller_confirmed_at, buyer_confirmed_at, state, state_updated_at, created_at, expires_at FROM buy_requests
-WHERE telegram_id = $1
-ORDER BY created_at ASC
-LIMIT $2 
-OFFSET $3
+const listBuyRequestsByUserInSpace = `-- name: ListBuyRequestsByUserInSpace :many
+SELECT br.buy_req_id, br.sell_req_id, br.buy_total_amount, br.telegram_id, br.tg_username, br.buy_by_card, br.buy_amount_by_card, br.buy_by_cash, br.buy_amount_by_cash, br.close_confirm_by_seller, br.close_confirm_by_buyer, br.seller_confirmed_at, br.buyer_confirmed_at, br.state, br.state_updated_at, br.created_at, br.expires_at
+FROM buy_requests br
+JOIN space_members sm ON br.telegram_id = sm.user_id AND br.space_id = sm.space_id
+WHERE sm.user_id = $1 AND sm.space_id = $2
+AND br.state = 'open'
+ORDER BY br.created_at ASC
+LIMIT $3 OFFSET $4
 `
 
-type ListBuyRequestsByTelegramIdParams struct {
-	TelegramID int64 `json:"telegram_id"`
-	Limit      int32 `json:"limit"`
-	Offset     int32 `json:"offset"`
+type ListBuyRequestsByUserInSpaceParams struct {
+	UserID  int64     `json:"user_id"`
+	SpaceID uuid.UUID `json:"space_id"`
+	Limit   int32     `json:"limit"`
+	Offset  int32     `json:"offset"`
 }
 
-func (q *Queries) ListBuyRequestsByTelegramId(ctx context.Context, arg ListBuyRequestsByTelegramIdParams) ([]BuyRequest, error) {
-	rows, err := q.db.Query(ctx, listBuyRequestsByTelegramId, arg.TelegramID, arg.Limit, arg.Offset)
+func (q *Queries) ListBuyRequestsByUserInSpace(ctx context.Context, arg ListBuyRequestsByUserInSpaceParams) ([]BuyRequest, error) {
+	rows, err := q.db.Query(ctx, listBuyRequestsByUserInSpace,
+		arg.UserID,
+		arg.SpaceID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

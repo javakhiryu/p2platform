@@ -64,29 +64,30 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "https://f398-37-110-215-31.ngrok-free.app"},
+		AllowOrigins:     []string{"http://localhost:8080", "https://a2d9-95-214-210-246.ngrok-free.app"},
 		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		AllowCredentials: true,
 	}))
 
-
 	router.SetHTMLTemplate(template.Must(template.ParseFS(StaticFS, "static/*.html")))
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	router.GET("/", server.renderIndexPage)
+	router.GET("/", server.renderAuthPage)
+	router.GET("/telegram-auth", server.renderIndexPage)
 	router.GET("/sell-request/:id", server.renderSellRequestPage)
 	router.GET("/create-sell-request", server.renderCreateSellRequestPage)
 	router.GET("/create-buy-request", server.renderCreateBuyRequestPage)
 	router.GET("/list-sell-requests", server.renderListSellRequestsPage)
 	router.GET("/buy-request/:id", server.renderBuyRequestPage)
 	router.GET("/list-buy-requests", server.renderListBuyRequestsPage)
+	router.GET("/list-spaces", server.renderListSpacesPage)
+	router.GET("/create-space", server.renderCreateSpacePage)
 
 	api := router.Group("/api/v1")
 	{
 		api.POST("/auth/telegram", server.telegramAuth)
-		
 
 		authRoutes := api.Group("/").Use(CookieAuthMiddleware(server.tokenMaker))
 		authRoutes.GET("/auth/me", server.getCurrentUser)

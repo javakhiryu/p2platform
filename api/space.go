@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 type createSpaceRequest struct {
@@ -30,10 +31,12 @@ func (server *Server) createSpace(ctx *gin.Context) {
 	}
 	uuid, err := uuid.NewRandom()
 	if err != nil {
+		log.Error().Err(err).Msg("error:")
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 	}
 	hashedPassword, err := util.HashedPassword(req.Password)
 	if err != nil {
+		log.Error().Err(err).Msg("error:")
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 	}
 
@@ -45,6 +48,7 @@ func (server *Server) createSpace(ctx *gin.Context) {
 		CreatorID:      telegramId,
 	})
 	if err != nil {
+		log.Error().Err(err).Msg("error:")
 		HandleAppError(ctx, err)
 		return
 	}

@@ -39,3 +39,21 @@ func (server *Server) renderBuyRequestPage(ctx *gin.Context) {
 func (server *Server) renderListBuyRequestsPage(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "list_buy_requests_page.html", nil)
 }
+
+func (server *Server) renderAuthPage(ctx *gin.Context) {
+	ctx.HTML(http.StatusOK, "auth_page.html", nil)
+}
+
+func (server *Server) renderListSpacesPage(ctx *gin.Context) {
+	id := ctx.Param("id")
+	ctx.HTML(http.StatusOK, "list_spaces_page.html", gin.H{
+		"id": id,
+	})
+}
+
+func (server *Server) renderCreateSpacePage(ctx *gin.Context) {
+	id := ctx.Param("id")
+	ctx.HTML(http.StatusOK, "create_space_page.html", gin.H{
+		"id": id,
+	})
+}

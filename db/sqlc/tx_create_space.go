@@ -7,6 +7,7 @@ import (
 	"p2platform/util"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 type CreateSpaceTxParams struct {
@@ -29,6 +30,7 @@ func (store *SQLStore) CreateSpaceTx(ctx context.Context, arg CreateSpaceTxParam
 	err := store.execTx(ctx, func(q *Queries) error {
 		user, err := q.GetUser(ctx, arg.CreatorID)
 		if err != nil {
+			log.Error().Err(err).Msg("1 error:")
 			if errors.Is(err, ErrNoRowsFound) {
 				return appErr.ErrUserNotFound
 			}
@@ -43,6 +45,7 @@ func (store *SQLStore) CreateSpaceTx(ctx context.Context, arg CreateSpaceTxParam
 		}
 		space, err := q.CreateSpace(ctx, argCreateSpace)
 		if err != nil {
+			log.Error().Err(err).Msg("2 error:")
 			if ErrCode(err) == UniqueViolation {
 				return appErr.ErrSpaceNameExists
 			}
@@ -55,6 +58,7 @@ func (store *SQLStore) CreateSpaceTx(ctx context.Context, arg CreateSpaceTxParam
 			Username: user.TgUsername,
 		})
 		if err != nil {
+			log.Error().Err(err).Msg("3 error:")
 			return appErr.ErrInternalServer
 		}
 		result = CreateSpaceTxResult{

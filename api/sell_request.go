@@ -16,8 +16,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type createSellRequestURI struct {
-	SpaceId string `uri:"space_id" binding:"required,uuid"`
+type createSellRequestQuery struct {
+	SpaceId string `form:"space_id" binding:"required,uuid"`
 }
 type createSellRequest struct {
 	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=1"`
@@ -65,12 +65,13 @@ type ErrResponse struct {
 //	@Failure      500      {object}  ErrResponse
 //	@Router       /sell-request [post]
 func (server *Server) createSellRequest(ctx *gin.Context) {
-	var uri createSellRequestURI
+	var uri createSellRequestQuery
 	var req createSellRequest
 	sellByCard := false
 	sellByCash := false
-	if err := ctx.ShouldBindUri(&uri); err != nil {
+	if err := ctx.ShouldBindQuery(&uri); err != nil {
 		ctx.JSON(appErr.ErrInvalidUri.Status, ErrorResponse(appErr.ErrInvalidUri))
+		return
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
@@ -115,6 +116,7 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 	}
 
 	arg := db.CreateSellRequestParams{
+		SpaceID:          uid,
 		SellTotalAmount:  req.SellTotalAmount,
 		SellMoneySource:  req.SellMoneySource,
 		CurrencyFrom:     req.CurrencyFrom,

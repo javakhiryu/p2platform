@@ -76,7 +76,7 @@ func (store *SQLStore) ListSellRequeststTx(ctx context.Context, params ListSellR
 			})
 		}
 
-		totalCount, err := q.CountOfSellRequests(ctx)
+		totalCount, err := q.CountOfSellRequestsBySpace(ctx, arg.SpaceID)
 		if err != nil {
 			return appErr.ErrFailedToGetSellRequests
 		}

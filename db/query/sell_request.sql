@@ -11,26 +11,18 @@ INSERT INTO sell_requests (
   sell_by_cash,
   sell_amount_by_cash,
   sell_exchange_rate,
+  space_id,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
 )
 RETURNING *;
 
 -- name: GetSellRequestById :one
 SELECT * FROM sell_requests WHERE sell_req_id = $1;
 
--- name: ListSellRequests :many
-SELECT * FROM sell_requests
-WHERE is_deleted = false
-ORDER BY created_at ASC
-LIMIT $1 
-OFFSET $2;
-
-
-
--- name: CountOfSellRequests :one
-SELECT COUNT(*) FROM sell_requests WHERE is_deleted = false;
+-- name: CountOfSellRequestsBySpace :one
+SELECT COUNT(*) FROM sell_requests WHERE space_id = $1 AND is_deleted = false AND is_actual = true; 
 
 -- name: ListSellRequestsByTelegramId :many
 SELECT * FROM sell_requests
@@ -40,28 +32,25 @@ LIMIT $2
 OFFSET $3;
 
 -- name: ListSellRequestsBySpaceAndTelegramID :many
-SELECT sr.*
-FROM sell_requests sr
-JOIN space_members sm ON sr.telegram_id = sm.user_id
-WHERE sr.telegram_id = $1
-  AND sm.space_id = $2
-  AND sr.is_deleted = false
-ORDER BY sr.updated_at DESC
+SELECT *
+FROM sell_requests
+WHERE space_id = $1
+AND telegram_id = $2
+AND is_deleted = false
 LIMIT $3
 OFFSET $4;
 
 -- name: ListSellRequestsBySpace :many
-SELECT sr.*
-FROM sell_requests sr
-JOIN space_members sm ON sr.telegram_id = sm.user_id
-WHERE sm.space_id = $1 AND sr.is_deleted = false
-ORDER BY sr.updated_at DESC
+SELECT *
+FROM sell_requests
+WHERE space_id = $1
+ORDER BY sell_req_id ASC
 LIMIT $2
 OFFSET $3;
 
 
--- name: CountOfSellRequestsByTelegramId :one
-SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND is_deleted = false;
+-- name: CountOfSellRequestsByTelegramIdAndSpace :one
+SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND space_id = $2 AND is_actual = true AND is_deleted = false;
 
 -- name: UpdateSellRequest :one
 UPDATE sell_requests

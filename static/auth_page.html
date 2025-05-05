@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome to P2Platform</title>
+    <title>Authentication Check | P2Platform</title>
     <style>
         :root {
             --tg-red: #ff4444;
@@ -15,7 +15,6 @@
             --tg-text-secondary: #707579;
             --tg-shadow: rgba(0, 0, 0, 0.05);
             --tg-green: #31b545;
-            --tg-red: #ff3b30;
             --spacing-sm: 8px;
             --spacing-md: 16px;
             --spacing-lg: 24px;
@@ -70,50 +69,70 @@
             position: relative;
         }
 
-        .welcome-title {
-            font-size: var(--font-size-lg);
-            font-weight: var(--font-weight-semibold);
+        .auth-status {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--tg-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
             margin-bottom: var(--spacing-md);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            font-size: var(--font-size-md);
             color: var(--tg-text);
             text-align: center;
-        }
-
-        .welcome-subtitle {
-            font-size: var(--font-size-md);
-            color: var(--tg-text-secondary);
-            margin-bottom: var(--spacing-lg);
-            text-align: center;
-            max-width: 80%;
-        }
-
-        .telegram-widget-container {
-            margin: var(--spacing-lg) 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-
-        .platform-features {
-            width: 100%;
-            margin-top: var(--spacing-lg);
-            text-align: left;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
             margin-bottom: var(--spacing-md);
         }
 
-        .feature-icon {
-            width: 24px;
-            height: 24px;
-            margin-right: var(--spacing-md);
-            color: var(--tg-accent);
+        .error-message {
+            color: var(--tg-red);
+            font-size: var(--font-size-md);
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+            display: none;
         }
 
-        .feature-text {
+        .button {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            margin-top: var(--spacing-md);
             font-size: var(--font-size-md);
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+            text-decoration: none;
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+            display: none;
+        }
+
+        .button:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .button.secondary {
+            background-color: #f1f1f1;
+            color: #333;
+            margin-top: var(--spacing-sm);
         }
 
         /* Error popup styles */
@@ -174,32 +193,11 @@
     <header>P2Platform</header>
 
     <div class="container">
-        <h1 class="welcome-title">Welcome to P2Platform</h1>
-        <p class="welcome-subtitle">Securely exchange currencies with trusted partners</p>
-
-        <div class="telegram-widget-container">
-            <script async src="https://telegram.org/js/telegram-widget.js?22"
-                data-telegram-login="p2platform_bot"
-                data-size="large"
-                data-radius="12"
-                data-onauth="onTelegramAuth(user)"
-                data-request-access="write">
-            </script>
-        </div>
-
-        <div class="platform-features">
-            <div class="feature-item">
-                <div class="feature-icon">✓</div>
-                <div class="feature-text">Secure Telegram authentication</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">✓</div>
-                <div class="feature-text">Real-time currency exchange</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">✓</div>
-                <div class="feature-text">Trusted community of traders</div>
-            </div>
+        <div class="auth-status">
+            <div class="loader"></div>
+            <div class="status-message">Checking authentication status...</div>
+            <div class="error-message" id="errorMessage"></div>
+            <button class="button" id="retryButton">Try Again</button>
         </div>
     </div>
 
@@ -231,38 +229,60 @@
             }
         }
 
-        async function onTelegramAuth(user) {
+        async function checkAuth() {
+            const loader = document.querySelector('.loader');
+            const statusMessage = document.querySelector('.status-message');
+            const errorMessage = document.getElementById('errorMessage');
+            const retryButton = document.getElementById('retryButton');
+            
             try {
-                const res = await fetch('http://localhost:8081/api/v1/auth/telegram', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(user)
+                const response = await fetch('http://localhost:8081/api/v1/auth/me', {
+                    method: 'GET',
+                    credentials: 'include'
                 });
-
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    const errorMessage = errorData.error?.message || 'Authentication failed';
-                    showErrorPopup(errorMessage);
-                    return;
-                }
-
-                // Successful authentication - redirect to list-spaces
-                window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/list-spaces';
                 
-            } catch (err) {
-                const errorMessage = 'Network error, please check your connection';
-                showErrorPopup(errorMessage);
+                if (response.ok) {
+                    // 200 OK - перенаправляем на list-spaces
+                    window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/list-spaces';
+                } else if (response.status === 401) {
+                    // 401 Unauthorized - перенаправляем на telegram-auth
+                    window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/telegram-auth';
+                } else {
+                    // Другие ошибки
+                    const errorData = await response.json();
+                    const errorMsg = errorData.error?.message || errorData.message || 'Unknown error occurred';
+                    showError(errorMsg);
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection.');
+            }
+
+            function showError(message) {
+                loader.style.display = 'none';
+                statusMessage.style.display = 'none';
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                retryButton.style.display = 'block';
             }
         }
 
-        // Handle potential errors from other parts of the app
-        window.addEventListener('error', (event) => {
-            showErrorPopup('An unexpected error occurred');
-        });
-
-        // Handle unhandled promise rejections
-        window.addEventListener('unhandledrejection', (event) => {
-            showErrorPopup('An operation failed, please try again');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Запускаем проверку при загрузке
+            checkAuth();
+            
+            // Настраиваем кнопку повтора
+            document.getElementById('retryButton').addEventListener('click', function() {
+                const loader = document.querySelector('.loader');
+                const statusMessage = document.querySelector('.status-message');
+                const errorMessage = document.getElementById('errorMessage');
+                
+                loader.style.display = 'block';
+                statusMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                this.style.display = 'none';
+                
+                checkAuth();
+            });
         });
     </script>
 </body>

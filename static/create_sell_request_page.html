@@ -318,7 +318,7 @@
 
         <pre id="sellOutput"></pre>
 
-        <a href="https://f398-37-110-215-31.ngrok-free.app" class="button back-button">← Back to Home</a>
+        <a href="https://a2d9-95-214-210-246.ngrok-free.app" class="button back-button">← Back to Home</a>
     </div>
     <script>
         // Error handling and popup display
@@ -381,6 +381,10 @@
                 
                 return num.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
             };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const spaceId = urlParams.get('space_id');
+
     
             // Parse formatted number back to float
             const parseFormattedNumber = (formattedValue) => {
@@ -459,7 +463,7 @@
                 }
     
                 try {
-                const res = await fetch('http://localhost:8081/api/v1/sell-request', {
+                const res = await fetch(`http://localhost:8081/api/v1/sell-request?space_id=${spaceId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)

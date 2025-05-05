@@ -125,6 +125,7 @@ func (store *SQLStore) CreateBuyRequestTx(ctx context.Context, arg CreateBuyRequ
 		}
 
 		sellRequest, err = q.GetSellRequestById(ctx, arg.SellReqID)
+
 		if err != nil {
 			return appErr.ErrFailedToGetSellRequests
 		}

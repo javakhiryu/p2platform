@@ -58,7 +58,10 @@ func (store *SQLStore) ListMySellRequeststTx(ctx context.Context, params ListMyS
 				LockedAmountByCash: lockedAmountByCash,
 			})
 		}
-		totalCount, err := q.CountOfSellRequestsByTelegramId(ctx, params.TelegramId)
+		totalCount, err := q.CountBuyRequestsByUserInSpace(ctx, CountBuyRequestsByUserInSpaceParams{
+			UserID: params.TelegramId,
+			SpaceID:    params.SpaceId,
+		})
 		if err != nil {
 			return appErr.ErrFailedToGetSellRequests
 		}

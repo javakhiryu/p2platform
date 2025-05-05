@@ -61,6 +61,7 @@ type SellRequest struct {
 	UpdatedAt        time.Time   `json:"updated_at"`
 	IsDeleted        pgtype.Bool `json:"is_deleted"`
 	Comment          string      `json:"comment"`
+	SpaceID          uuid.UUID   `json:"space_id"`
 }
 
 type Space struct {
