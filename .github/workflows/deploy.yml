@@ -32,13 +32,9 @@ jobs:
       uses: aliyun/acr-login@v1
       with:
         login-server: https://crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
-        region-id: ap-southeast-1
-        access-key-id: ${{ secrets.ALIBABA_ACCESS_KEY_ID }}
-        access-key-secret: ${{ secrets.ALIBABA_ACCESS_KEY_SECRET }}
-        instance-id: crpi-qzh5i8b0hkdo3v4d
-    
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
     - name: Build and push image
       run: |
         docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }} .
         docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
-      
