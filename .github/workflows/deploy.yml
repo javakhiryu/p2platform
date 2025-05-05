@@ -14,6 +14,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}:@postgres:5432/${{ secrets.DB_NAME }}
+          HTTP_SERVER_ADDRESS=${{ secrets.ECS_IP }}:8080
+          KAFKA_BROKERS=kafka:9092
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          EOF
+
       # Step 2: Install swag for documentation
       - name: Install swag
         run: |
