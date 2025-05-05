@@ -14,9 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create .env file
+      - name: Create app.env file
         run: |
-          cat <<EOF > .env
+          cat <<EOF > app.env
           ENVIRONMENT=${{ secrets.ENVIRONMENT }}
           DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}:@postgres:5432/${{ secrets.DB_NAME }}
           HTTP_SERVER_ADDRESS=${{ secrets.ECS_IP }}:8080
