@@ -30,13 +30,13 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      # Step 4: Build and push Docker image
-      - name: Build and push image
+      # Step 4: Build and push API image
+      - name: Build and push API image
         run: |
-          docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }} .
-          docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+          docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }} .
+          docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
 
-
+      # Step 5: Deploy with Docker Compose
       - name: Deploy to ECS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -44,27 +44,95 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Update Docker if needed
-            if ! command -v docker &> /dev/null; then
-                apt-get update && apt-get install -y docker.io
-                systemctl start docker
-                systemctl enable docker
+            set -ex
+            
+            # Install Docker and Docker Compose if missing
+            if ! command -v docker &>/dev/null; then
+                apt-get update -qq
+                apt-get install -y -qq docker.io
+                systemctl enable --now docker
             fi
-              
+            
+            if ! command -v docker-compose &>/dev/null; then
+                curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                chmod +x /usr/local/bin/docker-compose
+            fi
+            
             # Login to ACR
-            echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login \
-              --username=${{ secrets.REGISTRY_USERNAME }} \
-              --password-stdin \
-              crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
-              
-            # Stop and remove old container
-            docker stop p2platform || true
-            docker rm p2platform || true
-              
-            # Pull and run new image
-            docker pull crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
-            docker run -d \
-              --name p2platform \
-              -p 80:80 \
-              --restart always \
-              crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
+            echo "${{ secrets.REGISTRY_PASSWORD }}" | \
+              docker login \
+                --username "${{ secrets.REGISTRY_USERNAME }}" \
+                --password-stdin \
+                crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
+            
+            # Create docker-compose.yml
+            cat > docker-compose.yml <<EOF
+            version: '3.8'
+
+            networks:
+              p2platform:
+                driver: bridge
+
+            volumes:
+              db-data:
+
+            services:
+              postgres:
+                image: postgres:17-alpine
+                environment:
+                  POSTGRES_USER: ${{ secrets.DB_USER }}
+                  POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  POSTGRES_DB: ${{ secrets.DB_NAME }}
+                ports:
+                  - "5432:5432"
+                volumes:
+                  - db-data:/var/lib/postgresql/data
+                networks:
+                  - p2platform
+
+              api:
+                image: crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
+                ports:
+                  - "8080:8080"
+                environment:
+                  - DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}?sslmode=disable
+                  - KAFKA_BROKERS=kafka:9092
+                depends_on:
+                  - postgres
+                  - kafka
+                entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
+                command: ["/app/main"]
+                networks:
+                  - p2platform
+
+              kafka:
+                image: bitnami/kafka:latest
+                networks:
+                  - p2platform
+                environment:
+                  - KAFKA_CFG_NODE_ID=0
+                  - KAFKA_CFG_PROCESS_ROLES=controller,broker
+                  - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+                  - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+                  - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+                  - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+                ports:
+                  - "9092:9092"
+                volumes:
+                  - kafka-data:/bitnami/kafka
+
+            volumes:
+              db-data:
+              kafka-data:
+            EOF
+            
+            # Deploy services
+            docker-compose pull
+            docker-compose down || true
+            docker-compose up -d
+            
+            # Verify deployment
+            docker ps -a
+            echo "API available at http://${{ secrets.ECS_IP }}:8080"
+            echo "PostgreSQL available at ${{ secrets.ECS_IP }}:5432"
+            echo "Kafka available at ${{ secrets.ECS_IP }}:9092"
