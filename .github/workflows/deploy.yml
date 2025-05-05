@@ -39,6 +39,6 @@ jobs:
     
     - name: Build and push image
       run: |
-        docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/my-namespace/my-repo:${{ github.sha }} .
-        docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/my-namespace/my-repo:${{ github.sha }}
+        docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }} .
+        docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/p2platform:${{ github.sha }}
       
