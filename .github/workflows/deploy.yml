@@ -120,6 +120,7 @@ jobs:
                 networks:
                   - p2platform
                 environment:
+                  - KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
                   - KAFKA_CFG_NODE_ID=0
                   - KAFKA_CFG_PROCESS_ROLES=controller,broker
                   - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
