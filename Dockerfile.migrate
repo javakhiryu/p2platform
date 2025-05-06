@@ -1,0 +1,4 @@
+FROM golang:1.24.1-alpine3.21
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+COPY db/migration /migrations
+ENTRYPOINT ["migrate"]
