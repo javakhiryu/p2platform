@@ -17,7 +17,7 @@ jobs:
         run: |
           cat <<EOF > app.env
           ENVIRONMENT=${{ secrets.ENVIRONMENT }}
-          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
+          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{secrets.ECS_IP}}:5432/${{ secrets.DB_NAME }}
           HTTP_SERVER_ADDRESS=0.0.0.0:8080
           KAFKA_BROKERS=kafka:9092
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -157,11 +157,3 @@ jobs:
             echo "API available at http://${{ secrets.ECS_IP }}:8080"
             echo "PostgreSQL available at ${{ secrets.ECS_IP }}:5432"
             echo "Kafka available at ${{ secrets.ECS_IP }}:9092"
-      
-      - name: Build and run migrations
-        run: |
-          docker build -f Dockerfile.migrate -t migrator .
-          docker run --rm migrator \
-            -path=/migrations \
-            -database "postgres://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.ECS_IP }}:5432/${{ secrets.DB_NAME }}?sslmode=disable" \
-            up
