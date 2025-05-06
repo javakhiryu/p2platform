@@ -18,7 +18,7 @@ jobs:
           cat <<EOF > app.env
           ENVIRONMENT=${{ secrets.ENVIRONMENT }}
           DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
-          HTTP_SERVER_ADDRESS=${{ secrets.ECS_IP }}:8080
+          HTTP_SERVER_ADDRESS=0.0.0.0:8080
           KAFKA_BROKERS=kafka:9092
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
           EOF
