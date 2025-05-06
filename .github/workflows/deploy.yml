@@ -17,7 +17,7 @@ jobs:
         run: |
           cat <<EOF > app.env
           ENVIRONMENT=${{ secrets.ENVIRONMENT }}
-          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{secrets.ECS_IP}}:5432/${{ secrets.DB_NAME }}
+          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
           HTTP_SERVER_ADDRESS=0.0.0.0:8080
           KAFKA_BROKERS=kafka:9092
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -103,6 +103,7 @@ jobs:
             services:
               postgres:
                 image: postgres:17-alpine
+                container_name: postgres
                 environment:
                   POSTGRES_USER: ${{ secrets.DB_USER }}
                   POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -116,6 +117,7 @@ jobs:
 
               kafka:
                 image: bitnami/kafka:latest
+                container_name: kafka
                 networks:
                   - p2platform
                 environment:
@@ -133,6 +135,7 @@ jobs:
 
               api:
                image: crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
+               container_name: api
                ports:
                  - "${{secrets.EXT_PORT}}:8080"
                environment:
