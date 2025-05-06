@@ -109,7 +109,7 @@ func (server *Server) getCurrentUser(ctx *gin.Context) {
 			return
 		}
 		log.Error().Err(err).Msg("error:")
-		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, response)
