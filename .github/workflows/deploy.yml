@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -18,13 +17,12 @@ jobs:
         run: |
           cat <<EOF > app.env
           ENVIRONMENT=${{ secrets.ENVIRONMENT }}
-          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}:@postgres:5432/${{ secrets.DB_NAME }}
+          DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}
           HTTP_SERVER_ADDRESS=${{ secrets.ECS_IP }}:8080
           KAFKA_BROKERS=kafka:9092
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
           EOF
 
-      # Step 2: Install swag for documentation
       - name: Install swag
         run: |
           go install github.com/swaggo/swag/cmd/swag@latest
@@ -32,7 +30,6 @@ jobs:
           go get -u github.com/swaggo/files
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Step 3: Login to Alibaba ACR
       - name: Login to Personal ACR
         uses: aliyun/acr-login@v1
         with:
@@ -40,13 +37,11 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      # Step 4: Build and push API image
       - name: Build and push API image
         run: |
           docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }} .
           docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
 
-      # Step 5: Deploy with Docker Compose
       - name: Deploy to ECS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -55,26 +50,43 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -ex
-            
-            # Install Docker and Docker Compose if missing
+
+            # Install Docker
             if ! command -v docker &>/dev/null; then
-                apt-get update -qq
-                apt-get install -y -qq docker.io
-                systemctl enable --now docker
+              apt-get update -qq
+              apt-get install -y -qq \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                gnupg2 \
+                software-properties-common
+
+              curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+              add-apt-repository \
+                "deb [arch=amd64] https://download.docker.com/linux/debian \
+                buster \
+                stable"
+
+              apt-get update -qq
+              apt-get install -y -qq docker-ce docker-ce-cli containerd.io
+              systemctl enable docker
+              systemctl start docker
             fi
-            
+
+            # Install Docker Compose
             if ! command -v docker-compose &>/dev/null; then
-                curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                chmod +x /usr/local/bin/docker-compose
+              curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              chmod +x /usr/local/bin/docker-compose
+              ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
             fi
-            
+
             # Login to ACR
             echo "${{ secrets.REGISTRY_PASSWORD }}" | \
               docker login \
                 --username "${{ secrets.REGISTRY_USERNAME }}" \
                 --password-stdin \
                 crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
-            
+
             # Create docker-compose.yml
             cat > docker-compose.yml <<EOF
             version: '3.8'
@@ -86,6 +98,7 @@ jobs:
             volumes:
               db-data:
               kafka-data:
+
             services:
               postgres:
                 image: postgres:17-alpine
@@ -120,7 +133,7 @@ jobs:
                 networks:
                   - p2platform
                 environment:
-                  - KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+                  - KAFKA_HEAP_OPTS=-Xmx512m -Xms256m
                   - KAFKA_CFG_NODE_ID=0
                   - KAFKA_CFG_PROCESS_ROLES=controller,broker
                   - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
@@ -132,12 +145,12 @@ jobs:
                 volumes:
                   - kafka-data:/bitnami/kafka
             EOF
-            
+
             # Deploy services
             docker-compose pull
             docker-compose down || true
             docker-compose up -d
-            
+
             # Verify deployment
             docker ps -a
             echo "API available at http://${{ secrets.ECS_IP }}:8080"
