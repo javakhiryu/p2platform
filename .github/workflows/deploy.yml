@@ -21,6 +21,7 @@ jobs:
           HTTP_SERVER_ADDRESS=0.0.0.0:8080
           KAFKA_BROKERS=kafka:9092
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          BASE_URL=http://${{ secrets.ECS_IP }}
           EOF
 
       - name: Install swag
@@ -150,6 +151,13 @@ jobs:
             docker-compose pull
             docker-compose down || true
             docker-compose up -d
+
+            # Run migrations
+            docker exec root_api_1 migrate \
+              -path ./db/migration \
+              -database "postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}?sslmode=disable" \
+              up
+
 
             # Verify deployment
             docker ps -a

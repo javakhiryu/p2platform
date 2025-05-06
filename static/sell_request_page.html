@@ -374,21 +374,21 @@
             // Set up the Create Buy Request button
             const createButton = document.getElementById('createBuyRequestBtn');
             createButton.addEventListener('click', function() {
-                window.location.href = `https://a2d9-95-214-210-246.ngrok-free.app/create-buy-request?sell_req_id=${sellRequestId}`;
+                window.location.href = `{{  .BaseUrl }}/create-buy-request?sell_req_id=${sellRequestId}`;
             });
             
             // Set up the List Buy Requests button
             document.getElementById('listBuyRequestsBtn').addEventListener('click', function() {
-                window.location.href = `https://a2d9-95-214-210-246.ngrok-free.app/list-buy-requests?sell_req_id=${sellRequestId}`;
+                window.location.href = `{{  .BaseUrl }}/list-buy-requests?sell_req_id=${sellRequestId}`;
             });
             
             // Set up the Back to Sell Requests button
             const backButton = document.getElementById('backToSellRequestsBtn');
             backButton.href = spaceId 
-                ? `https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests?space_id=${spaceId}`
-                : 'https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests';
+                ? `{{  .BaseUrl }}/list-sell-requests?space_id=${spaceId}`
+                : '{{  .BaseUrl }}/list-sell-requests';
 
-            const apiUrl = `http://localhost:8081/api/v1/sell-request/${sellRequestId}`;
+            const apiUrl = `{{  .BaseUrl }}/api/v1/sell-request/${sellRequestId}`;
     
             fetch(apiUrl)
                 .then(response => {
@@ -447,7 +447,7 @@
 
                         // Update back button with space_id from response if available
                         if (sellRequest.space_id) {
-                            backButton.href = `https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests?space_id=${sellRequest.space_id}`;
+                            backButton.href = `{{  .BaseUrl }}/list-sell-requests?space_id=${sellRequest.space_id}`;
                         }
     
                         document.getElementById('comment').textContent = sellRequest.comment || 'No comments';
@@ -477,7 +477,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <a href="https://a2d9-95-214-210-246.ngrok-free.app" class="button back-button">← Back to Home</a>
+                            <a href="{{  .BaseUrl }}" class="button back-button">← Back to Home</a>
                         </div>
                     `;
                 });

@@ -463,7 +463,7 @@
                 btn.textContent = 'Processing...';
                 
                 try {
-                    const res = await fetch('http://localhost:8081/api/v1/buy-request', {
+                    const res = await fetch('{{  .BaseUrl }}/api/v1/buy-request', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
