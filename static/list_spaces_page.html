@@ -177,7 +177,7 @@
         </div>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
-        <a href="https://a2d9-95-214-210-246.ngrok-free.app/create-space" class="button">Create new space</a>
+        <a href="{{  .BaseUrl }}/create-space" class="button">Create new space</a>
     </div>
 
     <script>
@@ -214,7 +214,7 @@
                         params.append('last_space_id', nextCursor.LastSpaceID);
                     }
 
-                    const response = await fetch(`http://localhost:8081/api/v1/spaces?${params.toString()}`, {
+                    const response = await fetch(`{{  .BaseUrl }}/api/v1/spaces?${params.toString()}`, {
                         credentials: 'include'
                     });
 
@@ -267,7 +267,7 @@
                     `;
                     
                     spaceCard.addEventListener('click', () => {
-                        window.location.href = `https://a2d9-95-214-210-246.ngrok-free.app/list-sell-requests?space_id=${space.id}`;
+                        window.location.href = `{{  .BaseUrl }}/list-sell-requests?space_id=${space.id}`;
                     });
                     
                     spacesList.appendChild(spaceCard);

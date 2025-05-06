@@ -424,7 +424,7 @@
             const sellReqId = urlParams.get('sell_req_id');
 
             document.getElementById('createBuyRequestBtn').addEventListener('click', function() {
-                window.location.href = `https://a2d9-95-214-210-246.ngrok-free.app/create-buy-request?sell_req_id=${sellReqId}`;
+                window.location.href = `{{  .BaseUrl }}/create-buy-request?sell_req_id=${sellReqId}`;
             });
 
             // Add click event listener to the "Go to Sell Requests" button
@@ -499,7 +499,7 @@
                     buyRequestsList.innerHTML = '<div class="loading">Loading buy requests...</div>';
                     
                     // Build API URL with sell_req_id if provided
-                    let apiUrl = `http://localhost:8081/api/v1/buy-requests?page_id=${page}&page_size=${itemsPerPage}`;
+                    let apiUrl = `{{  .BaseUrl }}/api/v1/buy-requests?page_id=${page}&page_size=${itemsPerPage}`;
                     if (sellReqId) {
                         apiUrl += `&sell_req_id=${sellReqId}`;
                     }

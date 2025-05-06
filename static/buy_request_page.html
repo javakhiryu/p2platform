@@ -376,7 +376,7 @@
                 return;
             }
 
-            const apiUrl = `http://localhost:8081/api/v1/buy-request/${buyRequestId}`;
+            const apiUrl = `{{  .BaseUrl }}/api/v1/buy-request/${buyRequestId}`;
             const confirmButton = document.getElementById('confirmButton');
             const backButton = document.getElementById('backToListBtn');
 
@@ -479,7 +479,7 @@
                                     confirmButton.textContent = 'Processing...';
 
                                     // Send POST request to close the buy request
-                                    const response = await fetch(`http://localhost:8081/api/v1/buy-request/${buyReqId}/close-confirm`, {
+                                    const response = await fetch(`{{  .BaseUrl }}/api/v1/buy-request/${buyReqId}/close-confirm`, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json'

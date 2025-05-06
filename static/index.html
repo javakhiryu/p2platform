@@ -233,7 +233,7 @@
 
         async function onTelegramAuth(user) {
             try {
-                const res = await fetch('http://localhost:8081/api/v1/auth/telegram', {
+                const res = await fetch('{{  .BaseUrl }}/api/v1/auth/telegram', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(user)
@@ -247,7 +247,7 @@
                 }
 
                 // Successful authentication - redirect to list-spaces
-                window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/list-spaces';
+                window.location.href = '{{  .BaseUrl }}/list-spaces';
                 
             } catch (err) {
                 const errorMessage = 'Network error, please check your connection';

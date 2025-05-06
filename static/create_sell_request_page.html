@@ -318,7 +318,7 @@
 
         <pre id="sellOutput"></pre>
 
-        <a href="https://a2d9-95-214-210-246.ngrok-free.app" class="button back-button">← Back to Home</a>
+        <a href="{{  .BaseUrl }}" class="button back-button">← Back to Home</a>
     </div>
     <script>
         // Error handling and popup display
@@ -463,7 +463,7 @@
                 }
     
                 try {
-                const res = await fetch(`http://localhost:8081/api/v1/sell-request?space_id=${spaceId}`, {
+                const res = await fetch(`{{  .BaseUrl }}/api/v1/sell-request?space_id=${spaceId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)

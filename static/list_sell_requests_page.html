@@ -487,7 +487,7 @@
                     sellRequestsList.innerHTML = '<div class="loading">Loading sell requests...</div>';
                     
                     // Include space_id in the API URL if it exists
-                    let apiUrl = `http://localhost:8081/api/v1/sell-requests?page_id=${page}&page_size=${itemsPerPage}`;
+                    let apiUrl = `{{  .BaseUrl }}/api/v1/sell-requests?page_id=${page}&page_size=${itemsPerPage}`;
                     if (spaceId) {
                         apiUrl += `&space_id=${spaceId}`;
                     }

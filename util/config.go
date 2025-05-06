@@ -11,6 +11,7 @@ type Config struct {
 	TelegramBotToken  string `mapstructure:"TELEGRAM_BOT_TOKEN"`
 	KafkaBrokers      string `mapstructure:"KAFKA_BROKERS"`
 	AccessTokenDuration string `mapstructure:"ACCESS_TOKEN_DURATION"`
+	BaseURL           string `mapstructure:"BASE_URL"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

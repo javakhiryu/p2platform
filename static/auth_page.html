@@ -236,17 +236,17 @@
             const retryButton = document.getElementById('retryButton');
             
             try {
-                const response = await fetch('http://localhost:8081/api/v1/auth/me', {
+                const response = await fetch('{{  .BaseUrl }}/api/v1/auth/me', {
                     method: 'GET',
                     credentials: 'include'
                 });
                 
                 if (response.ok) {
                     // 200 OK - перенаправляем на list-spaces
-                    window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/list-spaces';
+                    window.location.href = '{{  .BaseUrl }}/list-spaces';
                 } else if (response.status === 401) {
                     // 401 Unauthorized - перенаправляем на telegram-auth
-                    window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/telegram-auth';
+                    window.location.href = '{{  .BaseUrl }}/telegram-auth';
                 } else {
                     // Другие ошибки
                     const errorData = await response.json();

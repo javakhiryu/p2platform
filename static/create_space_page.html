@@ -227,7 +227,7 @@
             <button type="submit" class="button" id="submitBtn">Create Space</button>
         </form>
 
-        <a href="https://a2d9-95-214-210-246.ngrok-free.app/list-spaces" class="back-button">← Back to Spaces</a>
+        <a href="{{  .BaseUrl }}/list-spaces" class="back-button">← Back to Spaces</a>
     </div>
 
     <script>
@@ -292,7 +292,7 @@
                 submitBtn.textContent = 'Creating...';
 
                 try {
-                    const response = await fetch('http://localhost:8081/api/v1/space', {
+                    const response = await fetch('{{  .BaseUrl }}/api/v1/space', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -312,7 +312,7 @@
                     const result = await response.json();
                     
                     // Redirect to list-spaces on success
-                    window.location.href = 'https://a2d9-95-214-210-246.ngrok-free.app/list-spaces';
+                    window.location.href = '{{  .BaseUrl }}/list-spaces';
 
                 } catch (error) {
                     showErrorPopup(error.message);

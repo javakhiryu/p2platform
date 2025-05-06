@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/spf13/viper"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -64,11 +65,16 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "https://a2d9-95-214-210-246.ngrok-free.app"},
+		AllowOrigins:     []string{viper.GetString("BASE_URL")},
 		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		AllowCredentials: true,
 	}))
+
+	router.Use(func(ctx *gin.Context) {
+		ctx.Set("BaseUrl", viper.GetString("BASE_URL"))
+		ctx.Next()
+	})
 
 	router.SetHTMLTemplate(template.Must(template.ParseFS(StaticFS, "static/*.html")))
 
