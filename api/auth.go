@@ -108,6 +108,7 @@ func (server *Server) getCurrentUser(ctx *gin.Context) {
 			ctx.JSON(http.StatusUnauthorized, response)
 			return
 		}
+		log.Error().Err(err).Msg("error:")
 		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
 		return
 	}
