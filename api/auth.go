@@ -64,14 +64,14 @@ func (server *Server) telegramAuth(ctx *gin.Context) {
 
 	accessToken, err := server.tokenMaker.CreateToken(user.ID, user.Username)
 	if err != nil {
-		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
 		log.Error().Str("Error:", err.Error())
 		return
 	}
 
 	duration, err := time.ParseDuration(server.config.AccessTokenDuration)
 	if err != nil {
-		ctx.JSON(appErr.ErrInternalServer.Status, appErr.ErrInternalServer)
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
 		log.Error().Str("Error:", err.Error())
 		return
 	}
