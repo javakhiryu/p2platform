@@ -1,3 +1,4 @@
+# docker-compose.prod.yml
 version: '3.8'
 
 networks:
@@ -42,20 +43,13 @@ services:
       - kafka-data:/bitnami/kafka
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${IMAGE_TAG}
     container_name: api
     ports:
       - "${EXT_PORT}:8080"
     environment:
-      - ENVIRONMENT=${ENVIRONMENT}
       - DB_SOURCE=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
       - KAFKA_BROKERS=kafka:9092
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - BASE_URL=${BASE_URL}
-    volumes:
-      - ./app.env:/app/app.env  # Монтируем файл конфигурации
     depends_on:
       - postgres
       - kafka
