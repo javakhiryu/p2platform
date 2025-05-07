@@ -137,14 +137,14 @@ jobs:
           script: |
             set -ex
             # Only run certbot if certificates don't exist
-            if [ ! -d "/root/certbot-etc/live/${{secrets.DOMAIN_NAME}}" ]; then
-              docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
-                --webroot \
-                --webroot-path /var/www/certbot \
-                --email ${{secrets.ADMIN_EMAIL}} \
-                --agree-tos \
-                --no-eff-email \
-                -d ${{secrets.DOMAIN_NAME}} 
+            if [ ! -d "/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}" ]; then
+            docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
+              --webroot \
+              --webroot-path /var/www/certbot \
+              --email ${{secrets.ADMIN_EMAIL}} \
+              --agree-tos \
+              --no-eff-email \
+              -d ${{secrets.DOMAIN_NAME}}
             fi
 
       - name: Restart Nginx with SSL configuration
