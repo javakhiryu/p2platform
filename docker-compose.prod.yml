@@ -66,6 +66,8 @@ services:
       ports:
         - "80:80"
         - "443:443"
+      depends_on:
+        - api
       volumes:
         - ./nginx/conf.d:/etc/nginx/conf.d
         - certbot-etc:/etc/letsencrypt
