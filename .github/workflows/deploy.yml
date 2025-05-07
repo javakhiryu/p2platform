@@ -44,6 +44,15 @@ jobs:
           docker build -t crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }} .
           docker push crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
 
+      - name: Copy compose file to ECS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.ECS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/root/"
+
       - name: Deploy to ECS
         uses: appleboy/ssh-action@v1.0.0
         with:
