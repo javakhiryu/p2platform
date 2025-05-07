@@ -10,7 +10,6 @@ COPY --from=builder /app/main .
 COPY app.env .
 COPY start.sh .
 COPY wait-for.sh .
-COPY docker-compose.prod.yml .
 COPY db/migration ./db/migration
 RUN chmod +x start.sh wait-for.sh && \
     apk add --no-cache postgresql-client # Для проверки БД
