@@ -89,8 +89,52 @@ jobs:
                 --password-stdin \
                 crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
 
+            # Создаём конфиг Nginx
+            mkdir -p nginx/conf.d
+            cat > nginx/conf.d/app.conf <<'NGINX_CONF'
+            server {
+                listen 80;
+                server_name ${{ secrets.DOMAIN_NAME }};
+                
+                location / {
+                    return 301 https://$host$request_uri;
+                }
+            }
+
+            server {
+                listen 443 ssl;
+                server_name ${{ secrets.DOMAIN_NAME }};
+                
+                ssl_certificate /etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}/privkey.pem;
+                
+                # SSL настройки
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_prefer_server_ciphers on;
+                ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
+                ssl_ecdh_curve secp384r1;
+                ssl_session_cache shared:SSL:10m;
+                ssl_session_tickets off;
+                
+                # Security headers
+                add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+                add_header X-Frame-Options DENY;
+                add_header X-Content-Type-Options nosniff;
+                add_header X-XSS-Protection "1; mode=block";
+                
+                # Proxy to API
+                location / {
+                    proxy_pass http://api:8080;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
+            NGINX_CONF
+
             # Create docker-compose.yml
-            cat > docker-compose.yml <<EOF
+             cat > docker-compose.yml <<'EOF'
             version: '3.8'
 
             networks:
@@ -100,6 +144,7 @@ jobs:
             volumes:
               db-data:
               kafka-data:
+              nginx-certs:
 
             services:
               postgres:
@@ -115,6 +160,11 @@ jobs:
                   - db-data:/var/lib/postgresql/data
                 networks:
                   - p2platform
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }}"]
+                  interval: 5s
+                  timeout: 5s
+                  retries: 5
 
               kafka:
                 image: bitnami/kafka:latest
@@ -133,28 +183,67 @@ jobs:
                   - "9092:9092"
                 volumes:
                   - kafka-data:/bitnami/kafka
+                healthcheck:
+                  test: nc -z localhost 9092
+                  interval: 10s
+                  timeout: 10s
+                  retries: 5
 
               api:
-               image: crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
-               container_name: api
-               ports:
-                 - "${{secrets.EXT_PORT}}:8080"
-               environment:
-                 - DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}?sslmode=disable
-                 - KAFKA_BROKERS=kafka:9092
-               depends_on:
-                 - postgres
-                 - kafka
-               entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/wait-for.sh", "kafka:9092", "--", "/app/start.sh"]
-               command: ["/app/main"]
-               networks:
-                 - p2platform
+                image: crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${{ github.sha }}
+                container_name: api
+                environment:
+                  - DB_SOURCE=postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@postgres:5432/${{ secrets.DB_NAME }}?sslmode=disable
+                  - KAFKA_BROKERS=kafka:9092
+                depends_on:
+                  postgres:
+                    condition: service_healthy
+                  kafka:
+                    condition: service_healthy
+                entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/wait-for.sh", "kafka:9092", "--", "/app/start.sh"]
+                command: ["/app/main"]
+                networks:
+                  - p2platform
+
+              nginx:
+                image: nginx:alpine
+                container_name: nginx
+                ports:
+                  - "80:80"
+                  - "443:443"
+                volumes:
+                  - ./nginx/conf.d:/etc/nginx/conf.d
+                  - /etc/letsencrypt:/etc/letsencrypt:ro
+                depends_on:
+                  - api
+                networks:
+                  - p2platform
+
+              certbot:
+                image: certbot/certbot
+                container_name: certbot
+                volumes:
+                  - /etc/letsencrypt:/etc/letsencrypt
+                  - ./nginx/conf.d:/etc/nginx/conf.d
+                command: certonly --webroot -w /var/www/html -d ${{ secrets.DOMAIN_NAME }} --email ${{ secrets.ADMIN_EMAIL }} --agree-tos --non-interactive --keep-until-expiring
+                depends_on:
+                  - nginx
+                networks:
+                  - p2platform
             EOF
 
             # Deploy services
-            docker-compose pull
-            docker-compose down || true
-            docker-compose up -d
+            docker-compose up nginx
+            sleep 10  # Ждём запуска Nginx
+            docker-compose up certbot
+            
+            # Полный запуск всех сервисов
+            docker-compose down
+            docker-compose up
+
+             # Настройка cron для автоматического обновления сертификатов
+            (crontab -l 2>/dev/null; echo "0 0 * * * docker-compose -f $(pwd)/docker-compose.yml run --rm certbot renew && docker-compose -f $(pwd)/docker-compose.yml exec nginx nginx -s reload") | crontab -
+
 
             # Verify deployment
             docker ps -a
