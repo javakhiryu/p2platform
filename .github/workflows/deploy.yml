@@ -62,7 +62,7 @@ jobs:
           source: "nginx/"
           target: "/root/"
 
-      - name: Deploy to ECS
+      - name: Prepare ECS environment
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.ECS_IP }}
@@ -70,8 +70,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -ex
-
-            # Install Docker
+            
+            # Install Docker if not exists
             if ! command -v docker &>/dev/null; then
               apt-get update -qq
               apt-get install -y -qq \
@@ -93,7 +93,7 @@ jobs:
               systemctl start docker
             fi
 
-            # Install Docker Compose
+            # Install Docker Compose if not exists
             if ! command -v docker-compose &>/dev/null; then
               curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
@@ -107,7 +107,6 @@ jobs:
                 --password-stdin \
                 crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com
             
-            
             # Create .env file
             cat > .env <<EOF
             DB_USER=${{ secrets.DB_USER }}
@@ -117,47 +116,66 @@ jobs:
             IMAGE_TAG=${{ github.sha }}
             EOF
 
-            # Deploy services
+            # Prepare SSL configs
+            mkdir -p /root/ssl-config
+            curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > /root/ssl-config/options-ssl-nginx.conf
+            openssl dhparam -out /root/ssl-config/ssl-dhparams.pem 2048
+
+      - name: Initial Nginx deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.ECS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -ex
+            # Start only Nginx first
+            docker-compose -f docker-compose.prod.yml up -d nginx
+
+      - name: Obtain SSL certificates
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.ECS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -ex
+            # Wait for Nginx to be ready
+            sleep 10
+            
+            # Get certificates if they don't exist
+            if [ ! -d "/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}" ]; then
+              docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
+                --webroot \
+                --webroot-path /var/www/certbot \
+                --email ${{secrets.ADMIN_EMAIL}} \
+                --agree-tos \
+                --no-eff-email \
+                -d ${{secrets.DOMAIN_NAME}}
+            fi
+
+      - name: Full deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.ECS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -ex
+            # Pull latest images
             docker-compose -f docker-compose.prod.yml pull
+            
+            # Stop and start all services
             docker-compose -f docker-compose.prod.yml down || true
             docker-compose -f docker-compose.prod.yml up -d
-
+            
             # Verify deployment
             docker ps -a
             echo "HTTPS API available at ${{ secrets.BASE_URL}}"
             echo "PostgreSQL available at ${{ secrets.ECS_IP }}:5432"
             echo "Kafka available at ${{ secrets.ECS_IP }}:9092"
 
-      - name: Initialize Let's Encrypt
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -ex
-            # Only run certbot if certificates don't exist
-            if [ ! -d "/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}" ]; then
-            docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
-              --webroot \
-              --webroot-path /var/www/certbot \
-              --email ${{secrets.ADMIN_EMAIL}} \
-              --agree-tos \
-              --no-eff-email \
-              -d ${{secrets.DOMAIN_NAME}}
-            fi
-
-      - name: Restart Nginx with SSL configuration
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -ex
-            docker-compose -f docker-compose.prod.yml restart nginx
-
-      - name: Setup Certbot Renewal Cron
+      - name: Setup Certbot renewal
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.ECS_IP }}
@@ -166,6 +184,6 @@ jobs:
           script: |
             # Add cron job for certbot renewal
             (crontab -l 2>/dev/null; echo "0 3 * * * docker exec certbot certbot renew --quiet --no-self-upgrade >> /var/log/certbot-renew.log 2>&1") | crontab -
-      
+            
             # Verify cron job was added
             crontab -
