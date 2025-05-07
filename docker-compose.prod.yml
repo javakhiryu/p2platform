@@ -81,7 +81,11 @@ services:
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-www:/var/www/certbot
-    command: sh -c "certbot renew --quiet --no-self-upgrade && sleep 86400"
+    command: >
+        sh -c "
+        certbot renew --quiet --no-self-upgrade;
+        sleep 86400
+        "
     restart: unless-stopped
     networks:
       - p2platform
