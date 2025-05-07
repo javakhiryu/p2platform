@@ -47,8 +47,8 @@ services:
   api:
     image: crpi-qzh5i8b0hkdo3v4d.ap-southeast-1.personal.cr.aliyuncs.com/p2platform/api:${IMAGE_TAG}
     container_name: api
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     environment:
       - DB_SOURCE=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
       - KAFKA_BROKERS=kafka:9092
@@ -59,18 +59,3 @@ services:
     command: ["/app/main"]
     networks:
       - p2platform
-  
-  nginx:
-      image: nginx:alpine
-      container_name: nginx
-      ports:
-        - "80:80"
-        - "443:443"
-      depends_on:
-        - api
-      volumes:
-        - ./nginx/conf.d:/etc/nginx/conf.d
-        - certbot-etc:/etc/letsencrypt
-        - certbot-www:/var/www/certbot
-      networks:
-        - p2platform

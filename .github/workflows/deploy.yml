@@ -52,16 +52,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "docker-compose.prod.yml"
           target: "/root/"
-      
-      - name: Copy nginx config to ECS
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "nginx/"
-          target: "/root/"
-
+  
       - name: Prepare ECS environment
         uses: appleboy/ssh-action@v1.0.0
         with:
