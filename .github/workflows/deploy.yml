@@ -142,15 +142,21 @@ jobs:
             set -ex
             # Wait for Nginx to start
             sleep 10
-            # Get certificates if they don't exist
-            if [ ! -d "/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}" ]; then
+            # Улучшенная проверка и получение сертификатов
+            CERT_PATH="/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}"
+            if [ ! -f "$CERT_PATH/fullchain.pem" ] || [ ! -f "$CERT_PATH/privkey.pem" ]; then
+              echo "Сертификаты не найдены, получаем новые..."
               docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
                 --webroot \
                 --webroot-path /var/www/certbot \
                 --email ${{secrets.ADMIN_EMAIL}} \
                 --agree-tos \
                 --no-eff-email \
+                --non-interactive \
+                --force-renewal \
                 -d ${{secrets.DOMAIN_NAME}}
+            else
+              echo "Сертификаты уже существуют, пропускаем получение"
             fi
 
       - name: Full deployment
