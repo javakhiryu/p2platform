@@ -116,49 +116,6 @@ jobs:
             IMAGE_TAG=${{ github.sha }}
             EOF
 
-            # Prepare SSL configs
-            mkdir -p /root/ssl-config
-            curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > /root/ssl-config/options-ssl-nginx.conf
-            openssl dhparam -out /root/ssl-config/ssl-dhparams.pem 2048
-
-      - name: Initial Nginx deployment
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -ex
-            # Start only Nginx first
-            docker-compose -f docker-compose.prod.yml up -d nginx
-
-      - name: Obtain SSL certificates
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -ex
-            # Wait for Nginx to start
-            sleep 10
-            # Улучшенная проверка и получение сертификатов
-            CERT_PATH="/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}"
-            if [ ! -f "$CERT_PATH/fullchain.pem" ] || [ ! -f "$CERT_PATH/privkey.pem" ]; then
-              echo "Сертификаты не найдены, получаем новые..."
-              docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
-                --webroot \
-                --webroot-path /var/www/certbot \
-                --email ${{secrets.ADMIN_EMAIL}} \
-                --agree-tos \
-                --no-eff-email \
-                --non-interactive \
-                --force-renewal \
-                -d ${{secrets.DOMAIN_NAME}}
-            else
-              echo "Сертификаты уже существуют, пропускаем получение"
-            fi
-
       - name: Full deployment
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -179,16 +136,3 @@ jobs:
             echo "HTTPS API available at ${{ secrets.BASE_URL}}"
             echo "PostgreSQL available at ${{ secrets.ECS_IP }}:5432"
             echo "Kafka available at ${{ secrets.ECS_IP }}:9092"
-
-      - name: Setup Certbot renewal
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Add cron job for certbot renewal
-            (crontab -l 2>/dev/null; echo "0 3 * * * docker exec certbot certbot renew --quiet --no-self-upgrade >> /var/log/certbot-renew.log 2>&1") | crontab -
-            
-            # Verify cron job was added
-            crontab -
