@@ -12,6 +12,9 @@ type Config struct {
 	KafkaBrokers      string `mapstructure:"KAFKA_BROKERS"`
 	AccessTokenDuration string `mapstructure:"ACCESS_TOKEN_DURATION"`
 	BaseURL           string `mapstructure:"BASE_URL"`
+	DBUser            string `mapstructure:"DB_USER"`
+	DBPassword        string `mapstructure:"DB_PASSWORD"`
+	DBName            string `mapstructure:"DB_NAME"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
