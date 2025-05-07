@@ -8,6 +8,8 @@ networks:
 volumes:
   db-data:
   kafka-data:
+  certbot-etc:
+  certbot-www:
 
 services:
   postgres:
