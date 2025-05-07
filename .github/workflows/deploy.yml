@@ -140,8 +140,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -ex
-            # Wait for Nginx to be ready
-            sleep 10
+              if [ ! -f "/usr/local/bin/wait-for-it.sh" ]; then
+              curl -o /usr/local/bin/wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+              chmod +x /usr/local/bin/wait-for-it.sh
+            fi
+            
+            # Ждем пока Nginx станет доступен на порту 80
+            /usr/local/bin/wait-for-it.sh localhost:80 -t 30
             
             # Get certificates if they don't exist
             if [ ! -d "/var/lib/docker/volumes/certbot-etc/_data/live/${{secrets.DOMAIN_NAME}}" ]; then
