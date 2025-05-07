@@ -70,7 +70,6 @@ services:
         - /root/nginx/conf.d:/etc/nginx/conf.d
         - certbot-etc:/etc/letsencrypt
         - certbot-www:/var/www/certbot
-        - /root/ssl-config:/etc/letsencrypt 
       depends_on:
         - api
       networks:
