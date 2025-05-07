@@ -117,19 +117,6 @@ jobs:
             IMAGE_TAG=${{ github.sha }}
             EOF
 
-            # Initialize Let's Encrypt directories and config
-            mkdir -p /root/certbot-etc /root/certbot-www
-            
-            # Generate initial SSL configuration files if they don't exist
-            if [ ! -f "/root/certbot-etc/options-ssl-nginx.conf" ]; then
-              docker run --rm -v /root/certbot-etc:/etc/letsencrypt certbot/certbot sh -c "\
-                mkdir -p /etc/letsencrypt/options-ssl-nginx && \
-                curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf \
-                  > /etc/letsencrypt/options-ssl-nginx.conf && \
-                curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/ssl-dhparams.pem \
-                  > /etc/letsencrypt/ssl-dhparams.pem"
-            fi
-
             # Start Nginx for initial deployment
             docker-compose -f docker-compose.prod.yml up -d nginx
             sleep 10  # Wait for Nginx to start
@@ -163,7 +150,7 @@ jobs:
                 --no-eff-email \
                 -d ${{secrets.DOMAIN_NAME}} 
             fi
-            
+
       - name: Restart Nginx with SSL configuration
         uses: appleboy/ssh-action@v1.0.0
         with:
