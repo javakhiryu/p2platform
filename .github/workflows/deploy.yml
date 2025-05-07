@@ -117,10 +117,6 @@ jobs:
             IMAGE_TAG=${{ github.sha }}
             EOF
 
-            # Start Nginx for initial deployment
-            docker-compose -f docker-compose.prod.yml up -d nginx
-            sleep 10  # Wait for Nginx to start
-
             # Deploy services
             docker-compose -f docker-compose.prod.yml pull
             docker-compose -f docker-compose.prod.yml down || true
