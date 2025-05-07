@@ -80,19 +80,6 @@ jobs:
                 --no-eff-email \
                 -d ${{secrets.DOMAIN_NAME}} 
             fi
-      - name: Setup Certbot Renewal Cron
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.ECS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Add cron job for certbot renewal
-            (crontab -l 2>/dev/null; echo "0 3 * * * docker exec certbot certbot renew --quiet --no-self-upgrade >> /var/log/certbot-renew.log 2>&1") | crontab -
-      
-            # Verify cron job was added
-            crontab -
-              
       - name: Deploy to ECS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -158,3 +145,16 @@ jobs:
             echo "HTTPS API available at ${{ secrets.BASE_URL}}"
             echo "PostgreSQL available at ${{ secrets.ECS_IP }}:5432"
             echo "Kafka available at ${{ secrets.ECS_IP }}:9092"
+
+      - name: Setup Certbot Renewal Cron
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.ECS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Add cron job for certbot renewal
+            (crontab -l 2>/dev/null; echo "0 3 * * * docker exec certbot certbot renew --quiet --no-self-upgrade >> /var/log/certbot-renew.log 2>&1") | crontab -
+      
+            # Verify cron job was added
+            crontab -
