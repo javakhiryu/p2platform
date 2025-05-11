@@ -148,73 +148,84 @@ func (server *Server) initTelegramAuth(ctx *gin.Context) {
 }
 
 func (server *Server) handleTelegramWebhook(ctx *gin.Context) {
-	var update tgbotapi.Update
-	if err := ctx.BindJSON(&update); err != nil {
-		ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
-		return
-	}
-	if update.Message.IsCommand() && update.Message.Command() == "start" {
-		args := update.Message.CommandArguments()
-		if strings.HasPrefix(args, "auth_") {
-			authCode := strings.TrimPrefix(args, "auth_")
-			err := server.store.ConfirmTelegramAuthCode(ctx, db.ConfirmTelegramAuthCodeParams{
-				AuthCode:   authCode,
-				TelegramID: util.ToPgInt(update.Message.From.ID),
-				Status:     "confirmed",
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("error:")
-				ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
-				return
-			}
+    var update tgbotapi.Update
+    if err := ctx.BindJSON(&update); err != nil {
+        log.Error().Err(err).Msg("failed to bind telegram webhook update")
+        ctx.JSON(appErr.ErrInvalidPayload.Status, ErrorResponse(appErr.ErrInvalidPayload))
+        return
+    }
 
-			userTg := update.Message.From
+    // Validate message structure
+    if update.Message == nil || !update.Message.IsCommand() || update.Message.From == nil {
+        ctx.JSON(http.StatusOK, gin.H{"status": "ignored"})
+        return
+    }
 
-			user, err := server.store.CreateUser(ctx, db.CreateUserParams{
-				TelegramID: userTg.ID,
-				TgUsername: userTg.UserName,
-				PhotoUrl:   util.ToPgText(""),
-				FirstName:  util.ToPgText(userTg.FirstName),
-				LastName:   util.ToPgText(userTg.LastName),
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("error:")
-				ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
-				return
-			}
+    if update.Message.Command() == "start" {
+        args := update.Message.CommandArguments()
+        if strings.HasPrefix(args, "auth_") {
+            authCode := strings.TrimPrefix(args, "auth_")
+            
+            // 1. Verify code first (check expiration)
+            code, err := server.store.GetTelegramAuthCode(ctx, authCode)
+            if err != nil || code.ExpiresAt.Before(time.Now()) {
+                log.Warn().Str("code", authCode).Msg("invalid or expired auth code")
+				log.Error().Err(err).Msg("failed to create user")
+				if err := kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
+					TelegramId: update.Message.From.ID, // Use From.ID instead of Chat.ID
+					Message:    "⚠️ Ссылка недействительна или истекла",
+					EventType:  "auth_success",
+				}); err != nil {
+					log.Error().Err(err).Msg("failed to publish notification")
+				}
+                ctx.JSON(http.StatusOK, gin.H{"status": "invalid_code"})
+                return
+            }
 
-			accessToken, err := server.tokenMaker.CreateToken(user.TelegramID, user.TgUsername)
-			if err != nil {
-				ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
-				log.Error().Str("Error:", err.Error())
-				return
-			}
 
-			duration, err := time.ParseDuration(server.config.AccessTokenDuration)
-			if err != nil {
-				ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
-				log.Error().Str("Error:", err.Error())
-				return
-			}
+            // 2. Create user first (transaction recommended)
+            _, err = server.store.CreateUserTx(ctx, db.CreateUserTxParams{
+                TelegramID: update.Message.From.ID,
+                TgUsername: update.Message.From.UserName,
+                FirstName: update.Message.From.FirstName,
+                LastName:update.Message.From.LastName,
+            })
+            if err != nil && !errors.Is(err, appErr.ErrUserAlreadyExists) {
+                log.Error().Err(err).Msg("failed to create user")
+				if err := kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
+					TelegramId: update.Message.From.ID, // Use From.ID instead of Chat.ID
+					Message:    "⚠️ Ошибка при создании профиля",
+					EventType:  "auth_success",
+				}); err != nil {
+					log.Error().Err(err).Msg("failed to publish notification")
+				}
+                ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+                return
+            }
 
-			ctx.SetCookie(
-				"access_token",
-				accessToken,
-				int(duration.Seconds()),
-				"/",
-				server.config.BaseURL,
-				false,
-				true,
-			)
+            // 3. Then confirm code
+            if err := server.store.ConfirmTelegramAuthCode(ctx, db.ConfirmTelegramAuthCodeParams{
+                AuthCode:   authCode,
+                TelegramID: util.ToPgInt(update.Message.From.ID),
+                Status:     "confirmed",
+            }); err != nil {
+                log.Error().Err(err).Msg("failed to confirm auth code")
+                // User already created, so we continue
+            }
 
-			_ = kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
-				TelegramId: update.Message.Chat.ID,
-				Message:    fmt.Sprintf("✅ Авторизация успешна!"),
-				EventType:  "auth_success",
-			})
-		}
-	}
-	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+            // 4. Notify (move to background if possible)
+            if err := kafka.Publish(server.producer, "notifications", model.NotifictationMessage{
+                TelegramId: update.Message.From.ID, // Use From.ID instead of Chat.ID
+                Message:    "✅ Авторизация успешна!",
+                EventType:  "auth_success",
+            }); err != nil {
+                log.Error().Err(err).Msg("failed to publish notification")
+            }
+
+            // 5. Respond to Telegram
+            ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+        }
+    }
 }
 
 type AuthStatusRequest struct {
@@ -248,6 +259,42 @@ func (server *Server) checkAuthStatus(ctx *gin.Context) {
 		})
 		return
 	}
+
+	if code.Status == "confirmed" {
+		user, err := server.store.GetUser(ctx, code.TelegramID.Int64)
+		if err != nil {
+			if errors.Is(err, db.ErrNoRowsFound) {
+				ctx.JSON(appErr.ErrUserNotFound.Status, ErrorResponse(appErr.ErrUserNotFound))
+				return
+			}
+			ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
+			return
+		}
+
+		accessToken, err := server.tokenMaker.CreateToken(user.TelegramID, user.TgUsername)
+			if err != nil {
+				ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
+				log.Error().Str("Error:", err.Error())
+				return
+			}
+
+			duration, err := time.ParseDuration(server.config.AccessTokenDuration)
+			if err != nil {
+				ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
+				log.Error().Str("Error:", err.Error())
+				return
+			}
+
+			ctx.SetCookie(
+				"access_token",
+				accessToken,
+				int(duration.Seconds()),
+				"/",
+				server.config.BaseURL,
+				false,
+				true,
+			)
+	}	
 
 	ctx.JSON(http.StatusOK, AuthStatusResponse{
 		Status:     code.Status,

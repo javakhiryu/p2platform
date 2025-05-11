@@ -19,6 +19,7 @@ type Store interface {
 	ListMySellRequeststTx(ctx context.Context, params ListMySellRequestsTxParams) (ListSellRequeststTxResults, error)
 	CreateSpaceTx(ctx context.Context, arg CreateSpaceTxParams) (CreateSpaceTxResult, error)
 	GetSpaceTx(ctx context.Context, spaceId uuid.UUID, requesterTelegramID int64) (GetSpaceTxResult, error)
+	CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error)
 }
 
 // Store
