@@ -81,6 +81,14 @@ type SpaceMember struct {
 	JoinedAt time.Time `json:"joined_at"`
 }
 
+type TelegramAuthCode struct {
+	AuthCode   string      `json:"auth_code"`
+	TelegramID pgtype.Int8 `json:"telegram_id"`
+	Status     string      `json:"status"`
+	CreatedAt  time.Time   `json:"created_at"`
+	ExpiresAt  time.Time   `json:"expires_at"`
+}
+
 type User struct {
 	TelegramID int64       `json:"telegram_id"`
 	TgUsername string      `json:"tg_username"`

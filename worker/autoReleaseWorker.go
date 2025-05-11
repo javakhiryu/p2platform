@@ -31,6 +31,7 @@ func (w *AutoReleaseWorker) Start() {
 			select {
 			case <-w.ticker.C:
 				w.processExpiredBuyRequests()
+				w.processExpiredTelegramAuthCodes()
 			case <-w.ctx.Done():
 				log.Info().Msg("AutoReleaseWorker stopped")
 				return
@@ -60,5 +61,24 @@ func (w *AutoReleaseWorker) processExpiredBuyRequests() {
 			Interface("release_result", result).
 			Msg("ReleaseLockedAmountTx completed")
 
+	}
+}
+
+func (w *AutoReleaseWorker) processExpiredTelegramAuthCodes() {
+	expired, err := w.store.ListExpireAuthCodes(w.ctx)
+	if err != nil {
+		log.Err(err).Msg("Failed to fetch expired telegram auth codes")
+		return
+	}
+	for _, code := range expired {
+		err := w.store.ExpireTelegramAuthCode(w.ctx, code.AuthCode)
+		if err != nil {
+			log.Err(err).Msg(fmt.Sprintf("Failed to expire telegram auth code: %v", code.AuthCode))
+		} else {
+			log.Info().Msg(fmt.Sprintf("Successfully expired telegram auth code: %v", code.AuthCode))
+		}
+		log.Info().
+		Interface("expired_codes", expired).
+		Msg("ListExpireAuthCodes completed")
 	}
 }

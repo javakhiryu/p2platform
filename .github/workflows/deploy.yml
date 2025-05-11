@@ -23,6 +23,8 @@ jobs:
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
           BASE_URL=${{ secrets.BASE_URL }}
           ACCESS_TOKEN_DURATION=${{ secrets.ACCESS_TOKEN_DURATION }}
+          TELEGRAM_BOT_USERNAME=${{ secrets.TELEGRAM_BOT_USERNAME }}
+          TELEGRAM_AUTH_TTL=${{ secrets.TELEGRAM_AUTH_TTL }}
           EOF
 
       - name: Install swag

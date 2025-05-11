@@ -86,11 +86,31 @@
             max-width: 80%;
         }
 
-        .telegram-widget-container {
-            margin: var(--spacing-lg) 0;
-            width: 100%;
+        .auth-button {
+            background-color: var(--tg-accent);
+            color: white;
+            border: none;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            font-size: var(--font-size-md);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
             display: flex;
+            align-items: center;
             justify-content: center;
+            width: 100%;
+            max-width: 280px;
+            margin: var(--spacing-md) 0;
+            transition: background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .auth-button:hover {
+            background-color: var(--tg-accent-hover);
+        }
+
+        .auth-button svg {
+            margin-right: var(--spacing-sm);
         }
 
         .platform-features {
@@ -114,6 +134,13 @@
 
         .feature-text {
             font-size: var(--font-size-md);
+        }
+
+        .auth-status {
+            margin-top: var(--spacing-md);
+            font-size: var(--font-size-sm);
+            color: var(--tg-text-secondary);
+            text-align: center;
         }
 
         /* Error popup styles */
@@ -168,6 +195,22 @@
                 opacity: 0;
             }
         }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: var(--spacing-sm);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -177,14 +220,17 @@
         <h1 class="welcome-title">Welcome to P2Platform</h1>
         <p class="welcome-subtitle">Securely exchange currencies with trusted partners</p>
 
-        <div class="telegram-widget-container">
-            <script async src="https://telegram.org/js/telegram-widget.js?22"
-                data-telegram-login="p2platform_bot"
-                data-size="large"
-                data-radius="12"
-                data-onauth="onTelegramAuth(user)"
-                data-request-access="write">
-            </script>
+        <button id="telegramAuthBtn" class="auth-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#0088CC"/>
+                <path d="M8.5 13.5L10.5 15.5L15.5 9.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Login with Telegram
+        </button>
+
+        <div id="authStatus" class="auth-status" style="display: none;">
+            <p>Waiting for authentication...</p>
+            <div id="spinner" class="spinner"></div>
         </div>
 
         <div class="platform-features">
@@ -231,28 +277,83 @@
             }
         }
 
-        async function onTelegramAuth(user) {
+        // Initialize Telegram auth
+        document.getElementById('telegramAuthBtn').addEventListener('click', async () => {
             try {
-                const res = await fetch('{{  .BaseUrl }}/api/v1/auth/telegram', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(user)
+                const authBtn = document.getElementById('telegramAuthBtn');
+                const authStatus = document.getElementById('authStatus');
+                
+                // Show loading state
+                authBtn.disabled = true;
+                authBtn.innerHTML = '<div class="spinner"></div> Processing...';
+                authStatus.style.display = 'block';
+
+                // 1. Get auth code from server
+                const initResponse = await fetch('{{ .BaseUrl }}/api/v1/auth/telegram/init', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    const errorMessage = errorData.error?.message || 'Authentication failed';
-                    showErrorPopup(errorMessage);
-                    return;
+                if (!initResponse.ok) {
+                    const errorData = await initResponse.json();
+                    throw new Error(errorData.error?.message || 'Failed to initialize authentication');
                 }
 
-                // Successful authentication - redirect to list-spaces
-                window.location.href = '{{  .BaseUrl }}/list-spaces';
+                const { auth_url, auth_code } = await initResponse.json();
+                
+                // 2. Open Telegram with the auth URL
+                window.open(auth_url, '_blank');
+                
+                // 3. Start checking auth status
+                checkAuthStatus(auth_code);
                 
             } catch (err) {
-                const errorMessage = 'Network error, please check your connection';
-                showErrorPopup(errorMessage);
+                showErrorPopup(err.message);
+                resetAuthButton();
             }
+        });
+
+        // Check auth status periodically
+        async function checkAuthStatus(authCode) {
+            try {
+                const response = await fetch(`{{ .BaseUrl }}/api/v1/auth/telegram/status?code=${authCode}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check auth status');
+                }
+
+                const { status, token, telegram_id } = await response.json();
+                
+                if (status === 'confirmed' && token) {
+                    // Authentication successful
+                    localStorage.setItem('jwt_token', token);
+                    window.location.href = '{{ .BaseUrl }}/list-spaces';
+                } else if (status === 'expired') {
+                    showErrorPopup('Authentication expired, please try again');
+                    resetAuthButton();
+                } else if (status === 'pending') {
+                    // Continue checking
+                    setTimeout(() => checkAuthStatus(authCode), 2000);
+                }
+            } catch (err) {
+                showErrorPopup('Authentication error, please try again');
+                resetAuthButton();
+            }
+        }
+
+        function resetAuthButton() {
+            const authBtn = document.getElementById('telegramAuthBtn');
+            const authStatus = document.getElementById('authStatus');
+            
+            authBtn.disabled = false;
+            authBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#0088CC"/>
+                    <path d="M8.5 13.5L10.5 15.5L15.5 9.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Login with Telegram
+            `;
+            authStatus.style.display = 'none';
         }
 
         // Handle potential errors from other parts of the app

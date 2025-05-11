@@ -124,6 +124,20 @@ func (mr *MockStoreMockRecorder) CloseConfirmBySeller(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseConfirmBySeller", reflect.TypeOf((*MockStore)(nil).CloseConfirmBySeller), arg0, arg1)
 }
 
+// ConfirmTelegramAuthCode mocks base method.
+func (m *MockStore) ConfirmTelegramAuthCode(arg0 context.Context, arg1 db.ConfirmTelegramAuthCodeParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmTelegramAuthCode", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ConfirmTelegramAuthCode indicates an expected call of ConfirmTelegramAuthCode.
+func (mr *MockStoreMockRecorder) ConfirmTelegramAuthCode(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmTelegramAuthCode", reflect.TypeOf((*MockStore)(nil).ConfirmTelegramAuthCode), arg0, arg1)
+}
+
 // CountBuyRequestsByUserInSpace mocks base method.
 func (m *MockStore) CountBuyRequestsByUserInSpace(arg0 context.Context, arg1 db.CountBuyRequestsByUserInSpaceParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -274,6 +288,21 @@ func (mr *MockStoreMockRecorder) CreateSpaceTx(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSpaceTx", reflect.TypeOf((*MockStore)(nil).CreateSpaceTx), arg0, arg1)
 }
 
+// CreateTelegramAuthCode mocks base method.
+func (m *MockStore) CreateTelegramAuthCode(arg0 context.Context, arg1 db.CreateTelegramAuthCodeParams) (db.TelegramAuthCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTelegramAuthCode", arg0, arg1)
+	ret0, _ := ret[0].(db.TelegramAuthCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTelegramAuthCode indicates an expected call of CreateTelegramAuthCode.
+func (mr *MockStoreMockRecorder) CreateTelegramAuthCode(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTelegramAuthCode", reflect.TypeOf((*MockStore)(nil).CreateTelegramAuthCode), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -388,6 +417,20 @@ func (m *MockStore) DeleteUser(arg0 context.Context, arg1 int64) error {
 func (mr *MockStoreMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockStore)(nil).DeleteUser), arg0, arg1)
+}
+
+// ExpireTelegramAuthCode mocks base method.
+func (m *MockStore) ExpireTelegramAuthCode(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExpireTelegramAuthCode", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExpireTelegramAuthCode indicates an expected call of ExpireTelegramAuthCode.
+func (mr *MockStoreMockRecorder) ExpireTelegramAuthCode(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExpireTelegramAuthCode", reflect.TypeOf((*MockStore)(nil).ExpireTelegramAuthCode), arg0, arg1)
 }
 
 // GetBuyRequestById mocks base method.
@@ -570,6 +613,21 @@ func (mr *MockStoreMockRecorder) GetSpaceTx(arg0, arg1, arg2 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpaceTx", reflect.TypeOf((*MockStore)(nil).GetSpaceTx), arg0, arg1, arg2)
 }
 
+// GetTelegramAuthCode mocks base method.
+func (m *MockStore) GetTelegramAuthCode(arg0 context.Context, arg1 string) (db.TelegramAuthCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTelegramAuthCode", arg0, arg1)
+	ret0, _ := ret[0].(db.TelegramAuthCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTelegramAuthCode indicates an expected call of GetTelegramAuthCode.
+func (mr *MockStoreMockRecorder) GetTelegramAuthCode(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTelegramAuthCode", reflect.TypeOf((*MockStore)(nil).GetTelegramAuthCode), arg0, arg1)
+}
+
 // GetUser mocks base method.
 func (m *MockStore) GetUser(arg0 context.Context, arg1 int64) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -643,6 +701,21 @@ func (m *MockStore) ListBuyRequestsByUserInSpace(arg0 context.Context, arg1 db.L
 func (mr *MockStoreMockRecorder) ListBuyRequestsByUserInSpace(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBuyRequestsByUserInSpace", reflect.TypeOf((*MockStore)(nil).ListBuyRequestsByUserInSpace), arg0, arg1)
+}
+
+// ListExpireAuthCodes mocks base method.
+func (m *MockStore) ListExpireAuthCodes(arg0 context.Context) ([]db.TelegramAuthCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListExpireAuthCodes", arg0)
+	ret0, _ := ret[0].([]db.TelegramAuthCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListExpireAuthCodes indicates an expected call of ListExpireAuthCodes.
+func (mr *MockStoreMockRecorder) ListExpireAuthCodes(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExpireAuthCodes", reflect.TypeOf((*MockStore)(nil).ListExpireAuthCodes), arg0)
 }
 
 // ListExpiredBuyRequests mocks base method.

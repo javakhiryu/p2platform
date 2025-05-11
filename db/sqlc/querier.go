@@ -17,6 +17,7 @@ type Querier interface {
 	CloseBuyRequestBySellRequest(ctx context.Context, sellReqID int32) error
 	CloseConfirmByBuyer(ctx context.Context, arg CloseConfirmByBuyerParams) error
 	CloseConfirmBySeller(ctx context.Context, arg CloseConfirmBySellerParams) error
+	ConfirmTelegramAuthCode(ctx context.Context, arg ConfirmTelegramAuthCodeParams) error
 	CountBuyRequestsByUserInSpace(ctx context.Context, arg CountBuyRequestsByUserInSpaceParams) (int64, error)
 	CountOfBuyRequests(ctx context.Context, sellReqID int32) (int64, error)
 	CountOfSellRequestsBySpace(ctx context.Context, spaceID uuid.UUID) (int64, error)
@@ -25,12 +26,14 @@ type Querier interface {
 	CreateLockedAmount(ctx context.Context, arg CreateLockedAmountParams) (LockedAmount, error)
 	CreateSellRequest(ctx context.Context, arg CreateSellRequestParams) (SellRequest, error)
 	CreateSpace(ctx context.Context, arg CreateSpaceParams) (Space, error)
+	CreateTelegramAuthCode(ctx context.Context, arg CreateTelegramAuthCodeParams) (TelegramAuthCode, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBuyRequest(ctx context.Context, buyReqID uuid.UUID) error
 	DeleteSellRequest(ctx context.Context, sellReqID int32) (pgtype.Bool, error)
 	DeleteSpace(ctx context.Context, spaceID uuid.UUID) error
 	DeleteSpaceMember(ctx context.Context, arg DeleteSpaceMemberParams) error
 	DeleteUser(ctx context.Context, telegramID int64) error
+	ExpireTelegramAuthCode(ctx context.Context, authCode string) error
 	GetBuyRequestById(ctx context.Context, buyReqID uuid.UUID) (BuyRequest, error)
 	GetLockedAmount(ctx context.Context, buyReqID uuid.UUID) (LockedAmount, error)
 	GetLockedAmountBySellRequest(ctx context.Context, sellReqID int32) ([]LockedAmount, error)
@@ -41,11 +44,13 @@ type Querier interface {
 	GetSpaceIdByUserId(ctx context.Context, userID int64) ([]uuid.UUID, error)
 	GetSpaceMember(ctx context.Context, arg GetSpaceMemberParams) (SpaceMember, error)
 	GetSpaceMembersCount(ctx context.Context, spaceID uuid.UUID) (int64, error)
+	GetTelegramAuthCode(ctx context.Context, authCode string) (TelegramAuthCode, error)
 	GetUser(ctx context.Context, telegramID int64) (User, error)
 	IsUserInSameSpaceAsSeller(ctx context.Context, arg IsUserInSameSpaceAsSellerParams) (bool, error)
 	IsUserInSpace(ctx context.Context, arg IsUserInSpaceParams) (bool, error)
 	ListBuyRequests(ctx context.Context, arg ListBuyRequestsParams) ([]BuyRequest, error)
 	ListBuyRequestsByUserInSpace(ctx context.Context, arg ListBuyRequestsByUserInSpaceParams) ([]BuyRequest, error)
+	ListExpireAuthCodes(ctx context.Context) ([]TelegramAuthCode, error)
 	ListExpiredBuyRequests(ctx context.Context) ([]BuyRequest, error)
 	ListFirstMySpacesByNameAsc(ctx context.Context, arg ListFirstMySpacesByNameAscParams) ([]Space, error)
 	ListFirstSpacesByNameAsc(ctx context.Context, limit int32) ([]Space, error)

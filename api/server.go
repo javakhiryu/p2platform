@@ -93,7 +93,12 @@ func (server *Server) setupRouter() {
 
 	api := router.Group("/api/v1")
 	{
-		api.POST("/auth/telegram", server.telegramAuth)
+		authGroup := api.Group("/auth")
+		{
+			authGroup.GET("/telegram/init", server.initTelegramAuth)
+			authGroup.GET("/telegram/status", server.checkAuthStatus)
+			authGroup.POST("/telegram/webhook", server.handleTelegramWebhook)
+		}
 
 		authRoutes := api.Group("/").Use(CookieAuthMiddleware(server.tokenMaker))
 		authRoutes.GET("/auth/me", server.getCurrentUser)
