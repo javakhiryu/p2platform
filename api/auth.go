@@ -139,7 +139,7 @@ func (server *Server) initTelegramAuth(ctx *gin.Context) {
 		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
 		return
 	}
-	authUrl := fmt.Sprintf("https://t.me/%s?start=%s", server.config.TelegramBotUsername, authCode)
+	authUrl := fmt.Sprintf("https://t.me/%s?start=auth_%s", server.config.TelegramBotUsername, authCode)
 	ctx.JSON(http.StatusOK, AuthInitResponse{
 		AuthUrl:  authUrl,
 		AuthCode: authCode,
