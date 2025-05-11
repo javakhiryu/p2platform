@@ -322,11 +322,10 @@
                     throw new Error('Failed to check auth status');
                 }
 
-                const { status, token, telegram_id } = await response.json();
+                const { status, telegram_id } = await response.json();
                 
-                if (status === 'confirmed' && token) {
+                if (status === 'confirmed') {
                     // Authentication successful
-                    localStorage.setItem('jwt_token', token);
                     window.location.href = '{{ .BaseUrl }}/list-spaces';
                 } else if (status === 'expired') {
                     showErrorPopup('Authentication expired, please try again');
