@@ -8,4 +8,5 @@ var (
 	ErrCookieNotFound =NewAppError("INVALID_COOKIE", "Cookie not found", http.StatusUnauthorized)
 	ErrInvalidCookie =NewAppError("INVALID_COOKIE", "Invalid cookie", http.StatusUnauthorized)
 	ErrFailedToHashPassword =NewAppError("FAILED_TO_HASH_PASSWORD", "Failed to hash password", http.StatusInternalServerError)
+	ErrAuthCodeNotFound =NewAppError("AUTH_CODE_NOT_FOUND", "Authorization code not found", http.StatusNotFound)
 )

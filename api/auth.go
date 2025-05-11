@@ -128,7 +128,7 @@ type AuthInitResponse struct {
 
 func (server *Server) initTelegramAuth(ctx *gin.Context) {
 	authCode := uuid.New().String()
-	expiresAt := time.Now().Add(time.Duration(server.config.TelegramAuthTTL.Minutes()))
+	expiresAt := time.Now().Add(server.config.TelegramAuthTTL)
 
 	_, err := server.store.CreateTelegramAuthCode(ctx, db.CreateTelegramAuthCodeParams{
 		AuthCode:  authCode,
@@ -218,7 +218,7 @@ func (server *Server) handleTelegramWebhook(ctx *gin.Context) {
 }
 
 type AuthStatusRequest struct {
-	Code string `form: "code", binding:"required,uuid"`
+	Code string `form:"code", binding:"required,uuid"`
 }
 
 type AuthStatusResponse struct {
@@ -235,7 +235,11 @@ func (server *Server) checkAuthStatus(ctx *gin.Context) {
 	}
 	code, err := server.store.GetTelegramAuthCode(ctx, req.Code)
 	if err != nil {
-		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(appErr.ErrInternalServer))
+		if errors.Is(err, db.ErrNoRowsFound) {
+			ctx.JSON(appErr.ErrAuthCodeNotFound.Status, ErrorResponse(appErr.ErrAuthCodeNotFound))
+			return
+		}
+		ctx.JSON(appErr.ErrInternalServer.Status, ErrorResponse(err))
 		return
 	}
 	if time.Now().After(code.ExpiresAt) {
