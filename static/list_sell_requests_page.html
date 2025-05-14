@@ -378,7 +378,7 @@
     </style>
 </head>
 <body>
-    <header>Sell Requests</header>
+    <header>Заявки на продажу</header>
 
     <div class="container">
         <div id="sellRequestsList" class="sell-requests-list">
@@ -588,7 +588,7 @@
                     // Create display for card amount if exists
                     const cardAmountDisplay = req.sell_amount_by_card > 0 ? `
                         <div class="request-info">
-                            <span class="info-label">Сумма на карту</span>
+                            <span class="info-label">Сумма необходимая на карту</span>
                             <span class="info-value">
                                 ${createAmountDisplay(req.sell_amount_by_card, request.locked_amount_by_card, req.currency_from)}
                             </span>
@@ -598,7 +598,7 @@
                     // Create display for cash amount if exists
                     const cashAmountDisplay = req.sell_amount_by_cash > 0 ? `
                         <div class="request-info">
-                            <span class="info-label">Сумма наличными</span>
+                            <span class="info-label">Сумма продажи за наличные</span>
                             <span class="info-value">
                                 ${createAmountDisplay(req.sell_amount_by_cash, request.locked_amount_by_cash, req.currency_from)}
                             </span>
@@ -607,7 +607,7 @@
 
                     card.innerHTML = `
                         <div class="request-header">
-                            <div class="request-id">Request #${req.sell_req_id}</div>
+                            <div class="request-id">Заявка №${req.sell_req_id}</div>
                             <div class="request-status ${req.is_actual ? 'status-active' : 'status-inactive'}">
                                 ${req.is_actual ? 'Active' : 'Inactive'}
                             </div>

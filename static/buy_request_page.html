@@ -336,7 +336,7 @@
         <div class="section">
             <div class="section-title">Информация о покупателе</div>
             <div class="info-row">
-                <span class="info-label">Telegram</span>
+                <span class="info-label">Телеграм пользователь</span>
                 <a class="info-value user-link" id="tgUsername" target="_blank"></a>
             </div>
             <div class="info-row">
@@ -427,14 +427,8 @@
                         document.getElementById('closedAt').textContent = formatDate(buyRequest.state_updated_at);
 
                         // Payment methods
-                        const buyByCardElement = document.getElementById('buyByCard');
-                        buyByCardElement.textContent = buyRequest.buy_by_card ? 'Yes' : 'No';
-                        buyByCardElement.classList.add(buyRequest.buy_by_card ? 'true' : 'false');
                         document.getElementById('buyAmountByCard').textContent = formatAmount(buyRequest.buy_amount_by_card) || '0';
 
-                        const buyByCashElement = document.getElementById('buyByCash');
-                        buyByCashElement.textContent = buyRequest.buy_by_cash ? 'Yes' : 'No';
-                        buyByCashElement.classList.add(buyRequest.buy_by_cash ? 'true' : 'false');
                         document.getElementById('buyAmountByCash').textContent = formatAmount(buyRequest.buy_amount_by_cash) || '0';
 
                         // User info
@@ -468,7 +462,7 @@
                                 try {
                                     // Disable button during processing
                                     confirmButton.disabled = true;
-                                    confirmButton.textContent = 'Processing...';
+                                    confirmButton.textContent = 'Выполняется...';
 
                                     // Send POST request to close the buy request
                                     const response = await fetch(`{{  .BaseUrl }}/api/v1/buy-request/${buyReqId}/close-confirm`, {

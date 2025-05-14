@@ -417,13 +417,13 @@
                         }
     
                         const sellByCardElement = document.getElementById('sellByCard');
-                        sellByCardElement.textContent = sellRequest.sell_by_card ? 'Yes' : 'No';
+                        sellByCardElement.textContent = sellRequest.sell_by_card ? 'Да' : 'Нет';
                         sellByCardElement.className = `info-value boolean-value ${sellRequest.sell_by_card ? 'true' : 'false'}`;
     
                         document.getElementById('sellAmountByCard').textContent = formatAmount(sellRequest.sell_amount_by_card) || '0';
     
                         const sellByCashElement = document.getElementById('sellByCash');
-                        sellByCashElement.textContent = sellRequest.sell_by_cash ? 'Yes' : 'No';
+                        sellByCashElement.textContent = sellRequest.sell_by_cash ? 'Да' : 'Нет';
                         sellByCashElement.className = `info-value boolean-value ${sellRequest.sell_by_cash ? 'true' : 'false'}`;
     
                         document.getElementById('sellAmountByCash').textContent = formatAmount(sellRequest.sell_amount_by_cash) || '0';
@@ -431,10 +431,10 @@
     
                         const isActualElement = document.getElementById('isActual');
                         if (sellRequest.is_actual) {
-                            isActualElement.textContent = 'Active';
+                            isActualElement.textContent = 'Активен';
                             isActualElement.className = 'info-value status-badge status-active';
                         } else {
-                            isActualElement.textContent = 'Inactive';
+                            isActualElement.textContent = 'Неактивен';
                             isActualElement.className = 'info-value status-badge status-inactive';
                             createButton.disabled = true;
                             createButton.classList.add('disabled');
