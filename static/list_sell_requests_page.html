@@ -588,7 +588,7 @@
                     // Create display for card amount if exists
                     const cardAmountDisplay = req.sell_amount_by_card > 0 ? `
                         <div class="request-info">
-                            <span class="info-label">Сумма необходимая на карту</span>
+                            <span class="info-label">Сумма продажи по карте</span>
                             <span class="info-value">
                                 ${createAmountDisplay(req.sell_amount_by_card, request.locked_amount_by_card, req.currency_from)}
                             </span>
