@@ -292,6 +292,19 @@
             text-align: center;
         }
 
+        .back-btn {
+            display: block;
+            width: 100%;
+            max-width: 240px;
+            margin: var(--spacing-xl) auto 0;
+            text-align: center;
+            background-color: var(--tg-secondary);
+        }
+
+        .button.back-btn:hover {
+            background-color: var(--tg-secondary-hover);
+        }
+
         .crossed-out {
             text-decoration: line-through;
             color: #999;
@@ -373,7 +386,7 @@
         <div id="pageInfo" class="page-info"></div>
 
         <a href="/create-sell-request?space_id=${space_id}" class="button create-new-btn">Create New Request</a>
-        <a href="{{  .BaseUrl }}/list-spaces" class="button secondary">Back To Spaces</a>
+        <a href="{{  .BaseUrl }}/list-spaces" class="button back-btn">Back To Spaces</a>
     </div>
 
     <script>
