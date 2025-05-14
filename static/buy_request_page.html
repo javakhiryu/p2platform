@@ -278,84 +278,76 @@
     </style>
 </head>
 <body>
-    <header>Buy Request Details</header>
+    <header>Заявки на покупку</header>
 
     <div class="container">
         <div class="section">
-            <div class="section-title">Transaction Info</div>
+            <div class="section-title">Детали заявки</div>
             <div class="info-row">
-                <span class="info-label">Request ID</span>
+                <span class="info-label">Номер заявки на покупку</span>
                 <span class="info-value" id="buyReqId"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Total Amount</span>
+                <span class="info-label">Общая сумма покупки</span>
                 <span class="info-value" id="buyTotalAmount"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Status</span>
+                <span class="info-label">Статус</span>
                 <span class="info-value" id="statusBadge"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Expires At</span>
+                <span class="info-label">Истекает</span>
                 <span class="info-value" id="expiresAt"></span>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">Payment Details</div>
+            <div class="section-title">Информация об оплате</div>
             <div class="info-row">
-                <span class="info-label">By Card</span>
-                <span class="info-value boolean-value" id="buyByCard"></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Card Amount</span>
+                <span class="info-label">Сумма покупки картой</span>
                 <span class="info-value" id="buyAmountByCard"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">By Cash</span>
-                <span class="info-value boolean-value" id="buyByCash"></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Cash Amount</span>
+                <span class="info-label">Сумма покупки за наличные</span>
                 <span class="info-value" id="buyAmountByCash"></span>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">Confirmation Status</div>
+            <div class="section-title">Статус подтверждения</div>
             <div class="confirmation-status">
                 <div class="confirmation-badge" id="sellerConfirmationStatus"></div>
                 <div class="confirmation-badge" id="buyerConfirmationStatus"></div>
             </div>
             <div class="info-row">
-                <span class="info-label">Seller Confirmed At</span>
+                <span class="info-label">Продавец подтвердил покупку</span>
                 <span class="info-value" id="sellerConfirmedAt"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Buyer Confirmed At</span>
+                <span class="info-label">Покупатель подтвердил покупку</span>
                 <span class="info-value" id="buyerConfirmedAt"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Closed At</span>
+                <span class="info-label">Заявка закрыта в</span>
                 <span class="info-value" id="closedAt"></span>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">User Info</div>
+            <div class="section-title">Информация о покупателе</div>
             <div class="info-row">
-                <span class="info-label">Buyer</span>
+                <span class="info-label">Telegram</span>
                 <a class="info-value user-link" id="tgUsername" target="_blank"></a>
             </div>
             <div class="info-row">
-                <span class="info-label">Created At</span>
+                <span class="info-label">Заявка создана в</span>
                 <span class="info-value" id="createdAt"></span>
             </div>
         </div>
 
         <div class="action-buttons">
-            <button id="confirmButton" class="button primary" disabled>Confirm Transaction</button>
-            <a id="backToListBtn" class="button secondary">← Back to List</a>
+            <button id="confirmButton" class="button primary" disabled>Подтвердить покупку</button>
+            <a id="backToListBtn" class="button secondary">← Назад к списку заявок на покупку</a>
         </div>
     </div>
 
@@ -405,13 +397,13 @@
                         // Status
                         const statusBadge = document.getElementById('statusBadge');
                         if (buyRequest.state ==="closed") {
-                            statusBadge.textContent = 'Closed';
+                            statusBadge.textContent = 'Закрыта';
                             statusBadge.classList.add('status-badge', 'status-closed');
                         } else if (buyRequest.state === "open") {
-                            statusBadge.textContent = 'Active';
+                            statusBadge.textContent = 'Активна';
                             statusBadge.classList.add('status-badge', 'status-active');
                         } else {
-                            statusBadge.textContent = 'Expired';
+                            statusBadge.textContent = 'Истекла';
                             statusBadge.classList.add('status-badge', 'status-closed');
                         }
 

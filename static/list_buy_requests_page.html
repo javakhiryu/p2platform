@@ -362,24 +362,24 @@
     </style>
 </head>
 <body>
-    <header>Buy Requests</header>
+    <header>Заявки на покупку</header>
 
     <div class="container">
         <div id="buyRequestsList" class="buy-requests-list">
-            <div class="loading">Loading buy requests...</div>
+            <div class="loading">Заявки на покупку загружаются...</div>
         </div>
 
         <div class="action-buttons">
-            <button id="prevButton" class="button secondary" disabled>Previous</button>
+            <button id="prevButton" class="button secondary" disabled>Назад</button>
             <div id="pageNumbers" class="pagination"></div>
-            <button id="nextButton" class="button secondary">Next</button>
+            <button id="nextButton" class="button secondary">Вперед</button>
         </div>
 
         <div id="pageInfo" class="page-info"></div>
         
         <div class="action-navigation-buttons">
-        <a id="createBuyRequestBtn" class="button create-new-btn">Create New Buy Request</a>
-        <a id="backToSellRequestsBtn" class="button back-button" >← Back to Sell Request</a>
+        <a id="createBuyRequestBtn" class="button create-new-btn">Создать заявку на покупку</a>
+        <a id="backToSellRequestsBtn" class="button back-button" >← Назад к заявке на продажу</a>
         </div>
 
     <script>
@@ -575,39 +575,39 @@
                     let statusClass, statusText;
                     if (request.state === "closed") {
                         statusClass = 'status-closed';
-                        statusText = 'Closed';
+                        statusText = 'Закрыта';
                     } else if (request.state === "expired") {
                         statusClass = 'status-expired';
-                        statusText = 'Expired';
+                        statusText = 'Истекла';
                     } else {
                         statusClass = 'status-active';
-                        statusText = 'Active';
+                        statusText = 'Активна';
                     }
                     
                     card.innerHTML = `
                         <div class="request-header">
-                            <div class="request-id">Request #${request.buy_req_id.substring(0, 8)}</div>
+                            <div class="request-id">Заявка #${request.buy_req_id.substring(0, 8)}</div>
                             <div class="request-status ${statusClass}">${statusText}</div>
                         </div>
                         
                         <div class="request-body">
                             <div class="request-info">
-                                <span class="info-label">Sell Request ID</span>
+                                <span class="info-label">Заявка на продажу</span>
                                 <span class="info-value">${request.sell_req_id}</span>
                             </div>
                             
                             <div class="request-info">
-                                <span class="info-label">Total Amount</span>
+                                <span class="info-label">Общая сумма</span>
                                 <span class="info-value amount-value">${formatAmount(request.buy_total_amount)}</span>
                             </div>
                             
                             <div class="request-info">
-                                <span class="info-label">By Card</span>
+                                <span class="info-label">Покупка картой</span>
                                 <span class="info-value">${request.buy_amount_by_card > 0 ? formatAmount(request.buy_amount_by_card) : 'No'}</span>
                             </div>
                             
                             <div class="request-info">
-                                <span class="info-label">By Cash</span>
+                                <span class="info-label">Покупка наличными</span>
                                 <span class="info-value">${request.buy_amount_by_cash > 0 ? formatAmount(request.buy_amount_by_cash) : 'No'}</span>
                             </div>
                         </div>

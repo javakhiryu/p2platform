@@ -227,14 +227,14 @@
     </style>
 </head>
 <body>
-    <header>Create Sell Request</header>
+    <header>Создние заявки на продажу</header>
 
     <div class="container">
         <form id="sellForm">
             <div class="form-group">
-                <label for="currency_from">Currency You Have</label>
+                <label for="currency_from">Валюта продажи</label>
                 <select id="currency_from" name="currency_from" required>
-                    <option value="" disabled selected>Select currency</option>
+                    <option value="" disabled selected>Выберите валюту</option>
                     <option value="USD">USD - US Dollar</option>
                     <option value="EUR">EUR - Euro</option>
                     <option value="UZS">UZS - Uzbek Sum</option>
@@ -253,9 +253,9 @@
             </div>
 
             <div class="form-group">
-                <label for="currency_to">Currency You Want</label>
+                <label for="currency_to">Валюта покупки</label>
                 <select id="currency_to" name="currency_to" required>
-                    <option value="" disabled selected>Select currency</option>
+                    <option value="" disabled selected>Выберите валюту</option>
                     <option value="USD">USD - US Dollar</option>
                     <option value="EUR">EUR - Euro</option>
                     <option value="UZS">UZS - Uzbek Sum</option>
@@ -271,45 +271,44 @@
                     <option value="TRY">TRY - Turkish Lira</option>
                     <option value="KZT">KZT - Kazakhstani Tenge</option>
                 </select>
-                <div class="currency-hint">Select different currency from "Currency You Have"</div>
             </div>
 
             <div class="form-group">
-                <label for="sell_amount_by_card">Amount to sell by Card</label>
+                <label for="sell_amount_by_card">Сумма необходимая на карту</label>
                 <input type="number" id="sell_amount_by_card" name="sell_amount_by_card" 
                        placeholder="Enter card amount or 0" min="0" />
             </div>
 
             <div class="form-group">
-                <label for="sell_amount_by_cash">Amount to sell by Cash</label>
+                <label for="sell_amount_by_cash">Сумма продажи за наличные</label>
                 <input type="number" id="sell_amount_by_cash" name="sell_amount_by_cash" 
                        placeholder="Enter cash amount or 0" min="0" />
             </div>
 
             <div class="form-group">
-                <label for="sell_total_amount">Total Amount to Sell</label>
+                <label for="sell_total_amount">Общая сумма продажи</label>
                 <input type="number" id="sell_total_amount" name="sell_total_amount" 
                        placeholder="Enter total amount" required min="1" />
             </div>
 
             <div class="form-group">
-                <label for="sell_exchange_rate">Exchange Rate</label>
+                <label for="sell_exchange_rate">Курс обмена</label>
                 <input type="number" id="sell_exchange_rate" name="sell_exchange_rate" 
                        placeholder="Enter your exchange rate" required min="0.0001" step="0.0001" />
             </div>
 
             <div class="form-group">
-                <label for="comment">Additional Notes (Optional)</label>
+                <label for="comment">Дополнительные инструкции (необязательно)</label>
                 <input type="text" id="comment" name="comment" 
                        placeholder="Any special instructions or details" />
             </div>
 
-            <button type="submit" class="button">Submit Request</button>
+            <button type="submit" class="button">Создать заявку</button>
         </form>
 
         <pre id="sellOutput"></pre>
 
-        <a id="backToSellRequestsBtn" class="button back-button">← Back to Sell Requests List</a>
+        <a id="backToSellRequestsBtn" class="button back-button">← Назад к списку заявок на продажу</a>
     </div>
     <script>
         // Error handling and popup display

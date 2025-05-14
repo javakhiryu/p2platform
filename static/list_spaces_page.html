@@ -213,7 +213,7 @@
     </style>
 </head>
 <body>
-    <header>Spaces List</header>
+    <header>Список пространств</header>
 
     <div class="container">
         <div class="spaces-list" id="spacesList">
@@ -221,7 +221,7 @@
         </div>
 
         <div class="load-more">
-            <button class="button" id="loadMoreBtn" style="display: none;">Load More</button>
+            <button class="button" id="loadMoreBtn" style="display: none;">Загрузить еще</button>
         </div>
         
         <div id="loadingIndicator" class="loading" style="display: none;">
@@ -229,18 +229,18 @@
         </div>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
-        <a href="{{  .BaseUrl }}/create-space" class="button">Create new space</a>
+        <a href="{{  .BaseUrl }}/create-space" class="button">Создать новое пространство</a>
     </div>
 
     <!-- Password Modal -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
-            <div class="modal-title">Enter Space Password</div>
+            <div class="modal-title">Введите пароль</div>
             <input type="password" id="spacePassword" class="modal-input" placeholder="Password" required>
             <div id="passwordError" class="modal-error"></div>
             <div class="modal-actions">
-                <button id="cancelPasswordBtn" class="button secondary">Cancel</button>
-                <button id="submitPasswordBtn" class="button">Submit</button>
+                <button id="cancelPasswordBtn" class="button secondary">Отмена</button>
+                <button id="submitPasswordBtn" class="button">Подтвердить</button>
             </div>
         </div>
     </div>

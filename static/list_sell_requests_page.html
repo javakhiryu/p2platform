@@ -301,6 +301,7 @@
 
         .back-btn {
             display: block;
+            color: var(--tg-text);
             width: 100%;
             max-width: 240px;
             margin: var(--spacing-xl) auto 0;
@@ -381,19 +382,19 @@
 
     <div class="container">
         <div id="sellRequestsList" class="sell-requests-list">
-            <div class="loading">Loading sell requests...</div>
+            <div class="loading">Заявки загружаются...</div>
         </div>
 
         <div class="action-buttons">
-            <button id="prevButton" class="button secondary" disabled>Previous</button>
+            <button id="prevButton" class="button secondary" disabled>Назад</button>
             <div id="pageNumbers" class="pagination"></div>
-            <button id="nextButton" class="button secondary">Next</button>
+            <button id="nextButton" class="button secondary">Вперед</button>
         </div>
 
         <div id="pageInfo" class="page-info"></div>
 
-        <a href="/create-sell-request?space_id=${space_id}" class="button create-new-btn">Create New Request</a>
-        <a href="{{  .BaseUrl }}/list-spaces" class="button back-btn">Back To Spaces</a>
+        <a href="/create-sell-request?space_id=${space_id}" class="button create-new-btn">Создать заявку на продажу</a>
+        <a href="{{  .BaseUrl }}/list-spaces" class="button back-btn">← Назад к списку пространств</a>
     </div>
 
     <script>
@@ -505,7 +506,7 @@
                 isFetching = true;
                 
                 try {
-                    sellRequestsList.innerHTML = '<div class="loading">Loading sell requests...</div>';
+                    sellRequestsList.innerHTML = '<div class="loading">Заявки на продажу загружаются...</div>';
                     
                     // Include space_id in the API URL if it exists
                     let apiUrl = `{{  .BaseUrl }}/api/v1/sell-requests?page_id=${page}&page_size=${itemsPerPage}`;
@@ -540,7 +541,7 @@
                     if (data.sell_requests && data.sell_requests.length > 0) {
                         renderSellRequests(data.sell_requests);
                     } else {
-                        sellRequestsList.innerHTML = '<div class="loading">No sell requests found</div>';
+                        sellRequestsList.innerHTML = '<div class="loading">Нет заявок на продажу</div>';
                     }
                     
                     updatePaginationControls();
@@ -587,7 +588,7 @@
                     // Create display for card amount if exists
                     const cardAmountDisplay = req.sell_amount_by_card > 0 ? `
                         <div class="request-info">
-                            <span class="info-label">Amount by Card</span>
+                            <span class="info-label">Сумма на карту</span>
                             <span class="info-value">
                                 ${createAmountDisplay(req.sell_amount_by_card, request.locked_amount_by_card, req.currency_from)}
                             </span>
@@ -597,7 +598,7 @@
                     // Create display for cash amount if exists
                     const cashAmountDisplay = req.sell_amount_by_cash > 0 ? `
                         <div class="request-info">
-                            <span class="info-label">Amount by Cash</span>
+                            <span class="info-label">Сумма наличными</span>
                             <span class="info-value">
                                 ${createAmountDisplay(req.sell_amount_by_cash, request.locked_amount_by_cash, req.currency_from)}
                             </span>
@@ -614,24 +615,24 @@
                         
                         <div class="request-body">
                             <div class="request-info">
-                                <span class="info-label">Total Amount</span>
+                                <span class="info-label">Общая сумма</span>
                                 <span class="info-value">
                                     ${createAmountDisplay(req.sell_total_amount, request.total_locked_amount, req.currency_from)}
                                 </span>
                             </div>
                             
                             <div class="request-info">
-                                <span class="info-label">Exchange</span>
+                                <span class="info-label">Обмен</span>
                                 <span class="currency-pair">${req.currency_from} → ${req.currency_to}</span>
                             </div>
                             
                             <div class="request-info">
-                                <span class="info-label">Exchange Rate</span>
+                                <span class="info-label">Курс обмена</span>
                                 <span class="info-value exchange-rate">${formatAmount(req.sell_exchange_rate)}</span>
                             </div>
                             <div class="request-info">
-                                <span class="info-label">Comment</span>
-                                <span class="info-value">${req.comment || 'No comment'}</span>
+                                <span class="info-label">Комментарии</span>
+                                <span class="info-value">${req.comment || '-'}</span>
                             </div>
 
                             
@@ -641,7 +642,7 @@
                         
                         <div class="request-footer">
                             <div class="user-info">
-                                <span>by</span>
+                                <span>От</span>
                                 <span class="tg-username">@${req.tg_username}</span>
                             </div>
                             

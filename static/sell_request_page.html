@@ -246,81 +246,81 @@
     </style>
 </head>
 <body>
-    <header>Sell Request Details</header>
+    <header>Заявку на продажу</header>
 
     <div class="container">
         <div class="section">
-            <div class="section-title">Transaction Info</div>
+            <div class="section-title">Информация о продаже</div>
             <div class="info-row">
-                <span class="info-label">Request ID</span>
+                <span class="info-label">Номер продажи</span>
                 <span class="info-value" id="sellReqId"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Total Amount</span>
+                <span class="info-label">Общая сумма</span>
                 <span class="info-value" id="sellTotalAmount"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Exchange Rate</span>
+                <span class="info-label">Курс обмена</span>
                 <span class="info-value" id="sellExchangeRate"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Status</span>
+                <span class="info-label">Статус</span>
                 <span class="info-value" id="isActual"></span>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">Payment Details</div>
+            <div class="section-title">Детали продажи</div>
             <div class="info-row">
-                <span class="info-label">Currency From</span>
+                <span class="info-label">Валюта продажи</span>
                 <span class="info-value" id="currencyFrom"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Currency To</span>
+                <span class="info-label">Валюта покупки</span>
                 <span class="info-value" id="currencyTo"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Sell By Card</span>
+                <span class="info-label">Перевод на карту</span>
                 <span class="info-value boolean-value" id="sellByCard"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Card Amount</span>
+                <span class="info-label">Сумма на карту</span>
                 <span class="info-value" id="sellAmountByCard"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Sell By Cash</span>
+                <span class="info-label">Наличными</span>
                 <span class="info-value boolean-value" id="sellByCash"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Cash Amount</span>
+                <span class="info-label">Сумма наличными</span>
                 <span class="info-value" id="sellAmountByCash"></span>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">User Info</div>
+            <div class="section-title">Информация о продавце</div>
             <div class="info-row">
-                <span class="info-label">Telegram Username</span>
+                <span class="info-label">Телеграм пользователь</span>
                 <a class="info-value" id="tgUsername" href="#" target="_blank"></a>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">Additional Info</div>
+            <div class="section-title">Дополнительная информация</div>
             <div class="info-row">
-                <span class="info-label">Created At</span>
+                <span class="info-label">Заявка создана</span>
                 <span class="info-value" id="createdAt"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">Comment</span>
+                <span class="info-label">Комментарии</span>
                 <span class="info-value" id="comment"></span>
             </div>
         </div>
         
         <div class="action-buttons">
-            <a id="createBuyRequestBtn" class="button primary">Create Buy Request</a>
-            <a id="listBuyRequestsBtn" class="button secondary">List Buy Requests</a>
-            <a id="backToSellRequestsBtn" class="button secondary">← Back to Sell Requests List</a>
+            <a id="createBuyRequestBtn" class="button primary">Создать заявку на покупку</a>
+            <a id="listBuyRequestsBtn" class="button secondary">Список заявок на покупку</a>
+            <a id="backToSellRequestsBtn" class="button secondary">← Назад к списку продаж</a>
         </div>
     </div>
     <script>

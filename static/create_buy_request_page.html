@@ -217,7 +217,7 @@
     </style>
 </head>
 <body>
-    <div class="header">Create Buy Request</div>
+    <div class="header">Создание заявки на покупку</div>
     
     <div class="container">
         <div id="successMessage" class="success-message"></div>
@@ -227,45 +227,45 @@
                 <input type="hidden" id="sellReqId" name="sell_req_id">
                  
                 <div class="form-group">
-                    <label class="form-label">Payment method</label>
+                    <label class="form-label">Способ оплаты</label>
                     <div class="payment-methods">
                         <div class="payment-method">
                             <input type="radio" id="methodCard" name="payment_method" value="card" class="payment-radio" checked>
-                            <label for="methodCard" class="payment-label">Card</label>
+                            <label for="methodCard" class="payment-label">Картой</label>
                         </div>
                         <div class="payment-method">
                             <input type="radio" id="methodCash" name="payment_method" value="cash" class="payment-radio">
-                            <label for="methodCash" class="payment-label">Cash</label>
+                            <label for="methodCash" class="payment-label">Наличными</label>
                         </div>
                         <div class="payment-method">
                             <input type="radio" id="methodBoth" name="payment_method" value="both" class="payment-radio">
-                            <label for="methodBoth" class="payment-label">Both</label>
+                            <label for="methodBoth" class="payment-label">Оба</label>
                         </div>
                     </div>
                 </div>
                 
                 <div id="cardAmountGroup" class="form-group" style="display: none;">
-                    <label for="amountByCard" class="form-label">Card amount</label>
+                    <label for="amountByCard" class="form-label">Сумма на карту</label>
                     <input type="number" id="amountByCard" class="form-input" 
                            placeholder="Enter amount" min="0" value="0">
-                    <div id="cardAmountError" class="error-message">Invalid amount</div>
+                    <div id="cardAmountError" class="error-message">Неправильная сумма</div>
                 </div>
                 
                 <div id="cashAmountGroup" class="form-group" style="display: none;">
-                    <label for="amountByCash" class="form-label">Cash amount</label>
+                    <label for="amountByCash" class="form-label">Сумма наличными</label>
                     <input type="number" id="amountByCash" class="form-input" 
                            placeholder="Enter amount" min="0" value="0">
-                    <div id="cashAmountError" class="error-message">Invalid amount</div>
+                    <div id="cashAmountError" class="error-message">Неправильная сумма</div>
                 </div>
 
                 <div class="form-group">
-                    <label for="totalAmount" class="form-label">Total amount</label>
+                    <label for="totalAmount" class="form-label">Общая сумма</label>
                     <input type="number" id="totalAmount" class="form-input" 
                            placeholder="Enter amount" min="1" required>
-                    <div id="totalAmountError" class="error-message">Please enter valid amount</div>
+                    <div id="totalAmountError" class="error-message">Пожалуйста введите правильную сумму</div>
                 </div>
                 
-                <button type="submit" id="submitBtn" class="btn">Create Request</button>
+                <button type="submit" id="submitBtn" class="btn">Создать заявку на продажу</button>
             </form>
         </div>
     </div>

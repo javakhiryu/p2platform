@@ -208,26 +208,26 @@
     <div class="container">
         <form id="createSpaceForm">
             <div class="form-group">
-                <label for="spaceName">Space Name*</label>
+                <label for="spaceName">Название пространства*</label>
                 <input type="text" id="spaceName" name="name" required placeholder="Enter space name">
-                <div id="nameError" class="error-message">Space name is required</div>
+                <div id="nameError" class="error-message">Название пространства обязательно</div>
             </div>
 
             <div class="form-group">
                 <label for="password">Password* (min 6 characters)</label>
                 <input type="password" id="password" name="password" required minlength="6" placeholder="Enter password">
-                <div id="passwordError" class="error-message">Password must be at least 6 characters</div>
+                <div id="passwordError" class="error-message">Пароль должен состоять не менее 6 символов</div>
             </div>
 
             <div class="form-group">
-                <label for="description">Description</label>
+                <label for="description">Описание пространства</label>
                 <textarea id="description" name="description" placeholder="Optional space description"></textarea>
             </div>
 
-            <button type="submit" class="button" id="submitBtn">Create Space</button>
+            <button type="submit" class="button" id="submitBtn">Создать пространство</button>
         </form>
 
-        <a href="{{  .BaseUrl }}/list-spaces" class="back-button">← Back to Spaces</a>
+        <a href="{{  .BaseUrl }}/list-spaces" class="back-button">← Назад к списку пространств</a>
     </div>
 
     <script>
