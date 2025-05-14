@@ -1,7 +1,6 @@
 -- name: CreateSellRequest :one
 INSERT INTO sell_requests (
   sell_total_amount,
-  sell_money_source,
   currency_from,
   currency_to,
   telegram_id,
@@ -14,7 +13,7 @@ INSERT INTO sell_requests (
   space_id,
   comment
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 )
 RETURNING *;
 
@@ -56,7 +55,6 @@ SELECT COUNT(*) FROM sell_requests WHERE telegram_id = $1 AND space_id = $2 AND 
 UPDATE sell_requests
 SET
     sell_total_amount = COALESCE(sqlc.narg('sell_total_amount'), sell_total_amount),
-    sell_money_source = COALESCE(sqlc.narg('sell_money_source'), sell_money_source),
     currency_from = COALESCE(sqlc.narg('currency_from'), currency_from),
     currency_to = COALESCE(sqlc.narg('currency_to'), currency_to),
     sell_by_card = COALESCE(sqlc.narg('sell_by_card'), sell_by_card),

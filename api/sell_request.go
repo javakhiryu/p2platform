@@ -21,7 +21,6 @@ type createSellRequestQuery struct {
 }
 type createSellRequest struct {
 	SellTotalAmount  int64  `json:"sell_total_amount" binding:"required,min=1"`
-	SellMoneySource  string `json:"sell_money_source" binding:"required,source"`
 	CurrencyFrom     string `json:"currency_from" binding:"required,currency"`
 	CurrencyTo       string `json:"currency_to" binding:"required,currency"`
 	SellAmountByCard int64  `json:"sell_amount_by_card" binding:"gte=0"`
@@ -33,7 +32,6 @@ type createSellRequest struct {
 type sellRequestResponse struct {
 	SellReqID        int32     `json:"sell_req_id"`
 	SellTotalAmount  int64     `json:"sell_total_amount"`
-	SellMoneySource  string    `json:"sell_money_source"`
 	CurrencyFrom     string    `json:"currency_from"`
 	CurrencyTo       string    `json:"currency_to"`
 	TgUsername       string    `json:"tg_username"`
@@ -118,7 +116,6 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 	arg := db.CreateSellRequestParams{
 		SpaceID:          uid,
 		SellTotalAmount:  req.SellTotalAmount,
-		SellMoneySource:  req.SellMoneySource,
 		CurrencyFrom:     req.CurrencyFrom,
 		CurrencyTo:       req.CurrencyTo,
 		TelegramID:       telegramId,
@@ -138,7 +135,6 @@ func (server *Server) createSellRequest(ctx *gin.Context) {
 	result := sellRequestResponse{
 		SellReqID:        sellRequest.SellReqID,
 		SellTotalAmount:  sellRequest.SellTotalAmount,
-		SellMoneySource:  sellRequest.SellMoneySource,
 		CurrencyFrom:     sellRequest.CurrencyFrom,
 		CurrencyTo:       sellRequest.CurrencyTo,
 		TgUsername:       sellRequest.TgUsername,
@@ -265,7 +261,6 @@ type updateSellRequestUri struct {
 
 type updateSellRequestJson struct {
 	SellTotalAmount  *int64  `json:"sell_total_amount" binding:"omitempty,min=1"`
-	SellMoneySource  *string `json:"sell_money_source" binding:"omitempty,source"`
 	CurrencyFrom     *string `json:"currency_from" binding:"omitempty,currency"`
 	CurrencyTo       *string `json:"currency_to" binding:"omitempty,currency"`
 	SellAmountByCard *int64  `json:"sell_amount_by_card" binding:"omitempty,gte=0"`
@@ -380,10 +375,6 @@ func (server *Server) updateSellRequest(ctx *gin.Context) {
 		SellTotalAmount: pgtype.Int8{
 			Int64: util.DerefInt64(reqJson.SellTotalAmount),
 			Valid: reqJson.SellTotalAmount != nil,
-		},
-		SellMoneySource: pgtype.Text{
-			String: util.DerefStr(reqJson.SellMoneySource),
-			Valid:  reqJson.SellMoneySource != nil,
 		},
 		CurrencyFrom: pgtype.Text{
 			String: util.DerefStr(reqJson.CurrencyFrom),

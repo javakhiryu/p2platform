@@ -232,15 +232,6 @@
     <div class="container">
         <form id="sellForm">
             <div class="form-group">
-                <label for="sell_money_source">Select Your Money Type</label>
-                <select id="sell_money_source" name="sell_money_source" required>
-                    <option value="" disabled selected>Select payment method</option>
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                </select>
-            </div>
-
-            <div class="form-group">
                 <label for="currency_from">Currency You Have</label>
                 <select id="currency_from" name="currency_from" required>
                     <option value="" disabled selected>Select currency</option>
@@ -284,13 +275,13 @@
             </div>
 
             <div class="form-group">
-                <label for="sell_amount_by_card">Amount to Receive by Card</label>
+                <label for="sell_amount_by_card">Amount to sell by Card</label>
                 <input type="number" id="sell_amount_by_card" name="sell_amount_by_card" 
                        placeholder="Enter card amount or 0" min="0" />
             </div>
 
             <div class="form-group">
-                <label for="sell_amount_by_cash">Amount to Receive by Cash</label>
+                <label for="sell_amount_by_cash">Amount to sell by Cash</label>
                 <input type="number" id="sell_amount_by_cash" name="sell_amount_by_cash" 
                        placeholder="Enter cash amount or 0" min="0" />
             </div>
@@ -458,7 +449,6 @@
                 // Prepare data with formatted numbers
                 const data = {
                     sell_total_amount: parseFormattedNumber(form.sell_total_amount.value),
-                    sell_money_source: form.sell_money_source.value,
                     currency_from: form.currency_from.value,
                     currency_to: form.currency_to.value,
                     sell_amount_by_card: parseFormattedNumber(form.sell_amount_by_card.value || '0'),

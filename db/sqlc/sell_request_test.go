@@ -13,7 +13,6 @@ func CreateRandomSellRequest(t *testing.T, user User) SellRequest {
 	SellAmount := util.RandomMoney()
 	arg := CreateSellRequestParams{
 		SellTotalAmount:  SellAmount,
-		SellMoneySource:  "card",
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
 		TelegramID:       user.TelegramID,
@@ -27,7 +26,6 @@ func CreateRandomSellRequest(t *testing.T, user User) SellRequest {
 	require.NoError(t, err)
 	require.NotEmpty(t, sellRequest)
 	require.Equal(t, arg.SellTotalAmount, sellRequest.SellTotalAmount)
-	require.Equal(t, arg.SellMoneySource, sellRequest.SellMoneySource)
 	require.Equal(t, arg.CurrencyFrom, sellRequest.CurrencyFrom)
 	require.Equal(t, arg.CurrencyTo, sellRequest.CurrencyTo)
 	require.Equal(t, arg.TelegramID, sellRequest.TelegramID)

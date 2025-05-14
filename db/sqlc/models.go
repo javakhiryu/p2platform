@@ -46,7 +46,6 @@ type LockedAmount struct {
 type SellRequest struct {
 	SellReqID        int32       `json:"sell_req_id"`
 	SellTotalAmount  int64       `json:"sell_total_amount"`
-	SellMoneySource  string      `json:"sell_money_source"`
 	CurrencyFrom     string      `json:"currency_from"`
 	CurrencyTo       string      `json:"currency_to"`
 	TelegramID       int64       `json:"telegram_id"`

@@ -56,19 +56,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/api.ErrResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/api.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/api.ErrResponse"
                         }
                     }
                 }
@@ -76,7 +76,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api.ErrorResponse": {
+        "api.ErrResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -91,7 +91,6 @@ const docTemplate = `{
                 "currency_from",
                 "currency_to",
                 "sell_exchange_rate",
-                "sell_money_source",
                 "sell_total_amount"
             ],
             "properties": {
@@ -114,9 +113,6 @@ const docTemplate = `{
                 },
                 "sell_exchange_rate": {
                     "type": "integer"
-                },
-                "sell_money_source": {
-                    "type": "string"
                 },
                 "sell_total_amount": {
                     "type": "integer",
@@ -156,9 +152,6 @@ const docTemplate = `{
                 },
                 "sell_exchange_rate": {
                     "type": "integer"
-                },
-                "sell_money_source": {
-                    "type": "string"
                 },
                 "sell_req_id": {
                     "type": "integer"

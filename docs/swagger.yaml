@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  api.ErrorResponse:
+  api.ErrResponse:
     properties:
       error:
         example: something went wrong
@@ -22,8 +22,6 @@ definitions:
         type: integer
       sell_exchange_rate:
         type: integer
-      sell_money_source:
-        type: string
       sell_total_amount:
         minimum: 1
         type: integer
@@ -31,7 +29,6 @@ definitions:
     - currency_from
     - currency_to
     - sell_exchange_rate
-    - sell_money_source
     - sell_total_amount
     type: object
   api.sellRequestResponse:
@@ -56,8 +53,6 @@ definitions:
         type: boolean
       sell_exchange_rate:
         type: integer
-      sell_money_source:
-        type: string
       sell_req_id:
         type: integer
       sell_total_amount:
@@ -102,15 +97,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/api.ErrResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/api.ErrResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/api.ErrResponse'
       summary: Create a new sell request
       tags:
       - sell-request

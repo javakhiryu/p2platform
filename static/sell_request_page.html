@@ -272,10 +272,6 @@
         <div class="section">
             <div class="section-title">Payment Details</div>
             <div class="info-row">
-                <span class="info-label">Money Source</span>
-                <span class="info-value" id="sellMoneySource"></span>
-            </div>
-            <div class="info-row">
                 <span class="info-label">Currency From</span>
                 <span class="info-value" id="currencyFrom"></span>
             </div>
@@ -284,7 +280,7 @@
                 <span class="info-value" id="currencyTo"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">By Card</span>
+                <span class="info-label">Sell By Card</span>
                 <span class="info-value boolean-value" id="sellByCard"></span>
             </div>
             <div class="info-row">
@@ -292,7 +288,7 @@
                 <span class="info-value" id="sellAmountByCard"></span>
             </div>
             <div class="info-row">
-                <span class="info-label">By Cash</span>
+                <span class="info-label">Sell By Cash</span>
                 <span class="info-value boolean-value" id="sellByCash"></span>
             </div>
             <div class="info-row">
@@ -408,7 +404,6 @@
                         // Update all the fields as before
                         document.getElementById('sellReqId').textContent = sellRequest.sell_req_id || 'N/A';
                         document.getElementById('sellTotalAmount').textContent = formatAmount(sellRequest.sell_total_amount) || '0';
-                        document.getElementById('sellMoneySource').textContent = sellRequest.sell_money_source || 'N/A';
                         document.getElementById('currencyFrom').textContent = sellRequest.currency_from || 'N/A';
                         document.getElementById('currencyTo').textContent = sellRequest.currency_to || 'N/A';
                         

@@ -32,7 +32,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			name: "OK",
 			body: gin.H{
 				"sell_total_amount":   sellRequest.SellTotalAmount,
-				"sell_money_source":   sellRequest.SellMoneySource,
 				"currency_from":       sellRequest.CurrencyFrom,
 				"currency_to":         sellRequest.CurrencyTo,
 				"tg_username":         sellRequest.TgUsername,
@@ -44,7 +43,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateSellRequestParams{
 					SellTotalAmount:  sellRequest.SellTotalAmount,
-					SellMoneySource:  sellRequest.SellMoneySource,
 					CurrencyFrom:     sellRequest.CurrencyFrom,
 					CurrencyTo:       sellRequest.CurrencyTo,
 					TelegramID:       user.TelegramID,
@@ -71,7 +69,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			name: "User not found",
 			body: gin.H{
 				"sell_total_amount":   sellRequest.SellTotalAmount,
-				"sell_money_source":   sellRequest.SellMoneySource,
 				"currency_from":       sellRequest.CurrencyFrom,
 				"currency_to":         sellRequest.CurrencyTo,
 				"tg_username":         sellRequest.TgUsername,
@@ -94,7 +91,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			name: "Internal server error on get user",
 			body: gin.H{
 				"sell_total_amount":   sellRequest.SellTotalAmount,
-				"sell_money_source":   sellRequest.SellMoneySource,
 				"currency_from":       sellRequest.CurrencyFrom,
 				"currency_to":         sellRequest.CurrencyTo,
 				"tg_username":         sellRequest.TgUsername,
@@ -138,7 +134,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			name: "Sum of money and card is not equal to total amount ",
 			body: gin.H{
 				"sell_total_amount":   util.ToPgInt(300),
-				"sell_money_source":   sellRequest.SellMoneySource,
 				"currency_from":       sellRequest.CurrencyFrom,
 				"currency_to":         sellRequest.CurrencyTo,
 				"tg_username":         sellRequest.TgUsername,
@@ -181,7 +176,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			name: "Internal Server Error",
 			body: gin.H{
 				"sell_total_amount":   sellRequest.SellTotalAmount,
-				"sell_money_source":   sellRequest.SellMoneySource,
 				"currency_from":       sellRequest.CurrencyFrom,
 				"currency_to":         sellRequest.CurrencyTo,
 				"tg_username":         sellRequest.TgUsername,
@@ -193,7 +187,6 @@ func TestCreateSellRequestAPI(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateSellRequestParams{
 					SellTotalAmount:  sellRequest.SellTotalAmount,
-					SellMoneySource:  sellRequest.SellMoneySource,
 					CurrencyFrom:     sellRequest.CurrencyFrom,
 					CurrencyTo:       sellRequest.CurrencyTo,
 					TelegramID:       user.TelegramID,
@@ -964,7 +957,6 @@ func randomSellRequest(user db.User) db.SellRequest {
 	return db.SellRequest{
 		SellReqID:        int32(util.RandomInt(1, 1000)),
 		SellTotalAmount:  1000,
-		SellMoneySource:  "cash",
 		CurrencyFrom:     util.RandomCurrency(),
 		CurrencyTo:       util.RandomCurrency(),
 		TgUsername:       user.TgUsername,

@@ -614,18 +614,13 @@
                             </div>
                             
                             <div class="request-info">
-                                <span class="info-label">Payment Method</span>
-                                <span class="info-value">${req.sell_money_source === 'both' ? 'Card & Cash' : req.sell_money_source}</span>
-                            </div>
-                            
-                            <div class="request-info">
                                 <span class="info-label">Exchange</span>
                                 <span class="currency-pair">${req.currency_from} → ${req.currency_to}</span>
                             </div>
                             
                             <div class="request-info">
                                 <span class="info-label">Exchange Rate</span>
-                                <span class="info-value exchange-rate">1 ${req.currency_from} = ${formatAmount(req.sell_exchange_rate)} ${req.currency_to}</span>
+                                <span class="info-value exchange-rate">1${formatAmount(req.sell_exchange_rate)}</span>
                             </div>
                             
                             ${cardAmountDisplay}
