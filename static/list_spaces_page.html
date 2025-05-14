@@ -157,6 +157,60 @@
             border-radius: var(--border-radius-md);
             background-color: #fdecea;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-md);
+            color: var(--tg-text);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--border-radius-md);
+            font-size: var(--font-size-md);
+            box-sizing: border-box;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        .modal-error {
+            color: #e74c3c;
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-sm);
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -171,7 +225,6 @@
             <button class="button" id="loadMoreBtn" style="display: none;">Load More</button>
         </div>
         
-
         <div id="loadingIndicator" class="loading" style="display: none;">
             Loading spaces...
         </div>
@@ -180,21 +233,46 @@
         <a href="{{  .BaseUrl }}/create-space" class="button">Create new space</a>
     </div>
 
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Enter Space Password</div>
+            <input type="password" id="spacePassword" class="modal-input" placeholder="Password" required>
+            <div id="passwordError" class="modal-error"></div>
+            <div class="modal-actions">
+                <button id="cancelPasswordBtn" class="button secondary">Cancel</button>
+                <button id="submitPasswordBtn" class="button">Submit</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const spacesList = document.getElementById('spacesList');
             const loadMoreBtn = document.getElementById('loadMoreBtn');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const errorMessage = document.getElementById('errorMessage');
+            
+            // Modal elements
+            const passwordModal = document.getElementById('passwordModal');
+            const spacePassword = document.getElementById('spacePassword');
+            const passwordError = document.getElementById('passwordError');
+            const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+            const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
 
             let nextCursor = null;
             let isLoading = false;
+            let currentSpaceId = null;
 
             // Load initial spaces
             loadSpaces();
 
             // Load more spaces when button is clicked
             loadMoreBtn.addEventListener('click', loadSpaces);
+
+            // Modal event listeners
+            submitPasswordBtn.addEventListener('click', submitPassword);
+            cancelPasswordBtn.addEventListener('click', closeModal);
 
             async function loadSpaces() {
                 if (isLoading) return;
@@ -267,11 +345,90 @@
                     `;
                     
                     spaceCard.addEventListener('click', () => {
-                        window.location.href = `{{  .BaseUrl }}/list-sell-requests?space_id=${space.id}`;
+                        checkSpaceAccess(space.id);
                     });
                     
                     spacesList.appendChild(spaceCard);
                 });
+            }
+
+            async function checkSpaceAccess(spaceId) {
+                try {
+                    loadingIndicator.style.display = 'block';
+                    
+                    const response = await fetch(`{{  .BaseUrl }}/api/v1/space/${spaceId}`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        // Access granted, redirect to space
+                        window.location.href = `{{  .BaseUrl }}/list-sell-requests?space_id=${spaceId}`;
+                    } else if (response.status === 403) {
+                        // Access forbidden, show password modal
+                        currentSpaceId = spaceId;
+                        showModal();
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Error checking space access:', error);
+                    errorMessage.textContent = 'Failed to access space. Please try again.';
+                    errorMessage.style.display = 'block';
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+
+            function showModal() {
+                spacePassword.value = '';
+                passwordError.style.display = 'none';
+                passwordModal.style.display = 'flex';
+            }
+
+            function closeModal() {
+                passwordModal.style.display = 'none';
+                currentSpaceId = null;
+            }
+
+            async function submitPassword() {
+                const password = spacePassword.value.trim();
+                
+                if (!password) {
+                    passwordError.textContent = 'Password is required';
+                    passwordError.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    submitPasswordBtn.disabled = true;
+                    passwordError.style.display = 'none';
+                    
+                    const response = await fetch(`{{  .BaseUrl }}/api/v1/space/${currentSpaceId}/join`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            password: password
+                        })
+                    });
+
+                    if (response.ok) {
+                        // Successfully joined, redirect to space
+                        window.location.href = `{{  .BaseUrl }}/list-sell-requests?space_id=${currentSpaceId}`;
+                    } else {
+                        const errorData = await response.json();
+                        passwordError.textContent = errorData.message || 'Invalid password';
+                        passwordError.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error submitting password:', error);
+                    passwordError.textContent = 'An error occurred. Please try again.';
+                    passwordError.style.display = 'block';
+                } finally {
+                    submitPasswordBtn.disabled = false;
+                }
             }
         });
     </script>
