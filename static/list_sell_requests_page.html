@@ -148,6 +148,13 @@
         .info-value {
             font-weight: var(--font-weight-medium);
             font-size: var(--font-size-md);
+            word-break: break-word;
+            max-height: 3.6em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .currency-pair {
@@ -620,8 +627,13 @@
                             
                             <div class="request-info">
                                 <span class="info-label">Exchange Rate</span>
-                                <span class="info-value exchange-rate">1${formatAmount(req.sell_exchange_rate)}</span>
+                                <span class="info-value exchange-rate">${formatAmount(req.sell_exchange_rate)}</span>
                             </div>
+                            <div class="request-info">
+                                <span class="info-label">Comment</span>
+                                <span class="info-value">${req.comment || 'No comment'}</span>
+                            </div>
+
                             
                             ${cardAmountDisplay}
                             ${cashAmountDisplay}
