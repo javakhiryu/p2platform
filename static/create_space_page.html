@@ -102,12 +102,17 @@
             resize: vertical;
         }
 
-        .button {
-            display: inline-block;
+        .button-container {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
             width: 100%;
+        }
+
+        .button {
+            flex: 1;
             text-align: center;
             padding: var(--spacing-md);
-            margin-top: var(--spacing-lg);
             font-size: var(--font-size-md);
             font-weight: var(--font-weight-semibold);
             background-color: var(--tg-accent);
@@ -116,6 +121,7 @@
             border-radius: var(--border-radius-lg);
             cursor: pointer;
             transition: background-color 0.2s;
+            text-decoration: none;
         }
 
         .button:hover {
@@ -127,25 +133,20 @@
             cursor: not-allowed;
         }
 
+        .button.secondary {
+            background-color: #f1f1f1;
+            color: var(--tg-text);
+        }
+
+        .button.secondary:hover {
+            background-color: #e5e5e5;
+        }
+
         .error-message {
             color: var(--tg-red);
             font-size: var(--font-size-sm);
             margin-top: var(--spacing-sm);
             display: none;
-        }
-
-        .back-button {
-            display: inline-block;
-            width: 100%;
-            text-align: center;
-            padding: var(--spacing-md);
-            margin-top: var(--spacing-md);
-            background-color: #f1f1f1;
-            color: var(--tg-text);
-            border: none;
-            border-radius: var(--border-radius-lg);
-            text-decoration: none;
-            font-size: var(--font-size-md);
         }
 
         /* Error popup styles */
@@ -209,25 +210,32 @@
         <form id="createSpaceForm">
             <div class="form-group">
                 <label for="spaceName">Название пространства*</label>
-                <input type="text" id="spaceName" name="name" required placeholder="Enter space name">
+                <input type="text" id="spaceName" name="name" required placeholder="Введите название пространства">
                 <div id="nameError" class="error-message">Название пространства обязательно</div>
             </div>
 
             <div class="form-group">
-                <label for="password">Password* (min 6 characters)</label>
-                <input type="password" id="password" name="password" required minlength="6" placeholder="Enter password">
+                <label for="password">Пароль* (минимум 6 символов)</label>
+                <input type="password" id="password" name="password" required minlength="6" placeholder="Введите пароль">
                 <div id="passwordError" class="error-message">Пароль должен состоять не менее 6 символов</div>
             </div>
 
             <div class="form-group">
-                <label for="description">Описание пространства</label>
-                <textarea id="description" name="description" placeholder="Optional space description"></textarea>
+                <label for="confirmPassword">Подтвердите пароль*</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Введите пароль ещё раз">
+                <div id="confirmPasswordError" class="error-message">Пароли не совпадают</div>
             </div>
 
-            <button type="submit" class="button" id="submitBtn">Создать пространство</button>
-        </form>
+            <div class="form-group">
+                <label for="description">Описание пространства</label>
+                <textarea id="description" name="description" placeholder="Введите описание пространства (не обязательно)"></textarea>
+            </div>
 
-        <a href="{{  .BaseUrl }}/list-spaces" class="back-button">← Назад к списку пространств</a>
+            <div class="button-container">
+                <button type="submit" class="button" id="submitBtn">Создать</button>
+                <a href="{{  .BaseUrl }}/list-spaces" class="button secondary">Отмена</a>
+            </div>
+        </form>
     </div>
 
     <script>
@@ -267,11 +275,13 @@
                 // Validate form
                 const spaceName = form.name.value.trim();
                 const password = form.password.value;
+                const confirmPassword = form.confirmPassword.value;
                 const description = form.description.value.trim();
 
                 // Reset error messages
                 document.getElementById('nameError').style.display = 'none';
                 document.getElementById('passwordError').style.display = 'none';
+                document.getElementById('confirmPasswordError').style.display = 'none';
 
                 let isValid = true;
 
@@ -285,11 +295,16 @@
                     isValid = false;
                 }
 
+                if (password !== confirmPassword) {
+                    document.getElementById('confirmPasswordError').style.display = 'block';
+                    isValid = false;
+                }
+
                 if (!isValid) return;
 
                 // Disable button during submission
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Creating...';
+                submitBtn.textContent = 'Создание...';
 
                 try {
                     const response = await fetch('{{  .BaseUrl }}/api/v1/space', {
@@ -319,7 +334,7 @@
                     console.error('Error creating space:', error);
                 } finally {
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Create Space';
+                    submitBtn.textContent = 'Создать';
                 }
             });
 
@@ -334,7 +349,22 @@
                 if (this.value.length >= 6) {
                     document.getElementById('passwordError').style.display = 'none';
                 }
+                checkPasswordMatch();
             });
+
+            document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+
+            function checkPasswordMatch() {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const errorElement = document.getElementById('confirmPasswordError');
+                
+                if (password && confirmPassword && password !== confirmPassword) {
+                    errorElement.style.display = 'block';
+                } else {
+                    errorElement.style.display = 'none';
+                }
+            }
         });
     </script>
 </body>
