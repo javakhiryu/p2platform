@@ -318,7 +318,7 @@
 
         <pre id="sellOutput"></pre>
 
-        <a href="{{  .BaseUrl }}" class="button back-button">← Back to Home</a>
+        <a id="backToSellRequestsBtn" class="button back-button">← Back to Sell Requests List</a>
     </div>
     <script>
         // Error handling and popup display
@@ -384,6 +384,11 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const spaceId = urlParams.get('space_id');
+
+            const backToSellRequestsBtn = document.getElementById('backToSellRequestsBtn');
+            backToSellRequestsBtn.addEventListener('click', function() {
+                window.location.href = `{{  .BaseUrl }}/list-sell-requests?space_id=${spaceId}`;
+            })
 
     
             // Parse formatted number back to float
